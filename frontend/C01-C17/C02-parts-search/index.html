@@ -1,0 +1,1315 @@
+<!DOCTYPE html>
+
+
+
+<html class="dark" lang="vi" style="">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <meta content="web_standard" name="shell-type" />
+    <title>Danh sách linh kiện | PC Builder Store</title>
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <style>
+        @layer base {
+
+            html,
+            body {
+                margin: 0;
+                padding: 0;
+            }
+
+            body {
+                overscroll-behavior: none;
+            }
+
+            main>:first-child {
+                margin-top: 0 !important;
+            }
+
+            main>:last-child {
+                margin-bottom: 0 !important;
+            }
+        }
+
+        ::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script
+        id="tailwind-config">tailwind.config = { darkMode: 'class', theme: { extend: { 'colors': { 'on-primary-fixed': '#40000c', 'primary-fixed': '#ffdada', 'on-background': '#e2e2e8', 'on-secondary': '#68000a', 'background': '#111317', 'on-secondary-container': '#ffaea8', 'tertiary-container': '#007ca8', 'secondary-fixed-dim': '#ffb3ad', 'on-tertiary': '#00354a', 'inverse-primary': '#be0037', 'inverse-on-surface': '#2f3035', 'on-primary-container': '#fffaf9', 'surface-tint': '#ffb3b6', 'error-container': '#93000a', 'tertiary-fixed': '#c4e7ff', 'primary': '#ffb3b6', 'surface-variant': '#333539', 'outline': '#ac8889', 'on-secondary-fixed-variant': '#930013', 'surface-bright': '#37393e', 'tertiary': '#7bd0ff', 'on-tertiary-fixed-variant': '#004c69', 'outline-variant': '#5c3f40', 'surface-container-high': '#282a2e', 'secondary-fixed': '#ffdad7', 'surface-container-highest': '#333539', 'on-surface': '#e2e2e8', 'inverse-surface': '#e2e2e8', 'secondary': '#ffb3ad', 'on-secondary-fixed': '#410004', 'surface-dim': '#111317', 'surface': '#111317', 'primary-fixed-dim': '#ffb3b6', 'on-primary': '#68001a', 'on-tertiary-container': '#f8fbff', 'tertiary-fixed-dim': '#7bd0ff', 'surface-container': '#1e2024', 'on-surface-variant': '#e5bdbe', 'surface-container-lowest': '#0c0e12', 'on-error-container': '#ffdad6', 'primary-container': '#e11d48', 'surface-container-low': '#1a1c20', 'on-primary-fixed-variant': '#920028', 'error': '#ffb4ab', 'on-error': '#690005', 'on-tertiary-fixed': '#001e2c', 'secondary-container': '#a40217' }, 'borderRadius': { 'DEFAULT': '0.125rem', 'lg': '0.25rem', 'xl': '0.5rem', 'full': '0.75rem' }, 'spacing': { 'gutter-desktop': '1.5rem', 'gutter': '1rem', 'space-2xl': '3rem', 'space-md': '1rem', 'space-xs': '0.25rem', 'margin': '1rem', 'space-lg': '1.5rem', 'space-sm': '0.5rem', 'space-xl': '2rem', 'space-3xl': '4rem', 'margin-desktop': '3rem', 'margin-tablet': '2rem' }, 'fontFamily': { 'headline-xl': ['Plus Jakarta Sans'], 'body-md': ['Plus Jakarta Sans'], 'body-lg': ['Plus Jakarta Sans'], 'headline-sm': ['Plus Jakarta Sans'], 'display-lg-mobile': ['Plus Jakarta Sans'], 'display-lg': ['Plus Jakarta Sans'], 'tech-code-md': ['JetBrains Mono'], 'label-sm': ['JetBrains Mono'], 'headline-md': ['Plus Jakarta Sans'], 'body-sm': ['Plus Jakarta Sans'], 'label-md': ['Plus Jakarta Sans'], 'tech-code-sm': ['JetBrains Mono'], 'headline-xl-mobile': ['Plus Jakarta Sans'], 'headline-lg': ['Plus Jakarta Sans'] }, 'fontSize': { 'headline-xl': ['40px', { 'lineHeight': '48px', 'letterSpacing': '-0.02em', 'fontWeight': '700' }], 'body-md': ['15px', { 'lineHeight': '24px', 'letterSpacing': '0', 'fontWeight': '400' }], 'body-lg': ['18px', { 'lineHeight': '28px', 'letterSpacing': '0', 'fontWeight': '400' }], 'headline-sm': ['20px', { 'lineHeight': '28px', 'letterSpacing': '0', 'fontWeight': '600' }], 'display-lg-mobile': ['36px', { 'lineHeight': '44px', 'letterSpacing': '-0.02em', 'fontWeight': '700' }], 'display-lg': ['56px', { 'lineHeight': '64px', 'letterSpacing': '-0.03em', 'fontWeight': '700' }], 'tech-code-md': ['14px', { 'lineHeight': '20px', 'letterSpacing': '-0.01em', 'fontWeight': '500' }], 'label-sm': ['11px', { 'lineHeight': '14px', 'letterSpacing': '0.06em', 'fontWeight': '600' }], 'headline-md': ['24px', { 'lineHeight': '32px', 'letterSpacing': '-0.01em', 'fontWeight': '600' }], 'body-sm': ['13px', { 'lineHeight': '20px', 'letterSpacing': '0.005em', 'fontWeight': '400' }], 'label-md': ['13px', { 'lineHeight': '18px', 'letterSpacing': '0.01em', 'fontWeight': '600' }], 'tech-code-sm': ['12px', { 'lineHeight': '16px', 'letterSpacing': '0.02em', 'fontWeight': '500' }], 'headline-xl-mobile': ['28px', { 'lineHeight': '36px', 'letterSpacing': '-0.01em', 'fontWeight': '700' }], 'headline-lg': ['32px', { 'lineHeight': '40px', 'letterSpacing': '-0.015em', 'fontWeight': '600' }] } } } };</script>
+    <link data-pcbs-shell-css="true" href="../../components/shell.css?v=8" rel="stylesheet" />
+    <link data-pcbs-interaction-css="true" href="../../components/interactions.css?v=8" rel="stylesheet" />
+    <link rel="stylesheet" href="../../components/layout-fixes.css?v=8">
+</head>
+
+<body
+    class="bg-background font-body-md text-body-md text-on-surface antialiased selection:bg-primary-container selection:text-on-primary-container min-h-screen flex flex-col relative">
+    <header data-shared-component="site-header"
+        class="fixed top-0 left-0 right-0 z-50 bg-surface/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.45)]">
+        <div
+            class="h-20 max-w-7xl mx-auto px-margin md:px-margin-tablet lg:px-margin-desktop flex items-center justify-between gap-space-lg">
+            <div class="flex items-center gap-space-xl"><a class="flex items-center gap-space-sm group"
+                    data-path="trang-chu" href="#">
+                    <div
+                        class="w-9 h-9 rounded-lg bg-surface-container flex items-center justify-center transition-colors group-hover:bg-primary-container">
+                        <span
+                            class="material-symbols-outlined text-primary group-hover:text-on-primary-container text-[22px]">memory</span>
+                    </div>
+                    <div class="flex flex-col"><span
+                            class="font-headline-sm text-headline-sm tracking-tight text-on-surface">PC BUILDER
+                            STORE</span><span
+                            class="font-label-sm text-label-sm uppercase tracking-widest text-on-surface-variant">Linh
+                            ki&#7879;n m&#225;y t&#237;nh</span></div>
+                </a>
+                <nav class="flex items-center gap-space-xs"><a
+                        class="px-space-md py-space-sm rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors"
+                        data-path="trang-chu" href="#">Trang ch&#7911;</a><a
+                        class="px-space-md py-space-sm rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors"
+                        data-path="linh-kien" href="#">Linh ki&#7879;n</a><a
+                        class="px-space-md py-space-sm rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors"
+                        data-path="pc-lap-san" href="#">X&#226;y d&#7921;ng PC</a></nav>
+            </div>
+            <div class="flex items-center gap-space-md flex-1 max-w-md justify-end">
+                <div class="hidden md:flex items-center relative w-full max-w-xs">
+                    <form class="flex items-center relative w-full" role="search"><span
+                            class="material-symbols-outlined absolute left-3 text-on-surface-variant text-[18px] pointer-events-none">search</span><input
+                            aria-label="T&#236;m ki&#7871;m s&#7843;n ph&#7849;m"
+                            class="w-full bg-surface-container-low pl-9 pr-space-md py-2 rounded-lg font-body-sm text-body-sm text-on-surface placeholder:text-outline-variant focus:outline-none focus:bg-surface-container-high transition-colors"
+                            placeholder="T&#236;m CPU, GPU, RAM, SSD..." type="search" /></form>
+                </div>
+                <div class="flex items-center gap-space-sm"><a aria-label="Gi&#7887; h&#224;ng"
+                        class="w-10 h-10 rounded-lg bg-surface-container-low hover:bg-surface-container-high flex items-center justify-center relative transition-colors"
+                        data-path="gio-hang" href="#"><span
+                            class="material-symbols-outlined text-on-surface text-[20px]">shopping_bag</span></a><a
+                        aria-label="T&#224;i kho&#7843;n"
+                        class="w-10 h-10 rounded-lg bg-surface-container-low hover:bg-surface-container-high flex items-center justify-center transition-colors"
+                        data-path="tai-khoan" href="#"><span
+                            class="material-symbols-outlined text-on-surface text-[20px]">person</span></a></div>
+            </div>
+        </div>
+    </header>
+
+    <div class="hidden fixed top-24 right-6 z-50 max-w-md bg-surface-container-high border border-primary-container/80 text-on-surface shadow-[0_20px_40px_-8px_rgba(0,0,0,0.70)] p-space-md rounded flex items-start gap-space-sm animate-fade-in"
+        id="build-pc-toast"><span
+            class="material-symbols-outlined text-primary-container shrink-0 text-[22px]">construction</span>
+        <div class="flex-1">
+            <p class="font-label-md text-label-md text-on-surface font-semibold">Thông báo hệ thống</p>
+            <p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Tính năng đang được phát triển — Sắp ra
+                mắt</p>
+        </div><button class="text-on-surface-variant hover:text-on-surface transition-colors"
+            onclick="document.getElementById('build-pc-toast').classList.add('hidden');" type="button"><span
+                class="material-symbols-outlined text-[18px]">close</span></button>
+    </div>
+    <main class="w-full pt-20 bg-background flex-1 max-w-7xl mx-auto px-margin lg:px-margin-desktop">
+        <div class="flex flex-col w-full pb-8">
+            <!-- BREADCRUMB & HEADER SECTION -->
+            <section class="w-full pt-6 pb-4"><!-- Breadcrumb -->
+                <nav
+                    class="flex items-center gap-space-xs text-on-surface-variant font-tech-code-sm text-tech-code-sm mb-3">
+                    <a class="hover:text-primary transition-colors flex items-center gap-1" href="#">
+                        <span class="material-symbols-outlined text-[16px]">home</span>
+                        <span class="">Trang chủ</span>
+                    </a>
+                    <span class="material-symbols-outlined text-[14px] text-outline-variant">chevron_right</span>
+                    <a class="hover:text-primary transition-colors" href="#">Linh kiện</a>
+                    <span class="material-symbols-outlined text-[14px] text-outline-variant">chevron_right</span>
+                    <span class="text-on-surface font-semibold">Bộ nhớ RAM</span>
+                </nav>
+                <!-- Page Title & Subtitle -->
+                <div class="flex flex-col md:flex-row md:items-end justify-between gap-space-md mb-6">
+                    <div>
+                        <div class="flex items-center gap-2 mb-1"> <span
+                                class="font-tech-code-sm text-tech-code-sm text-primary tracking-widest uppercase">Phần
+                                cứng hiệu năng cao • DDR5 &amp; DDR4</span>
+                        </div>
+                        <h1 class="font-headline-xl text-headline-xl text-on-surface tracking-tight">Bộ nhớ RAM</h1>
+                        <p class="text-body-sm text-on-surface-variant my-2">Th&#244;ng tin hi&#7875;n th&#7883; mang
+                            t&#237;nh minh h&#7885;a; c&#225;c thao t&#225;c c&#7847;n k&#7871;t n&#7889;i h&#7879;
+                            th&#7889;ng.</p>
+                        <p class="font-body-md text-body-md text-on-surface-variant mt-1 max-w-2xl"> Tuyển chọn RAM cao
+                            cấp DDR5/DDR4 băng thông cao, độ trễ cực thấp (Tight Timings) tương thích tối ưu hóa AMD
+                            EXPO và Intel XMP 3.0. </p>
+                    </div>
+
+                    <div
+                        class="flex items-center gap-4 bg-surface-container-low px-4 py-2.5 rounded-lg border-l-2 border-primary-container shrink-0">
+                        <div class="flex flex-col">
+                            <span
+                                class="font-tech-code-sm text-[11px] text-on-surface-variant uppercase tracking-wider">Kho
+                                RAM sẵn có</span>
+                            <span
+                                class="font-tech-code-sm text-tech-code-sm text-on-surface font-semibold flex items-center gap-1.5">
+                                Số lượng RAM: dữ liệu tham khảo </span>
+                        </div>
+                        <div class="w-px h-6 bg-surface-container-high"></div>
+                        <div class="flex flex-col">
+                            <span
+                                class="font-tech-code-sm text-[11px] text-on-surface-variant uppercase tracking-wider">Kiểm
+                                Tra cứu QVL</span>
+                            <span class="font-tech-code-sm text-tech-code-sm text-primary font-semibold">K&#7871;t qu&#7843; ki&#7875;m tra: &#273;ang c&#7853;p nh&#7853;t</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Category Navigation Row (Horizontal Pill Tabs) -->
+                <div class="w-full overflow-x-auto no-scrollbar py-1">
+                    <div class="flex items-center gap-2 min-w-max pb-1">
+                        <button
+                            class="flex items-center gap-2 px-4 py-2 rounded-lg font-label-md text-label-md text-on-surface-variant bg-surface-container-low hover:bg-surface-container hover:text-on-surface transition-all"
+                            type="button">
+                            <span class="material-symbols-outlined text-[18px]">apps</span>
+                            <span class="">Tất cả</span>
+                        </button>
+                        <button
+                            class="flex items-center gap-2 px-4 py-2 rounded-lg font-label-md text-label-md text-on-surface-variant bg-surface-container-low hover:bg-surface-container hover:text-on-surface transition-all"
+                            type="button">
+                            <span class="material-symbols-outlined text-[18px]">memory</span>
+                            <span class="">CPU (Vi xử lý)</span>
+                        </button>
+                        <button
+                            class="flex items-center gap-2 px-4 py-2 rounded-lg font-label-md text-label-md text-on-surface-variant bg-surface-container-low hover:bg-surface-container hover:text-on-surface transition-all"
+                            type="button">
+                            <span class="material-symbols-outlined text-[18px]">developer_board</span>
+                            <span class="">Card đồ họa (VGA)</span>
+                        </button>
+                        <button
+                            class="flex items-center gap-2 px-4 py-2 rounded-lg font-label-md text-label-md text-on-surface-variant bg-surface-container-low hover:bg-surface-container hover:text-on-surface transition-all"
+                            type="button">
+                            <span class="material-symbols-outlined text-[18px]">grid_view</span>
+                            <span class="">Bo mạch chủ</span>
+                        </button>
+                        <!-- Active Category Tab: Bộ nhớ RAM -->
+                        <button
+                            class="flex items-center gap-2 px-4 py-2 rounded-lg font-label-md text-label-md bg-surface-container-high text-on-primary-container shadow-sm transition-all border-l-2 border-primary-container"
+                            type="button">
+                            <span class="material-symbols-outlined text-[18px] text-primary-container">straighten</span>
+                            <span class="text-on-surface font-bold">Bộ nhớ RAM</span>
+                            <span
+                                class="text-[10px] font-tech-code-sm bg-primary-container text-on-primary-container px-1.5 py-0.2 rounded-full font-bold">32</span>
+                        </button>
+                        <button
+                            class="flex items-center gap-2 px-4 py-2 rounded-lg font-label-md text-label-md text-on-surface-variant bg-surface-container-low hover:bg-surface-container hover:text-on-surface transition-all"
+                            type="button">
+                            <span class="material-symbols-outlined text-[18px]">save</span>
+                            <span class="">Ổ cứng (SSD / HDD)</span>
+                        </button>
+                        <button
+                            class="flex items-center gap-2 px-4 py-2 rounded-lg font-label-md text-label-md text-on-surface-variant bg-surface-container-low hover:bg-surface-container hover:text-on-surface transition-all"
+                            type="button">
+                            <span class="material-symbols-outlined text-[18px]">power</span>
+                            <span class="">Nguồn máy tính (PSU)</span>
+                        </button>
+                        <button
+                            class="flex items-center gap-2 px-4 py-2 rounded-lg font-label-md text-label-md text-on-surface-variant bg-surface-container-low hover:bg-surface-container hover:text-on-surface transition-all"
+                            type="button">
+                            <span class="material-symbols-outlined text-[18px]">inbox</span>
+                            <span class="">Vỏ case</span>
+                        </button>
+                        <button
+                            class="flex items-center gap-2 px-4 py-2 rounded-lg font-label-md text-label-md text-on-surface-variant bg-surface-container-low hover:bg-surface-container hover:text-on-surface transition-all"
+                            type="button">
+                            <span class="material-symbols-outlined text-[18px]">mode_fan</span>
+                            <span class="">Tản nhiệt PC</span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+            <!-- TWO-COLUMN CATALOG LAYOUT -->
+            <div class="w-full grid grid-cols-1 lg:grid-cols-12 gap-gutter-desktop mt-4 items-start">
+                <!-- LEFT COLUMN: FILTER SIDEBAR (~280px / 3 cols desktop) -->
+                <aside class="lg:col-span-3 space-y-4">
+                    <div class="bg-surface-container-low p-4 rounded-lg shadow-sm space-y-5">
+                        <!-- Sidebar Header with Clear All -->
+                        <div class="flex items-center justify-between pb-3 border-b border-surface-container-high">
+                            <div class="flex items-center gap-2">
+                                <span class="material-symbols-outlined text-[20px] text-primary-container">tune</span>
+                                <span class="font-headline-sm text-[16px] text-on-surface font-bold tracking-tight">Bộ
+                                    lọc RAM</span>
+                            </div>
+                            <button
+                                class="font-tech-code-sm text-[12px] text-on-surface-variant hover:text-primary transition-colors cursor-pointer"
+                                type="button"> Đặt lại </button>
+                        </div>
+                        <!-- Active Filters Chips with 'Xóa tất cả' -->
+                        <div class="space-y-2">
+                            <div
+                                class="flex items-center justify-between text-on-surface-variant font-tech-code-sm text-[11px]">
+                                <span class="uppercase tracking-wider">Đang lọc (4)</span>
+                                <button class="text-primary hover:underline cursor-pointer" type="button">Xóa tất
+                                    cả</button>
+                            </div>
+                            <div class="flex flex-wrap gap-1.5">
+                                <span
+                                    class="inline-flex items-center gap-1 bg-surface-container-high text-on-surface text-tech-code-sm font-tech-code-sm px-2 py-1 rounded">
+                                    DDR5 <button class="text-on-surface-variant hover:text-primary-container"
+                                        type="button"><span
+                                            class="material-symbols-outlined text-[14px]">close</span></button>
+                                </span>
+                                <span
+                                    class="inline-flex items-center gap-1 bg-surface-container-high text-on-surface text-tech-code-sm font-tech-code-sm px-2 py-1 rounded">
+                                    64GB (2x32GB) <button class="text-on-surface-variant hover:text-primary-container"
+                                        type="button"><span
+                                            class="material-symbols-outlined text-[14px]">close</span></button>
+                                </span>
+                                <span
+                                    class="inline-flex items-center gap-1 bg-surface-container-high text-on-surface text-tech-code-sm font-tech-code-sm px-2 py-1 rounded">
+                                    6000 MT/s <button class="text-on-surface-variant hover:text-primary-container"
+                                        type="button"><span
+                                            class="material-symbols-outlined text-[14px]">close</span></button>
+                                </span>
+                                <span
+                                    class="inline-flex items-center gap-1 bg-surface-container-high text-on-surface text-tech-code-sm font-tech-code-sm px-2 py-1 rounded">
+                                    CL30 <button class="text-on-surface-variant hover:text-primary-container"
+                                        type="button"><span
+                                            class="material-symbols-outlined text-[14px]">close</span></button>
+                                </span>
+                            </div>
+                        </div>
+                        <!-- RAM Spec 1: Thế hệ RAM -->
+                        <div class="space-y-2.5 pt-2 border-t border-surface-container-high">
+                            <div
+                                class="flex items-center justify-between text-on-surface font-label-md text-label-md font-semibold">
+                                <span class="">Thế hệ RAM</span>
+                                <span
+                                    class="material-symbols-outlined text-[18px] text-on-surface-variant">expand_less</span>
+                            </div>
+                            <div class="space-y-2">
+                                <label
+                                    class="flex items-center justify-between text-body-sm font-body-sm text-on-surface cursor-pointer select-none">
+                                    <span class="flex items-center gap-2">
+                                        <input checked=""
+                                            class="w-4 h-4 rounded bg-surface-container-lowest text-primary-container accent-primary-container focus:ring-0 cursor-pointer"
+                                            type="checkbox" />
+                                        <span class="font-semibold text-on-surface">DDR5</span>
+                                    </span>
+                                    <span class="font-tech-code-sm text-[11px] text-on-surface-variant">24</span>
+                                </label>
+                                <label
+                                    class="flex items-center justify-between text-body-sm font-body-sm text-on-surface-variant hover:text-on-surface cursor-pointer select-none">
+                                    <span class="flex items-center gap-2">
+                                        <input
+                                            class="w-4 h-4 rounded bg-surface-container-lowest text-primary-container accent-primary-container focus:ring-0 cursor-pointer"
+                                            type="checkbox" />
+                                        <span class="">DDR4</span>
+                                    </span>
+                                    <span class="font-tech-code-sm text-[11px] text-on-surface-variant">8</span>
+                                </label>
+                            </div>
+                        </div>
+                        <!-- RAM Spec 2: Dung lượng -->
+                        <div class="space-y-2.5 pt-2 border-t border-surface-container-high">
+                            <div
+                                class="flex items-center justify-between text-on-surface font-label-md text-label-md font-semibold">
+                                <span class="">Tổng dung lượng</span>
+                                <span
+                                    class="material-symbols-outlined text-[18px] text-on-surface-variant">expand_less</span>
+                            </div>
+                            <div class="space-y-2 max-h-40 overflow-y-auto pr-1">
+                                <label
+                                    class="flex items-center justify-between text-body-sm font-body-sm text-on-surface cursor-pointer select-none">
+                                    <span class="flex items-center gap-2">
+                                        <input checked=""
+                                            class="w-4 h-4 rounded bg-surface-container-lowest text-primary-container accent-primary-container focus:ring-0 cursor-pointer"
+                                            type="checkbox" />
+                                        <span class="font-semibold text-on-surface">64GB (2x32GB)</span>
+                                    </span>
+                                    <span class="font-tech-code-sm text-[11px] text-on-surface-variant">12</span>
+                                </label>
+                                <label
+                                    class="flex items-center justify-between text-body-sm font-body-sm text-on-surface-variant hover:text-on-surface cursor-pointer select-none">
+                                    <span class="flex items-center gap-2">
+                                        <input
+                                            class="w-4 h-4 rounded bg-surface-container-lowest text-primary-container accent-primary-container focus:ring-0 cursor-pointer"
+                                            type="checkbox" />
+                                        <span class="">32GB (2x16GB)</span>
+                                    </span>
+                                    <span class="font-tech-code-sm text-[11px] text-on-surface-variant">14</span>
+                                </label>
+                                <label
+                                    class="flex items-center justify-between text-body-sm font-body-sm text-on-surface-variant hover:text-on-surface cursor-pointer select-none">
+                                    <span class="flex items-center gap-2">
+                                        <input
+                                            class="w-4 h-4 rounded bg-surface-container-lowest text-primary-container accent-primary-container focus:ring-0 cursor-pointer"
+                                            type="checkbox" />
+                                        <span class="">96GB / 128GB (Kit)</span>
+                                    </span>
+                                    <span class="font-tech-code-sm text-[11px] text-on-surface-variant">4</span>
+                                </label>
+                                <label
+                                    class="flex items-center justify-between text-body-sm font-body-sm text-on-surface-variant hover:text-on-surface cursor-pointer select-none">
+                                    <span class="flex items-center gap-2">
+                                        <input
+                                            class="w-4 h-4 rounded bg-surface-container-lowest text-primary-container accent-primary-container focus:ring-0 cursor-pointer"
+                                            type="checkbox" />
+                                        <span class="">16GB (2x8GB)</span>
+                                    </span>
+                                    <span class="font-tech-code-sm text-[11px] text-on-surface-variant">2</span>
+                                </label>
+                            </div>
+                        </div>
+                        <!-- RAM Spec 3: Tốc độ Bus -->
+                        <div class="space-y-2.5 pt-2 border-t border-surface-container-high">
+                            <div
+                                class="flex items-center justify-between text-on-surface font-label-md text-label-md font-semibold">
+                                <span class="">Tốc độ Bus (MT/s)</span>
+                                <span
+                                    class="material-symbols-outlined text-[18px] text-on-surface-variant">expand_less</span>
+                            </div>
+                            <div class="space-y-2 max-h-40 overflow-y-auto pr-1">
+                                <label
+                                    class="flex items-center justify-between text-body-sm font-body-sm text-on-surface cursor-pointer select-none">
+                                    <span class="flex items-center gap-2">
+                                        <input checked=""
+                                            class="w-4 h-4 rounded bg-surface-container-lowest text-primary-container accent-primary-container focus:ring-0 cursor-pointer"
+                                            type="checkbox" />
+                                        <span class="font-semibold text-on-surface">6000 MT/s (Sweetspot)</span>
+                                    </span>
+                                    <span class="font-tech-code-sm text-[11px] text-on-surface-variant">15</span>
+                                </label>
+                                <label
+                                    class="flex items-center justify-between text-body-sm font-body-sm text-on-surface-variant hover:text-on-surface cursor-pointer select-none">
+                                    <span class="flex items-center gap-2">
+                                        <input
+                                            class="w-4 h-4 rounded bg-surface-container-lowest text-primary-container accent-primary-container focus:ring-0 cursor-pointer"
+                                            type="checkbox" />
+                                        <span class="">6400 MT/s</span>
+                                    </span>
+                                    <span class="font-tech-code-sm text-[11px] text-on-surface-variant">7</span>
+                                </label>
+                                <label
+                                    class="flex items-center justify-between text-body-sm font-body-sm text-on-surface-variant hover:text-on-surface cursor-pointer select-none">
+                                    <span class="flex items-center gap-2">
+                                        <input
+                                            class="w-4 h-4 rounded bg-surface-container-lowest text-primary-container accent-primary-container focus:ring-0 cursor-pointer"
+                                            type="checkbox" />
+                                        <span class="">7200 MT/s+ (OC)</span>
+                                    </span>
+                                    <span class="font-tech-code-sm text-[11px] text-on-surface-variant">5</span>
+                                </label>
+                                <label
+                                    class="flex items-center justify-between text-body-sm font-body-sm text-on-surface-variant hover:text-on-surface cursor-pointer select-none">
+                                    <span class="flex items-center gap-2">
+                                        <input
+                                            class="w-4 h-4 rounded bg-surface-container-lowest text-primary-container accent-primary-container focus:ring-0 cursor-pointer"
+                                            type="checkbox" />
+                                        <span class="">3200 / 3600 MT/s (DDR4)</span>
+                                    </span>
+                                    <span class="font-tech-code-sm text-[11px] text-on-surface-variant">5</span>
+                                </label>
+                            </div>
+                        </div>
+                        <!-- RAM Spec 4: Độ trễ CAS (Latency) -->
+                        <div class="space-y-2.5 pt-2 border-t border-surface-container-high">
+                            <div
+                                class="flex items-center justify-between text-on-surface font-label-md text-label-md font-semibold">
+                                <span class="">Độ trễ CAS (Latency)</span>
+                                <span
+                                    class="material-symbols-outlined text-[18px] text-on-surface-variant">expand_less</span>
+                            </div>
+                            <div class="space-y-2">
+                                <label
+                                    class="flex items-center justify-between text-body-sm font-body-sm text-on-surface cursor-pointer select-none">
+                                    <span class="flex items-center gap-2">
+                                        <input checked=""
+                                            class="w-4 h-4 rounded bg-surface-container-lowest text-primary-container accent-primary-container focus:ring-0 cursor-pointer"
+                                            type="checkbox" />
+                                        <span class="font-semibold text-on-surface">CL30 (Độ trễ cực thấp)</span>
+                                    </span>
+                                    <span class="font-tech-code-sm text-[11px] text-on-surface-variant">10</span>
+                                </label>
+                                <label
+                                    class="flex items-center justify-between text-body-sm font-body-sm text-on-surface-variant hover:text-on-surface cursor-pointer select-none">
+                                    <span class="flex items-center gap-2">
+                                        <input
+                                            class="w-4 h-4 rounded bg-surface-container-lowest text-primary-container accent-primary-container focus:ring-0 cursor-pointer"
+                                            type="checkbox" />
+                                        <span class="">CL32</span>
+                                    </span>
+                                    <span class="font-tech-code-sm text-[11px] text-on-surface-variant">9</span>
+                                </label>
+                                <label
+                                    class="flex items-center justify-between text-body-sm font-body-sm text-on-surface-variant hover:text-on-surface cursor-pointer select-none">
+                                    <span class="flex items-center gap-2">
+                                        <input
+                                            class="w-4 h-4 rounded bg-surface-container-lowest text-primary-container accent-primary-container focus:ring-0 cursor-pointer"
+                                            type="checkbox" />
+                                        <span class="">CL36 / CL40</span>
+                                    </span>
+                                    <span class="font-tech-code-sm text-[11px] text-on-surface-variant">13</span>
+                                </label>
+                            </div>
+                        </div>
+                        <!-- Filter Group: Thương hiệu RAM -->
+                        <div class="space-y-2.5 pt-2 border-t border-surface-container-high">
+                            <div
+                                class="flex items-center justify-between text-on-surface font-label-md text-label-md font-semibold">
+                                <span class="">Thương hiệu RAM</span>
+                                <span
+                                    class="material-symbols-outlined text-[18px] text-on-surface-variant">expand_less</span>
+                            </div>
+                            <div class="space-y-2">
+                                <label
+                                    class="flex items-center justify-between text-body-sm font-body-sm text-on-surface cursor-pointer select-none">
+                                    <span class="flex items-center gap-2">
+                                        <input checked=""
+                                            class="w-4 h-4 rounded bg-surface-container-lowest text-primary-container accent-primary-container focus:ring-0 cursor-pointer"
+                                            type="checkbox" />
+                                        <span class="font-semibold text-on-surface">Corsair</span>
+                                    </span>
+                                    <span class="font-tech-code-sm text-[11px] text-on-surface-variant">14</span>
+                                </label>
+                                <label
+                                    class="flex items-center justify-between text-body-sm font-body-sm text-on-surface-variant hover:text-on-surface cursor-pointer select-none">
+                                    <span class="flex items-center gap-2">
+                                        <input checked=""
+                                            class="w-4 h-4 rounded bg-surface-container-lowest text-primary-container accent-primary-container focus:ring-0 cursor-pointer"
+                                            type="checkbox" />
+                                        <span class="text-on-surface">G.Skill</span>
+                                    </span>
+                                    <span class="font-tech-code-sm text-[11px] text-on-surface-variant">11</span>
+                                </label>
+                                <label
+                                    class="flex items-center justify-between text-body-sm font-body-sm text-on-surface-variant hover:text-on-surface cursor-pointer select-none">
+                                    <span class="flex items-center gap-2">
+                                        <input
+                                            class="w-4 h-4 rounded bg-surface-container-lowest text-primary-container accent-primary-container focus:ring-0 cursor-pointer"
+                                            type="checkbox" />
+                                        <span class="">Kingston Fury</span>
+                                    </span>
+                                    <span class="font-tech-code-sm text-[11px] text-on-surface-variant">7</span>
+                                </label>
+                            </div>
+                        </div>
+                        <!-- Action Buttons -->
+                        <div class="pt-2 space-y-2">
+                            <button
+                                class="w-full py-2.5 bg-primary-container hover:bg-rose-600 text-on-primary-container rounded font-label-md text-label-md font-bold transition-all flex items-center justify-center gap-2 shadow-sm"
+                                type="button">
+                                <span class="material-symbols-outlined text-[18px]">check_circle</span>
+                                <span class="">Áp dụng bộ lọc</span>
+                            </button>
+                            <button
+                                class="w-full py-2 bg-surface-container hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface rounded font-tech-code-sm text-tech-code-sm transition-all text-center"
+                                type="button"> Thiết lập lại mặc định </button>
+                        </div>
+                    </div>
+                    <!-- Tech Support Box -->
+                    <div
+                        class="bg-surface-container-lowest p-4 rounded-lg flex items-start gap-3 border-l-2 border-primary-container">
+                        <span
+                            class="material-symbols-outlined text-primary-container text-[24px] shrink-0">memory</span>
+                        <div class="space-y-1">
+                            <h4 class="font-label-md text-label-md text-on-surface font-bold">Cần tra cứu QVL bo mạch chủ?
+                            </h4>
+                            <p class="font-body-sm text-[12px] text-on-surface-variant leading-relaxed">H&#7895; tr&#7907; t&#432; v&#7845;n k&#7929; thu&#7853;t: th&#244;ng tin &#273;ang c&#7853;p nh&#7853;t.</p>
+                            <a class="inline-flex items-center gap-1 font-tech-code-sm text-[12px] text-primary hover:underline pt-1" data-requires-backend="Tư vấn tương thích"
+                                href="#">
+                                <span class="">Tư vấn tương thích ngay</span>
+                                <span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+                            </a>
+                        </div>
+                    </div>
+                </aside>
+                <!-- RIGHT COLUMN: TOOLBAR & PRODUCT GRID (9 cols desktop) -->
+                <main class="lg:col-span-9 space-y-4">
+                    <!-- TOOLBAR: Result Counter & Sort Control -->
+                    <div
+                        class="bg-surface-container-low px-4 py-3 rounded-lg flex flex-col sm:flex-row items-center justify-between gap-3 shadow-sm pb-8">
+                        <!-- Left: Summary -->
+                        <div
+                            class="flex items-center gap-2 font-tech-code-sm text-tech-code-sm text-on-surface-variant w-full sm:w-auto">
+                            <span class="">Hiển thị <strong class="text-on-surface font-semibold">1 - 9</strong> trong
+                                số <strong class="text-on-surface font-semibold">32</strong> kit RAM</span>
+                        </div>
+                        <!-- Right: Sort & Layout toggles -->
+                        <div class="flex items-center gap-3 w-full sm:w-auto justify-end">
+                            <div class="flex items-center gap-2">
+                                <label class="font-tech-code-sm text-[12px] text-on-surface-variant whitespace-nowrap"
+                                    for="sort-select">Sắp xếp:</label>
+                                <div class="relative">
+                                    <select
+                                        class="bg-surface-container-lowest text-on-surface text-body-sm font-body-sm pl-3 pr-8 py-1.5 rounded cursor-pointer outline-none appearance-none hover:bg-surface-container transition-colors"
+                                        id="sort-select">
+                                        <option selected="" value="relevant">Phù hợp nhất</option>
+                                        <option value="price-asc">Giá: Thấp đến Cao</option>
+                                        <option value="price-desc">Giá: Cao đến Thấp</option>
+                                        <option value="name-asc">Tên sản phẩm: A - Z</option>
+                                        <option value="discount">Ưu đãi nhiều nhất</option>
+                                    </select>
+                                    <span
+                                        class="material-symbols-outlined pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[16px] text-on-surface-variant">expand_more</span>
+                                </div>
+                            </div>
+                            <!-- Grid/List Switch -->
+                            <div class="flex items-center bg-surface-container-lowest p-0.5 rounded">
+                                <button aria-label="Lưới 3 cột"
+                                    class="p-1 rounded bg-surface-container-high text-on-surface shadow-xs"
+                                    type="button">
+                                    <span class="material-symbols-outlined text-[18px]">grid_view</span>
+                                </button>
+                                <button aria-label="Danh sách"
+                                    class="p-1 rounded text-on-surface-variant hover:text-on-surface transition-colors"
+                                    type="button">
+                                    <span class="material-symbols-outlined text-[18px]">view_list</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- PRODUCT GRID - 3 COLUMNS -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-gutter-desktop">
+                        <!-- CARD 1: CORSAIR DOMINATOR TITANIUM 64GB DDR5 (Selected for Compare) -->
+                        <div
+                            class="bg-surface-container-low rounded-lg p-4 flex flex-col justify-between hover:bg-surface-container transition-all group relative border-l-2 border-primary-container shadow-sm">
+                            <div>
+                                <!-- Top Badges & Compare Toggle -->
+                                <div class="flex items-center justify-between gap-2 mb-3">
+                                    <div class="flex items-center gap-1.5 flex-wrap">
+                                        <span
+                                            class="px-2 py-0.5 bg-surface-container-lowest text-primary font-tech-code-sm text-[11px] uppercase tracking-wider rounded font-bold">T&#236;nh tr&#7841;ng: &#273;ang c&#7853;p nh&#7853;t</span>
+                                        <span
+                                            class="px-2 py-0.5 bg-surface-container-high text-on-surface-variant font-tech-code-sm text-[11px] rounded">B&#7843;o h&#224;nh: &#273;ang c&#7853;p nh&#7853;t</span>
+                                    </div>
+                                    <label
+                                        class="flex items-center gap-1 text-[11px] font-tech-code-sm text-primary cursor-pointer select-none bg-surface-container-lowest px-2 py-0.5 rounded">
+                                        <input checked=""
+                                            class="w-3.5 h-3.5 rounded bg-surface-container text-primary-container accent-primary-container cursor-pointer"
+                                            type="checkbox" />
+                                        <span class="font-semibold">So sánh</span>
+                                    </label>
+                                </div>
+                                <!-- Media Slot -->
+                                <div
+                                    class="w-full h-44 bg-surface-container-lowest rounded overflow-hidden relative mb-3 flex items-center justify-center p-3">
+                                    <img class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
+                                        data-alt="Corsair Dominator Titanium RGB 64GB DDR5 memory modules"
+                                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuAkDawHav1H9VIiOmDKqK-M2bz-3yXmnt7hgCxg6_mmW37LfMqPqZMqJczx2N3ULn5xl7KZjum5O0AJTEhho766411i866S62xScXOBBVbMgOya5Dz1ER9fvyCjBFpPRGBmuPcFrDNjm4p-HZNoit9o5eXB8BFZqS_WpFY_BWpozlrT5H7nuHC7RxX2rT5W5vKI0QnlAbX7smCOUnZU5eQmsmJHmE1hbrCeu3hoqPhLEczKtazkIkHlWw" />
+                                    <div
+                                        class="absolute bottom-2 left-2 px-1.5 py-0.5 bg-surface-container-lowest/80 backdrop-blur text-[10px] font-tech-code-sm text-emerald-400 flex items-center gap-1 rounded">
+                                        Còn 8 bộ </div>
+                                </div>
+                                <!-- Brand & Product Title -->
+                                <div
+                                    class="font-tech-code-sm text-[12px] text-primary uppercase tracking-wider font-semibold mb-1">
+                                    CORSAIR </div>
+                                <h3
+                                    class="font-headline-sm text-[15px] text-on-surface font-bold leading-snug line-clamp-2 group-hover:text-primary transition-colors mb-2.5">
+                                    Ram Corsair Dominator Titanium RGB 64GB (2x32GB) DDR5 6000MHz Black </h3>
+                                <!-- 4 Clean RAM Spec Items -->
+                                <div
+                                    class="bg-surface-container-lowest p-2.5 rounded space-y-1.5 mb-3 font-tech-code-sm text-tech-code-sm">
+                                    <div class="flex items-center justify-between text-on-surface-variant">
+                                        <span class="text-[11px]">Dung lượng:</span>
+                                        <span class="text-on-surface font-semibold">64GB (2 x 32GB)</span>
+                                    </div>
+                                    <div class="flex items-center justify-between text-on-surface-variant">
+                                        <span class="text-[11px]">Thế hệ RAM:</span>
+                                        <span class="text-on-surface font-semibold">DDR5</span>
+                                    </div>
+                                    <div class="flex items-center justify-between text-on-surface-variant">
+                                        <span class="text-[11px]">Tốc độ Bus:</span>
+                                        <span class="text-on-surface font-semibold">6000 MT/s</span>
+                                    </div>
+                                    <div class="flex items-center justify-between text-on-surface-variant">
+                                        <span class="text-[11px]">Độ trễ CAS:</span>
+                                        <span class="text-primary font-semibold">CL30-36-36-76</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Bottom Price & CTA -->
+                            <div class="pt-2 border-t border-surface-container-high">
+                                <div class="flex items-baseline justify-between mb-3">
+                                    <div>
+                                        <div class="font-tech-code-md text-headline-sm text-primary font-bold">
+                                            8.490.000 <span class="text-[14px]">₫</span>
+                                        </div>
+                                        <div class="text-[12px] font-tech-code-sm text-on-surface-variant line-through">
+                                            9.190.000 ₫ </div>
+                                    </div>
+                                    <span
+                                        class="text-[11px] font-tech-code-sm text-primary-container bg-surface-container-highest px-1.5 py-0.5 rounded font-bold">
+                                        -8% </span>
+                                </div>
+                                <div class="grid grid-cols-5 gap-2">
+                                    <button
+                                        class="col-span-2 py-2 px-2 rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md text-center transition-colors"
+                                        type="button" data-requires-backend="Thao t&#225;c s&#7843;n ph&#7849;m"> Chi tiết </button>
+                                    <button
+                                        class="col-span-3 py-2 px-3 rounded bg-primary-container hover:bg-rose-600 text-on-primary-container font-label-md text-label-md font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm"
+                                        type="button" data-requires-backend="Thao t&#225;c s&#7843;n ph&#7849;m">
+                                        <span class="material-symbols-outlined text-[18px]">shopping_bag</span>
+                                        <span class="">Thêm giỏ</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- CARD 2: G.SKILL TRIDENT Z5 RGB 64GB DDR5 (Selected for Compare) -->
+                        <div
+                            class="bg-surface-container-low rounded-lg p-4 flex flex-col justify-between hover:bg-surface-container transition-all group relative border-l-2 border-primary-container shadow-sm">
+                            <div>
+                                <div class="flex items-center justify-between gap-2 mb-3">
+                                    <div class="flex items-center gap-1.5 flex-wrap">
+                                        <span
+                                            class="px-2 py-0.5 bg-surface-container-lowest text-primary font-tech-code-sm text-[11px] uppercase tracking-wider rounded font-bold">T&#236;nh tr&#7841;ng: &#273;ang c&#7853;p nh&#7853;t</span>
+                                        <span
+                                            class="px-2 py-0.5 bg-surface-container-high text-on-surface-variant font-tech-code-sm text-[11px] rounded">B&#7843;o h&#224;nh: &#273;ang c&#7853;p nh&#7853;t</span>
+                                    </div>
+                                    <label
+                                        class="flex items-center gap-1 text-[11px] font-tech-code-sm text-primary cursor-pointer select-none bg-surface-container-lowest px-2 py-0.5 rounded">
+                                        <input checked=""
+                                            class="w-3.5 h-3.5 rounded bg-surface-container text-primary-container accent-primary-container cursor-pointer"
+                                            type="checkbox" />
+                                        <span class="font-semibold">So sánh</span>
+                                    </label>
+                                </div>
+                                <div
+                                    class="w-full h-44 bg-surface-container-lowest rounded overflow-hidden relative mb-3 flex items-center justify-center p-3">
+                                    <img class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
+                                        data-alt="G.SKILL Trident Z5 RGB 64GB DDR5 memory modules"
+                                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuAkDawHav1H9VIiOmDKqK-M2bz-3yXmnt7hgCxg6_mmW37LfMqPqZMqJczx2N3ULn5xl7KZjum5O0AJTEhho766411i866S62xScXOBBVbMgOya5Dz1ER9fvyCjBFpPRGBmuPcFrDNjm4p-HZNoit9o5eXB8BFZqS_WpFY_BWpozlrT5H7nuHC7RxX2rT5W5vKI0QnlAbX7smCOUnZU5eQmsmJHmE1hbrCeu3hoqPhLEczKtazkIkHlWw" />
+                                    <div
+                                        class="absolute bottom-2 left-2 px-1.5 py-0.5 bg-surface-container-lowest/80 backdrop-blur text-[10px] font-tech-code-sm text-emerald-400 flex items-center gap-1 rounded">
+                                        Còn 12 bộ </div>
+                                </div>
+                                <div
+                                    class="font-tech-code-sm text-[12px] text-primary uppercase tracking-wider font-semibold mb-1">
+                                    G.SKILL </div>
+                                <h3
+                                    class="font-headline-sm text-[15px] text-on-surface font-bold leading-snug line-clamp-2 group-hover:text-primary transition-colors mb-2.5">
+                                    Ram G.Skill Trident Z5 RGB 64GB (2x32GB) DDR5 6400MHz Silver </h3>
+                                <div
+                                    class="bg-surface-container-lowest p-2.5 rounded space-y-1.5 mb-3 font-tech-code-sm text-tech-code-sm">
+                                    <div class="flex items-center justify-between text-on-surface-variant">
+                                        <span class="text-[11px]">Dung lượng:</span>
+                                        <span class="text-on-surface font-semibold">64GB (2 x 32GB)</span>
+                                    </div>
+                                    <div class="flex items-center justify-between text-on-surface-variant">
+                                        <span class="text-[11px]">Thế hệ RAM:</span>
+                                        <span class="text-on-surface font-semibold">DDR5</span>
+                                    </div>
+                                    <div class="flex items-center justify-between text-on-surface-variant">
+                                        <span class="text-[11px]">Tốc độ Bus:</span>
+                                        <span class="text-on-surface font-semibold">6400 MT/s</span>
+                                    </div>
+                                    <div class="flex items-center justify-between text-on-surface-variant">
+                                        <span class="text-[11px]">Độ trễ CAS:</span>
+                                        <span class="text-primary font-semibold">CL32-39-39-102</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="pt-2 border-t border-surface-container-high">
+                                <div class="flex items-baseline justify-between mb-3">
+                                    <div>
+                                        <div class="font-tech-code-md text-headline-sm text-primary font-bold">
+                                            7.890.000 <span class="text-[14px]">₫</span>
+                                        </div>
+                                        <div class="text-[12px] font-tech-code-sm text-on-surface-variant line-through">
+                                            8.500.000 ₫ </div>
+                                    </div>
+                                    <span
+                                        class="text-[11px] font-tech-code-sm text-primary-container bg-surface-container-highest px-1.5 py-0.5 rounded font-bold">
+                                        -7% </span>
+                                </div>
+                                <div class="grid grid-cols-5 gap-2">
+                                    <button
+                                        class="col-span-2 py-2 px-2 rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md text-center transition-colors"
+                                        type="button" data-requires-backend="Thao t&#225;c s&#7843;n ph&#7849;m"> Chi tiết </button>
+                                    <button
+                                        class="col-span-3 py-2 px-3 rounded bg-primary-container hover:bg-rose-600 text-on-primary-container font-label-md text-label-md font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm"
+                                        type="button" data-requires-backend="Thao t&#225;c s&#7843;n ph&#7849;m">
+                                        <span class="material-symbols-outlined text-[18px]">shopping_bag</span>
+                                        <span class="">Thêm giỏ</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- CARD 3: KINGSTON FURY BEAST RGB 32GB DDR5 -->
+                        <div
+                            class="bg-surface-container-low rounded-lg p-4 flex flex-col justify-between hover:bg-surface-container transition-all group relative shadow-sm">
+                            <div>
+                                <div class="flex items-center justify-between gap-2 mb-3">
+                                    <div class="flex items-center gap-1.5 flex-wrap">
+                                        <span
+                                            class="px-2 py-0.5 bg-surface-container-lowest text-primary font-tech-code-sm text-[11px] uppercase tracking-wider rounded font-bold">
+                                            Sản phẩm tham khảo </span>
+                                        <span
+                                            class="px-2 py-0.5 bg-surface-container-high text-on-surface-variant font-tech-code-sm text-[11px] rounded">B&#7843;o h&#224;nh: &#273;ang c&#7853;p nh&#7853;t</span>
+                                    </div>
+                                    <label
+                                        class="flex items-center gap-1 text-[11px] font-tech-code-sm text-on-surface-variant hover:text-on-surface cursor-pointer select-none bg-surface-container-lowest px-2 py-0.5 rounded">
+                                        <input
+                                            class="w-3.5 h-3.5 rounded bg-surface-container text-primary-container accent-primary-container cursor-pointer"
+                                            type="checkbox" />
+                                        <span class="">So sánh</span>
+                                    </label>
+                                </div>
+                                <div
+                                    class="w-full h-44 bg-surface-container-lowest rounded overflow-hidden relative mb-3 flex items-center justify-center p-3">
+                                    <img class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
+                                        data-alt="Kingston Fury Beast RGB 32GB DDR5 memory modules"
+                                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuAkDawHav1H9VIiOmDKqK-M2bz-3yXmnt7hgCxg6_mmW37LfMqPqZMqJczx2N3ULn5xl7KZjum5O0AJTEhho766411i866S62xScXOBBVbMgOya5Dz1ER9fvyCjBFpPRGBmuPcFrDNjm4p-HZNoit9o5eXB8BFZqS_WpFY_BWpozlrT5H7nuHC7RxX2rT5W5vKI0QnlAbX7smCOUnZU5eQmsmJHmE1hbrCeu3hoqPhLEczKtazkIkHlWw" />
+                                    <div
+                                        class="absolute bottom-2 left-2 px-1.5 py-0.5 bg-surface-container-lowest/80 backdrop-blur text-[10px] font-tech-code-sm text-emerald-400 flex items-center gap-1 rounded">
+                                        Còn 19 bộ </div>
+                                </div>
+                                <div
+                                    class="font-tech-code-sm text-[12px] text-primary uppercase tracking-wider font-semibold mb-1">
+                                    KINGSTON </div>
+                                <h3
+                                    class="font-headline-sm text-[15px] text-on-surface font-bold leading-snug line-clamp-2 group-hover:text-primary transition-colors mb-2.5">
+                                    Ram Kingston Fury Beast RGB 32GB (2x16GB) DDR5 6000MHz White </h3>
+                                <div
+                                    class="bg-surface-container-lowest p-2.5 rounded space-y-1.5 mb-3 font-tech-code-sm text-tech-code-sm">
+                                    <div class="flex items-center justify-between text-on-surface-variant">
+                                        <span class="text-[11px]">Dung lượng:</span>
+                                        <span class="text-on-surface font-semibold">32GB (2 x 16GB)</span>
+                                    </div>
+                                    <div class="flex items-center justify-between text-on-surface-variant">
+                                        <span class="text-[11px]">Thế hệ RAM:</span>
+                                        <span class="text-on-surface font-semibold">DDR5</span>
+                                    </div>
+                                    <div class="flex items-center justify-between text-on-surface-variant">
+                                        <span class="text-[11px]">Tốc độ Bus:</span>
+                                        <span class="text-on-surface font-semibold">6000 MT/s</span>
+                                    </div>
+                                    <div class="flex items-center justify-between text-on-surface-variant">
+                                        <span class="text-[11px]">Độ trễ CAS:</span>
+                                        <span class="text-primary font-semibold">CL36-38-38</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="pt-2 border-t border-surface-container-high">
+                                <div class="flex items-baseline justify-between mb-3">
+                                    <div>
+                                        <div class="font-tech-code-md text-headline-sm text-primary font-bold">
+                                            3.690.000 <span class="text-[14px]">₫</span>
+                                        </div>
+                                        <div class="text-[12px] font-tech-code-sm text-on-surface-variant line-through">
+                                            4.100.000 ₫ </div>
+                                    </div>
+                                    <span
+                                        class="text-[11px] font-tech-code-sm text-primary-container bg-surface-container-highest px-1.5 py-0.5 rounded font-bold">
+                                        -10% </span>
+                                </div>
+                                <div class="grid grid-cols-5 gap-2">
+                                    <button
+                                        class="col-span-2 py-2 px-2 rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md text-center transition-colors"
+                                        type="button" data-requires-backend="Thao t&#225;c s&#7843;n ph&#7849;m"> Chi tiết </button>
+                                    <button
+                                        class="col-span-3 py-2 px-3 rounded bg-primary-container hover:bg-rose-600 text-on-primary-container font-label-md text-label-md font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm"
+                                        type="button" data-requires-backend="Thao t&#225;c s&#7843;n ph&#7849;m">
+                                        <span class="material-symbols-outlined text-[18px]">shopping_bag</span>
+                                        <span class="">Thêm giỏ</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- CARD 4: CORSAIR VENGEANCE RGB 32GB DDR5 -->
+                        <div
+                            class="bg-surface-container-low rounded-lg p-4 flex flex-col justify-between hover:bg-surface-container transition-all group relative shadow-sm">
+                            <div>
+                                <div class="flex items-center justify-between gap-2 mb-3">
+                                    <div class="flex items-center gap-1.5 flex-wrap">
+                                        <span
+                                            class="px-2 py-0.5 bg-surface-container-lowest text-primary font-tech-code-sm text-[11px] uppercase tracking-wider rounded font-bold">T&#236;nh tr&#7841;ng: &#273;ang c&#7853;p nh&#7853;t</span>
+                                        <span
+                                            class="px-2 py-0.5 bg-surface-container-high text-on-surface-variant font-tech-code-sm text-[11px] rounded">B&#7843;o h&#224;nh: &#273;ang c&#7853;p nh&#7853;t</span>
+                                    </div>
+                                    <label
+                                        class="flex items-center gap-1 text-[11px] font-tech-code-sm text-on-surface-variant hover:text-on-surface cursor-pointer select-none bg-surface-container-lowest px-2 py-0.5 rounded">
+                                        <input
+                                            class="w-3.5 h-3.5 rounded bg-surface-container text-primary-container accent-primary-container cursor-pointer"
+                                            type="checkbox" />
+                                        <span class="">So sánh</span>
+                                    </label>
+                                </div>
+                                <div
+                                    class="w-full h-44 bg-surface-container-lowest rounded overflow-hidden relative mb-3 flex items-center justify-center p-3">
+                                    <img class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
+                                        data-alt="Corsair Vengeance RGB 32GB DDR5 RAM"
+                                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuAkDawHav1H9VIiOmDKqK-M2bz-3yXmnt7hgCxg6_mmW37LfMqPqZMqJczx2N3ULn5xl7KZjum5O0AJTEhho766411i866S62xScXOBBVbMgOya5Dz1ER9fvyCjBFpPRGBmuPcFrDNjm4p-HZNoit9o5eXB8BFZqS_WpFY_BWpozlrT5H7nuHC7RxX2rT5W5vKI0QnlAbX7smCOUnZU5eQmsmJHmE1hbrCeu3hoqPhLEczKtazkIkHlWw" />
+                                    <div
+                                        class="absolute bottom-2 left-2 px-1.5 py-0.5 bg-surface-container-lowest/80 backdrop-blur text-[10px] font-tech-code-sm text-emerald-400 flex items-center gap-1 rounded">
+                                        Còn 14 bộ </div>
+                                </div>
+                                <div
+                                    class="font-tech-code-sm text-[12px] text-primary uppercase tracking-wider font-semibold mb-1">
+                                    CORSAIR </div>
+                                <h3
+                                    class="font-headline-sm text-[15px] text-on-surface font-bold leading-snug line-clamp-2 group-hover:text-primary transition-colors mb-2.5">
+                                    Ram Corsair Vengeance RGB 32GB (2x16GB) DDR5 6000MHz Black </h3>
+                                <div
+                                    class="bg-surface-container-lowest p-2.5 rounded space-y-1.5 mb-3 font-tech-code-sm text-tech-code-sm">
+                                    <div class="flex items-center justify-between text-on-surface-variant">
+                                        <span class="text-[11px]">Dung lượng:</span>
+                                        <span class="text-on-surface font-semibold">32GB (2 x 16GB)</span>
+                                    </div>
+                                    <div class="flex items-center justify-between text-on-surface-variant">
+                                        <span class="text-[11px]">Thế hệ RAM:</span>
+                                        <span class="text-on-surface font-semibold">DDR5</span>
+                                    </div>
+                                    <div class="flex items-center justify-between text-on-surface-variant">
+                                        <span class="text-[11px]">Tốc độ Bus:</span>
+                                        <span class="text-on-surface font-semibold">6000 MT/s</span>
+                                    </div>
+                                    <div class="flex items-center justify-between text-on-surface-variant">
+                                        <span class="text-[11px]">Độ trễ CAS:</span>
+                                        <span class="text-primary font-semibold">CL30-36-36-76</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="pt-2 border-t border-surface-container-high">
+                                <div class="flex items-baseline justify-between mb-3">
+                                    <div>
+                                        <div class="font-tech-code-md text-headline-sm text-primary font-bold">
+                                            3.790.000 <span class="text-[14px]">₫</span>
+                                        </div>
+                                        <div class="text-[12px] font-tech-code-sm text-on-surface-variant line-through">
+                                            4.190.000 ₫ </div>
+                                    </div>
+                                    <span
+                                        class="text-[11px] font-tech-code-sm text-primary-container bg-surface-container-highest px-1.5 py-0.5 rounded font-bold">
+                                        -9% </span>
+                                </div>
+                                <div class="grid grid-cols-5 gap-2">
+                                    <button
+                                        class="col-span-2 py-2 px-2 rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md text-center transition-colors"
+                                        type="button" data-requires-backend="Thao t&#225;c s&#7843;n ph&#7849;m"> Chi tiết </button>
+                                    <button
+                                        class="col-span-3 py-2 px-3 rounded bg-primary-container hover:bg-rose-600 text-on-primary-container font-label-md text-label-md font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm"
+                                        type="button" data-requires-backend="Thao t&#225;c s&#7843;n ph&#7849;m">
+                                        <span class="material-symbols-outlined text-[18px]">shopping_bag</span>
+                                        <span class="">Thêm giỏ</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- CARD 5: G.SKILL RIPJAWS S5 (DISTINCT OUT-OF-STOCK TREATMENT) -->
+                        <div
+                            class="bg-surface-container-low rounded-lg p-4 flex flex-col justify-between opacity-75 hover:opacity-90 transition-all group relative shadow-sm border border-surface-container-high">
+                            <div>
+                                <div class="flex items-center justify-between gap-2 mb-3">
+                                    <div class="flex items-center gap-1.5 flex-wrap">
+                                        <span
+                                            class="px-2 py-0.5 bg-error-container text-on-error-container font-tech-code-sm text-[11px] uppercase tracking-wider rounded font-bold flex items-center gap-1">
+                                            Tồn kho chưa xác nhận </span>
+                                        <span
+                                            class="px-2 py-0.5 bg-surface-container-high text-on-surface-variant font-tech-code-sm text-[11px] rounded">B&#7843;o h&#224;nh: &#273;ang c&#7853;p nh&#7853;t</span>
+                                    </div>
+                                    <span
+                                        class="text-[11px] font-tech-code-sm text-on-surface-variant bg-surface-container-lowest px-2 py-0.5 rounded cursor-not-allowed">
+                                        Chưa xác nhận </span>
+                                </div>
+                                <div
+                                    class="w-full h-44 bg-surface-container-lowest rounded overflow-hidden relative mb-3 flex items-center justify-center p-3 grayscale group-hover:grayscale-0 transition-all">
+                                    <img class="w-full h-full object-contain"
+                                        data-alt="G.SKILL Ripjaws S5 DDR5 32GB kit"
+                                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuAkDawHav1H9VIiOmDKqK-M2bz-3yXmnt7hgCxg6_mmW37LfMqPqZMqJczx2N3ULn5xl7KZjum5O0AJTEhho766411i866S62xScXOBBVbMgOya5Dz1ER9fvyCjBFpPRGBmuPcFrDNjm4p-HZNoit9o5eXB8BFZqS_WpFY_BWpozlrT5H7nuHC7RxX2rT5W5vKI0QnlAbX7smCOUnZU5eQmsmJHmE1hbrCeu3hoqPhLEczKtazkIkHlWw" />
+                                    <div
+                                        class="absolute inset-0 bg-background/50 backdrop-blur-[2px] flex items-center justify-center">
+                                        <span
+                                            class="px-3 py-1 bg-surface-container-highest text-on-surface font-tech-code-sm text-[12px] font-bold tracking-wider uppercase rounded shadow-md">
+                                            Đang chờ nhập kho </span>
+                                    </div>
+                                </div>
+                                <div
+                                    class="font-tech-code-sm text-[12px] text-outline uppercase tracking-wider font-semibold mb-1">
+                                    G.SKILL </div>
+                                <h3
+                                    class="font-headline-sm text-[15px] text-on-surface/80 font-bold leading-snug line-clamp-2 mb-2.5">
+                                    Ram G.Skill Ripjaws S5 32GB (2x16GB) DDR5 5600MHz Low-Profile </h3>
+                                <div
+                                    class="bg-surface-container-lowest p-2.5 rounded space-y-1.5 mb-3 font-tech-code-sm text-tech-code-sm">
+                                    <div class="flex items-center justify-between text-on-surface-variant">
+                                        <span class="text-[11px]">Dung lượng:</span>
+                                        <span class="text-on-surface font-semibold">32GB (2 x 16GB)</span>
+                                    </div>
+                                    <div class="flex items-center justify-between text-on-surface-variant">
+                                        <span class="text-[11px]">Thế hệ RAM:</span>
+                                        <span class="text-on-surface font-semibold">DDR5</span>
+                                    </div>
+                                    <div class="flex items-center justify-between text-on-surface-variant">
+                                        <span class="text-[11px]">Tốc độ Bus:</span>
+                                        <span class="text-on-surface font-semibold">5600 MT/s</span>
+                                    </div>
+                                    <div class="flex items-center justify-between text-on-surface-variant">
+                                        <span class="text-[11px]">Độ trễ CAS:</span>
+                                        <span class="text-primary font-semibold">CL36-36-36-89</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="pt-2 border-t border-surface-container-high">
+                                <div class="flex items-baseline justify-between mb-3">
+                                    <div>
+                                        <div
+                                            class="font-tech-code-md text-headline-sm text-on-surface-variant font-bold">
+                                            2.990.000 <span class="text-[14px]">₫</span>
+                                        </div>
+                                        <div class="text-[12px] font-tech-code-sm text-on-surface-variant"> Giá niêm yết
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-5 gap-2">
+                                    <button
+                                        class="col-span-2 py-2 px-2 rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md text-center transition-colors"
+                                        type="button" data-requires-backend="Thao t&#225;c s&#7843;n ph&#7849;m"> Chi tiết </button>
+                                    <button
+                                        class="col-span-3 py-2 px-3 rounded bg-surface-container-high text-on-surface-variant cursor-not-allowed font-label-md text-label-md font-semibold transition-all flex items-center justify-center gap-1.5"
+                                        disabled="" type="button">
+                                        <span class="material-symbols-outlined text-[18px]">block</span>
+                                        <span class="">Tồn kho chưa xác nhận</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- CARD 6: CORSAIR DOMINATOR PLATINUM RGB DDR4 32GB -->
+                        <div
+                            class="bg-surface-container-low rounded-lg p-4 flex flex-col justify-between hover:bg-surface-container transition-all group relative shadow-sm">
+                            <div>
+                                <div class="flex items-center justify-between gap-2 mb-3">
+                                    <div class="flex items-center gap-1.5 flex-wrap">
+                                        <span
+                                            class="px-2 py-0.5 bg-surface-container-lowest text-primary font-tech-code-sm text-[11px] uppercase tracking-wider rounded font-bold">
+                                            RAM DDR4 </span>
+                                        <span
+                                            class="px-2 py-0.5 bg-surface-container-high text-on-surface-variant font-tech-code-sm text-[11px] rounded">B&#7843;o h&#224;nh: &#273;ang c&#7853;p nh&#7853;t</span>
+                                    </div>
+                                    <label
+                                        class="flex items-center gap-1 text-[11px] font-tech-code-sm text-on-surface-variant hover:text-on-surface cursor-pointer select-none bg-surface-container-lowest px-2 py-0.5 rounded">
+                                        <input
+                                            class="w-3.5 h-3.5 rounded bg-surface-container text-primary-container accent-primary-container cursor-pointer"
+                                            type="checkbox" />
+                                        <span class="">So sánh</span>
+                                    </label>
+                                </div>
+                                <div
+                                    class="w-full h-44 bg-surface-container-lowest rounded overflow-hidden relative mb-3 flex items-center justify-center p-3">
+                                    <img class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
+                                        data-alt="Corsair Dominator Platinum RGB 32GB DDR4 RAM"
+                                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuAkDawHav1H9VIiOmDKqK-M2bz-3yXmnt7hgCxg6_mmW37LfMqPqZMqJczx2N3ULn5xl7KZjum5O0AJTEhho766411i866S62xScXOBBVbMgOya5Dz1ER9fvyCjBFpPRGBmuPcFrDNjm4p-HZNoit9o5eXB8BFZqS_WpFY_BWpozlrT5H7nuHC7RxX2rT5W5vKI0QnlAbX7smCOUnZU5eQmsmJHmE1hbrCeu3hoqPhLEczKtazkIkHlWw" />
+                                    <div
+                                        class="absolute bottom-2 left-2 px-1.5 py-0.5 bg-surface-container-lowest/80 backdrop-blur text-[10px] font-tech-code-sm text-emerald-400 flex items-center gap-1 rounded">
+                                        Còn 5 bộ </div>
+                                </div>
+                                <div
+                                    class="font-tech-code-sm text-[12px] text-primary uppercase tracking-wider font-semibold mb-1">
+                                    CORSAIR </div>
+                                <h3
+                                    class="font-headline-sm text-[15px] text-on-surface font-bold leading-snug line-clamp-2 group-hover:text-primary transition-colors mb-2.5">
+                                    Ram Corsair Dominator Platinum RGB 32GB (2x16GB) DDR4 3600MHz Black </h3>
+                                <div
+                                    class="bg-surface-container-lowest p-2.5 rounded space-y-1.5 mb-3 font-tech-code-sm text-tech-code-sm">
+                                    <div class="flex items-center justify-between text-on-surface-variant">
+                                        <span class="text-[11px]">Dung lượng:</span>
+                                        <span class="text-on-surface font-semibold">32GB (2 x 16GB)</span>
+                                    </div>
+                                    <div class="flex items-center justify-between text-on-surface-variant">
+                                        <span class="text-[11px]">Thế hệ RAM:</span>
+                                        <span class="text-on-surface font-semibold">DDR4</span>
+                                    </div>
+                                    <div class="flex items-center justify-between text-on-surface-variant">
+                                        <span class="text-[11px]">Tốc độ Bus:</span>
+                                        <span class="text-on-surface font-semibold">3600 MT/s</span>
+                                    </div>
+                                    <div class="flex items-center justify-between text-on-surface-variant">
+                                        <span class="text-[11px]">Độ trễ CAS:</span>
+                                        <span class="text-primary font-semibold">CL18-22-22-42</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="pt-2 border-t border-surface-container-high">
+                                <div class="flex items-baseline justify-between mb-3">
+                                    <div>
+                                        <div class="font-tech-code-md text-headline-sm text-primary font-bold">
+                                            3.190.000 <span class="text-[14px]">₫</span>
+                                        </div>
+                                        <div class="text-[12px] font-tech-code-sm text-on-surface-variant line-through">
+                                            3.590.000 ₫ </div>
+                                    </div>
+                                    <span
+                                        class="text-[11px] font-tech-code-sm text-primary-container bg-surface-container-highest px-1.5 py-0.5 rounded font-bold">
+                                        -11% </span>
+                                </div>
+                                <div class="grid grid-cols-5 gap-2">
+                                    <button
+                                        class="col-span-2 py-2 px-2 rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md text-center transition-colors"
+                                        type="button" data-requires-backend="Thao t&#225;c s&#7843;n ph&#7849;m"> Chi tiết </button>
+                                    <button
+                                        class="col-span-3 py-2 px-3 rounded bg-primary-container hover:bg-rose-600 text-on-primary-container font-label-md text-label-md font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm"
+                                        type="button" data-requires-backend="Thao t&#225;c s&#7843;n ph&#7849;m">
+                                        <span class="material-symbols-outlined text-[18px]">shopping_bag</span>
+                                        <span class="">Thêm giỏ</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- PAGINATION BAR -->
+                    <div
+                        class="w-full bg-surface-container-low px-6 py-4 rounded-lg flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 shadow-sm pb-8">
+                        <div class="font-tech-code-sm text-tech-code-sm text-on-surface-variant"> Hiển thị trang <span
+                                class="text-on-surface font-semibold">1</span> / <span
+                                class="text-on-surface font-semibold">6</span>
+                        </div>
+                        <div class="flex items-center gap-1.5 font-tech-code-sm text-tech-code-sm">
+                            <button
+                                class="px-2.5 py-1.5 rounded bg-surface-container-lowest text-on-surface-variant/40 cursor-not-allowed"
+                                disabled="" type="button">
+                                <span class="material-symbols-outlined text-[16px]">chevron_left</span>
+                            </button>
+                            <button
+                                class="px-3.5 py-1.5 rounded bg-primary-container text-on-primary-container font-bold shadow-xs"
+                                type="button"> 1 </button>
+                            <button
+                                class="px-3.5 py-1.5 rounded bg-surface-container-lowest text-on-surface hover:bg-surface-container-high transition-colors"
+                                type="button"> 2 </button>
+                            <button
+                                class="px-3.5 py-1.5 rounded bg-surface-container-lowest text-on-surface hover:bg-surface-container-high transition-colors"
+                                type="button"> 3 </button>
+                            <button
+                                class="px-3.5 py-1.5 rounded bg-surface-container-lowest text-on-surface hover:bg-surface-container-high transition-colors"
+                                type="button"> 4 </button>
+                            <span class="px-2 text-on-surface-variant">...</span>
+                            <button
+                                class="px-3 py-1.5 rounded bg-surface-container-lowest text-on-surface hover:bg-surface-container-high transition-colors"
+                                type="button"> 6 </button>
+                            <button
+                                class="px-2.5 py-1.5 rounded bg-surface-container-lowest text-on-surface hover:bg-surface-container-high transition-colors"
+                                type="button">
+                                <span class="material-symbols-outlined text-[16px]">chevron_right</span>
+                            </button>
+                        </div>
+                        <div class="hidden md:flex items-center gap-2">
+                            <span class="font-tech-code-sm text-[12px] text-on-surface-variant">Chuyển nhanh đến:</span>
+                            <input
+                                class="w-14 bg-surface-container-lowest px-2 py-1 text-on-surface font-tech-code-sm text-[12px] rounded outline-none border-0 text-center"
+                                placeholder="Trang..." type="text" />
+                        </div>
+                    </div>
+                </main>
+            </div>
+            <!-- STICKY COMPARISON TRAY (BOTTOM DOCK) WITH DYNAMIC FOOTER AVOIDANCE & SMOOTH COLLAPSE -->
+            <div class="fixed bottom-3 left-4 right-4 z-40 max-w-7xl mx-auto pointer-events-auto transition-[bottom] duration-150 ease-out"
+                id="compare-tray-section"><!-- Slim Collapsed Bar (Visible when tray is collapsed) -->
+                <div class="hidden w-full bg-surface-container/95 backdrop-blur-md rounded-lg shadow-2xl py-2 px-3 md:px-4 border-l-4 border-primary-container flex items-center justify-between gap-3 animate-fade-in"
+                    id="compare-collapsed-bar">
+                    <div class="flex items-center gap-2.5">
+                        <div
+                            class="w-7 h-7 rounded bg-surface-container-high flex items-center justify-center text-primary-container shrink-0">
+                            <span class="material-symbols-outlined text-[18px]">compare_arrows</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="font-label-md text-[13px] text-on-surface font-bold">So sánh sản phẩm</span>
+                            <span
+                                class="font-tech-code-sm text-[11px] bg-primary-container text-on-primary-container px-2 py-0.2 rounded-full font-bold"
+                                id="collapsed-counter-badge"> 2/4 kit RAM </span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button
+                            class="px-2.5 py-1 bg-surface-container-high hover:bg-surface-container-highest text-primary hover:text-primary-fixed rounded font-label-md text-[12px] font-semibold transition-all flex items-center gap-1 border border-primary-container/40 cursor-pointer"
+                            id="btn-expand-tray" type="button">
+                            <span class="material-symbols-outlined text-[15px]">expand_less</span>
+                            <span class="">Mở rộng khay</span>
+                        </button>
+                        <button
+                            class="py-1 px-3 bg-primary-container hover:bg-rose-600 text-on-primary-container rounded font-label-md text-[12px] font-bold transition-all hidden sm:inline-flex items-center gap-1 shadow-sm"
+                            type="button">
+                            <span class="material-symbols-outlined text-[15px]">table_chart</span>
+                            <span class="">Xem so sánh</span>
+                        </button>
+                    </div>
+                </div>
+                <!-- Expanded Comparison Tray Body -->
+                <div class="flex flex-col gap-1" id="compare-expanded-wrapper">
+                    <!-- State Switcher Header & Collapse Controls (Slim py-0.5 / text-xs) -->
+                    <div class="flex items-center justify-between px-2 py-0.5">
+                        
+                        <button
+                            class="flex items-center gap-1 text-[10px] font-tech-code-sm text-on-surface-variant hover:text-on-surface bg-surface-container-low px-2 py-0.5 rounded border border-surface-container-high transition-colors cursor-pointer"
+                            id="btn-collapse-tray" type="button">
+                            <span class="material-symbols-outlined text-[13px]">expand_more</span>
+                            <span class="">Thu gọn khay</span>
+                        </button>
+                    </div>
+                    <!-- Tray Main Card: Compact height (py-2 px-3 md:px-4) -->
+                    <div class="w-full bg-surface-container/95 backdrop-blur-md rounded-lg shadow-2xl py-2 px-3 md:px-4 border-l-4 border-primary-container transition-all duration-300"
+                        id="compare-tray-body">
+                        <!-- ACTIVE VIEW (2/4 SELECTED) -->
+                        <div class="flex flex-col lg:flex-row items-center justify-between gap-3"
+                            id="compare-active-view">
+                            <!-- Left: Compact Context -->
+                            <div class="flex items-center gap-2.5 shrink-0 w-full lg:w-auto">
+                                <div
+                                    class="w-8 h-8 rounded bg-surface-container-high flex items-center justify-center text-primary-container shrink-0">
+                                    <span class="material-symbols-outlined text-[20px]">compare_arrows</span>
+                                </div>
+                                <div class="leading-tight">
+                                    <div class="flex items-center gap-1.5">
+                                        <h4 class="font-label-md text-[13px] text-on-surface font-bold">Khay so sánh kỹ
+                                            thuật</h4>
+                                        <span
+                                            class="font-tech-code-sm text-[10px] bg-primary-container text-on-primary-container px-1.5 py-0.2 rounded-full font-bold">
+                                            2/4 sản phẩm </span>
+                                    </div>
+                                    <p class="font-body-sm text-[11px] text-on-surface-variant mt-0.5"> Chỉ so sánh linh
+                                        kiện cùng nhóm: <span class="text-primary font-semibold">RAM</span>
+                                    </p>
+                                </div>
+                            </div>
+                            <!-- Center: 4 Horizontal Compact Slots (thumbnail ~36px, overflow-x-auto) -->
+                            <div
+                                class="flex items-center gap-2 flex-1 max-w-2xl w-full overflow-x-auto no-scrollbar py-0.5">
+                                <!-- Slot 1: Corsair Dominator Titanium 64GB -->
+                                <div class="bg-surface-container-lowest py-1 px-2 rounded flex items-center gap-2 border border-surface-container-high shrink-0 min-w-[155px] max-w-[185px]"
+                                    id="compare-slot-1">
+                                    <div
+                                        class="w-9 h-9 bg-surface-container-low rounded p-0.5 shrink-0 flex items-center justify-center">
+                                        <img class="w-full h-full object-contain"
+                                            data-alt="Thumb Corsair Dominator Titanium 64GB"
+                                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuAkDawHav1H9VIiOmDKqK-M2bz-3yXmnt7hgCxg6_mmW37LfMqPqZMqJczx2N3ULn5xl7KZjum5O0AJTEhho766411i866S62xScXOBBVbMgOya5Dz1ER9fvyCjBFpPRGBmuPcFrDNjm4p-HZNoit9o5eXB8BFZqS_WpFY_BWpozlrT5H7nuHC7RxX2rT5W5vKI0QnlAbX7smCOUnZU5eQmsmJHmE1hbrCeu3hoqPhLEczKtazkIkHlWw" />
+                                    </div>
+                                    <div class="min-w-0 flex-1 leading-tight">
+                                        <div class="font-label-md text-[11px] text-on-surface font-semibold truncate">
+                                            Corsair Dominator</div>
+                                        <div class="font-tech-code-sm text-[10px] text-primary font-bold">8.490.000 ₫
+                                        </div>
+                                    </div>
+                                    <button aria-label="Xóa linh kiện này"
+                                        class="w-4 h-4 rounded-full bg-surface-container-high text-on-surface-variant hover:text-primary-container flex items-center justify-center transition-colors cursor-pointer shrink-0"
+                                        onclick="document.getElementById('compare-slot-1').remove();" type="button">
+                                        <span class="material-symbols-outlined text-[11px]">close</span>
+                                    </button>
+                                </div>
+                                <!-- Slot 2: G.Skill Trident Z5 RGB 64GB -->
+                                <div class="bg-surface-container-lowest py-1 px-2 rounded flex items-center gap-2 border border-surface-container-high shrink-0 min-w-[155px] max-w-[185px]"
+                                    id="compare-slot-2">
+                                    <div
+                                        class="w-9 h-9 bg-surface-container-low rounded p-0.5 shrink-0 flex items-center justify-center">
+                                        <img class="w-full h-full object-contain"
+                                            data-alt="Thumb G.Skill Trident Z5 RGB 64GB"
+                                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuAkDawHav1H9VIiOmDKqK-M2bz-3yXmnt7hgCxg6_mmW37LfMqPqZMqJczx2N3ULn5xl7KZjum5O0AJTEhho766411i866S62xScXOBBVbMgOya5Dz1ER9fvyCjBFpPRGBmuPcFrDNjm4p-HZNoit9o5eXB8BFZqS_WpFY_BWpozlrT5H7nuHC7RxX2rT5W5vKI0QnlAbX7smCOUnZU5eQmsmJHmE1hbrCeu3hoqPhLEczKtazkIkHlWw" />
+                                    </div>
+                                    <div class="min-w-0 flex-1 leading-tight">
+                                        <div class="font-label-md text-[11px] text-on-surface font-semibold truncate">
+                                            G.Skill Trident Z5</div>
+                                        <div class="font-tech-code-sm text-[10px] text-primary font-bold">7.890.000 ₫
+                                        </div>
+                                    </div>
+                                    <button aria-label="Xóa linh kiện này"
+                                        class="w-4 h-4 rounded-full bg-surface-container-high text-on-surface-variant hover:text-primary-container flex items-center justify-center transition-colors cursor-pointer shrink-0"
+                                        onclick="document.getElementById('compare-slot-2').remove();" type="button">
+                                        <span class="material-symbols-outlined text-[11px]">close</span>
+                                    </button>
+                                </div>
+                                <!-- Slot 3: Empty Dashed Slot -->
+                                <div
+                                    class="border border-dashed border-outline-variant/60 bg-surface-container-lowest/40 py-1.5 px-2.5 rounded flex items-center justify-center gap-1 text-on-surface-variant/70 font-tech-code-sm text-[11px] hover:border-primary/60 transition-colors cursor-pointer shrink-0 h-9 min-w-[115px]">
+                                    <span class="material-symbols-outlined text-[15px]">add_circle_outline</span>
+                                    <span class="">+ Thêm kit 3</span>
+                                </div>
+                                <!-- Slot 4: Empty Dashed Slot -->
+                                <div
+                                    class="border border-dashed border-outline-variant/60 bg-surface-container-lowest/40 py-1.5 px-2.5 rounded flex items-center justify-center gap-1 text-on-surface-variant/70 font-tech-code-sm text-[11px] hover:border-primary/60 transition-colors cursor-pointer shrink-0 h-9 min-w-[115px]">
+                                    <span class="material-symbols-outlined text-[15px]">add_circle_outline</span>
+                                    <span class="">+ Thêm kit 4</span>
+                                </div>
+                            </div>
+                            <!-- Right: Compact Actions -->
+                            <div class="flex items-center gap-2 shrink-0 w-full lg:w-auto justify-end">
+                                <button
+                                    class="font-tech-code-sm text-[11px] text-on-surface-variant hover:text-primary transition-colors cursor-pointer px-1.5 py-1 whitespace-nowrap"
+                                    onclick="document.getElementById('compare-active-view').classList.add('hidden'); document.getElementById('compare-empty-view').classList.remove('hidden');"
+                                    type="button"> Xóa tất cả </button>
+                                <button
+                                    class="py-1.5 px-3.5 bg-primary-container hover:bg-rose-600 text-on-primary-container rounded font-label-md text-[12px] font-bold transition-all flex items-center justify-center gap-1.5 shadow-md whitespace-nowrap"
+                                    type="button">
+                                    <span class="material-symbols-outlined text-[17px]">table_chart</span>
+                                    <span class="">So sánh thông số ngay (2)</span>
+                                </button>
+                            </div>
+                        </div>
+                        <!-- Empty comparison state -->
+                        <div class="hidden flex-col md:flex-row items-center justify-between gap-3"
+                            id="compare-empty-view">
+                            <div class="flex items-center gap-2.5">
+                                <div
+                                    class="w-8 h-8 rounded bg-surface-container-high flex items-center justify-center text-on-surface-variant shrink-0">
+                                    <span class="material-symbols-outlined text-[20px]">view_column</span>
+                                </div>
+                                <div class="leading-tight">
+                                    <h4 class="font-label-md text-[13px] text-on-surface font-bold">Khay so sánh đang
+                                        trống (0/4)</h4>
+                                    <p class="font-body-sm text-[11px] text-on-surface-variant mt-0.5"> Tích chọn ô
+                                        <strong>"So sánh"</strong> trên tối đa 4 kit RAM để đối chiếu thông số Bus, CAS
+                                        Latency và giá. </p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2 shrink-0">
+                                <button
+                                    class="py-1.5 px-3.5 bg-surface-container-high text-on-surface-variant cursor-not-allowed rounded font-label-md text-[12px] font-semibold transition-all flex items-center gap-1.5 whitespace-nowrap"
+                                    disabled="" type="button">
+                                    <span class="material-symbols-outlined text-[17px]">table_chart</span>
+                                    <span class="">Chọn ít nhất 2 linh kiện để so sánh</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script>/* Replaced broken generated script; interactions are in shared-components/interactions.js. */</script>
+    </main>
+    <footer data-shared-component="site-footer"
+        class="w-full bg-surface-container-lowest border-t border-surface-container-high/40">
+        <div class="max-w-7xl mx-auto px-margin md:px-margin-tablet lg:px-margin-desktop py-space-xl">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-space-xl mb-space-lg">
+                <div>
+                    <div class="flex items-center gap-space-sm mb-space-sm">
+                        <div class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center"><span
+                                class="material-symbols-outlined text-primary-container text-[20px]">memory</span></div>
+                        <span class="font-headline-sm text-headline-sm text-on-surface">PC BUILDER STORE</span>
+                    </div>
+                    <p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">Linh ki&#7879;n
+                        m&#225;y t&#237;nh v&#224; c&#244;ng c&#7909; x&#226;y d&#7921;ng c&#7845;u h&#236;nh PC.</p>
+                </div>
+                <div>
+                    <h3 class="font-headline-sm text-[16px] text-on-surface mb-space-sm">Kh&#225;m ph&#225;</h3>
+                    <ul class="space-y-2 font-body-sm text-body-sm text-on-surface-variant">
+                        <li><a data-path="linh-kien" href="#">Linh ki&#7879;n m&#225;y t&#237;nh</a></li>
+                        <li><a data-path="pc-lap-san" href="#">X&#226;y d&#7921;ng PC</a></li>
+                        <li><a data-path="so-sanh" href="#">So s&#225;nh s&#7843;n ph&#7849;m</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="font-headline-sm text-[16px] text-on-surface mb-space-sm">H&#7895; tr&#7907;</h3>
+                    <ul class="space-y-2 font-body-sm text-body-sm text-on-surface-variant">
+                        <li><a data-path="don-hang" href="#">Tra c&#7913;u &#273;&#417;n h&#224;ng</a></li>
+                        <li><a data-path="tai-khoan" href="#">T&#224;i kho&#7843;n</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="font-headline-sm text-[16px] text-on-surface mb-space-sm">Mua s&#7855;m</h3>
+                    <ul class="space-y-2 font-body-sm text-body-sm text-on-surface-variant">
+                        <li><a data-path="gio-hang" href="#">Gi&#7887; h&#224;ng</a></li>
+                        <li><a data-path="trang-chu" href="#">Trang ch&#7911;</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div
+                class="pt-space-md border-t border-surface-container-high/40 flex flex-col md:flex-row items-center justify-between gap-space-md">
+                <span class="font-tech-code-sm text-tech-code-sm text-on-surface-variant">&#169; PC Builder Store</span>
+            </div>
+        </div>
+    </footer>
+    <script data-pcbs-interactions="true" defer="" src="../../components/interactions.js?v=18"></script>
+</body>
+
+</html>

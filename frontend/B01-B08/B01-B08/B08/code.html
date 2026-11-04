@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="vi"><head><link data-pcbs-shell-css="true" href="../../../components/shell.css?v=8" rel="stylesheet"/><link data-pcbs-interaction-css="true" href="../../../components/interactions.css?v=8" rel="stylesheet"/><title>PC Builder Store &mdash; C&#7845;u h&#236;nh &#273;&#227; l&#432;u</title><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_standard" name="shell-type"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "surface-container-low": "#1a1c20", "primary-fixed": "#ffdada", "outline-variant": "#5c3f40", "on-primary": "#68001a", "surface-tint": "#ffb3b6", "surface-bright": "#37393e", "secondary": "#ffb3ad", "on-primary-fixed-variant": "#920028", "on-tertiary-container": "#f8fbff", "on-error": "#690005", "tertiary-fixed-dim": "#7bd0ff", "inverse-on-surface": "#2f3035", "error": "#ffb4ab", "error-container": "#93000a", "tertiary": "#7bd0ff", "on-secondary": "#68000a", "on-tertiary": "#00354a", "secondary-fixed-dim": "#ffb3ad", "on-surface-variant": "#e5bdbe", "secondary-fixed": "#ffdad7", "on-tertiary-fixed-variant": "#004c69", "on-secondary-fixed": "#410004", "background": "#111317", "surface-dim": "#111317", "inverse-surface": "#e2e2e8", "on-error-container": "#ffdad6", "on-surface": "#e2e2e8", "surface-container-highest": "#333539", "inverse-primary": "#be0037", "on-secondary-fixed-variant": "#930013", "primary": "#ffb3b6", "primary-container": "#e11d48", "on-secondary-container": "#ffaea8", "surface-container": "#1e2024", "on-primary-fixed": "#40000c", "on-primary-container": "#fffaf9", "tertiary-container": "#007ca8", "tertiary-fixed": "#c4e7ff", "surface-container-high": "#282a2e", "surface": "#111317", "secondary-container": "#a40217", "surface-container-lowest": "#0c0e12", "on-background": "#e2e2e8", "primary-fixed-dim": "#ffb3b6", "outline": "#ac8889", "surface-variant": "#333539", "on-tertiary-fixed": "#001e2c" }, "borderRadius": { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" }, "spacing": { "gutter": "1rem", "space-2xl": "3rem", "gutter-desktop": "1.5rem", "margin-tablet": "2rem", "space-xl": "2rem", "margin": "1rem", "space-lg": "1.5rem", "margin-desktop": "3rem", "space-3xl": "4rem", "space-md": "1rem", "space-sm": "0.5rem", "space-xs": "0.25rem" }, "fontFamily": { "headline-sm": ["Plus Jakarta Sans"], "display-lg": ["Plus Jakarta Sans"], "tech-code-sm": ["JetBrains Mono"], "label-md": ["Plus Jakarta Sans"], "tech-code-md": ["JetBrains Mono"], "body-lg": ["Plus Jakarta Sans"], "headline-xl": ["Plus Jakarta Sans"], "display-lg-mobile": ["Plus Jakarta Sans"], "body-sm": ["Plus Jakarta Sans"], "headline-md": ["Plus Jakarta Sans"], "body-md": ["Plus Jakarta Sans"], "headline-lg": ["Plus Jakarta Sans"], "headline-xl-mobile": ["Plus Jakarta Sans"], "label-sm": ["JetBrains Mono"] }, "fontSize": { "headline-sm": ["20px", {"lineHeight": "28px", "letterSpacing": "0", "fontWeight": "600"}], "display-lg": ["56px", {"lineHeight": "64px", "letterSpacing": "-0.03em", "fontWeight": "700"}], "tech-code-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500"}], "label-md": ["13px", {"lineHeight": "18px", "letterSpacing": "0.01em", "fontWeight": "600"}], "tech-code-md": ["14px", {"lineHeight": "20px", "letterSpacing": "-0.01em", "fontWeight": "500"}], "body-lg": ["18px", {"lineHeight": "28px", "letterSpacing": "0", "fontWeight": "400"}], "headline-xl": ["40px", {"lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700"}], "display-lg-mobile": ["36px", {"lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700"}], "body-sm": ["13px", {"lineHeight": "20px", "letterSpacing": "0.005em", "fontWeight": "400"}], "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}], "body-md": ["15px", {"lineHeight": "24px", "letterSpacing": "0", "fontWeight": "400"}], "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.015em", "fontWeight": "600"}], "headline-xl-mobile": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "700"}], "label-sm": ["11px", {"lineHeight": "14px", "letterSpacing": "0.06em", "fontWeight": "600"}] } } } };</script></head><body class="bg-surface font-body-md text-body-md text-on-surface antialiased selection:bg-primary-container selection:text-on-primary-container"><header data-shared-component="site-header" class="fixed top-0 left-0 right-0 z-50 bg-surface/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.45)]"><div class="h-20 max-w-7xl mx-auto px-margin md:px-margin-tablet lg:px-margin-desktop flex items-center justify-between gap-space-lg"><div class="flex items-center gap-space-xl"><a class="flex items-center gap-space-sm group" data-path="trang-chu" href="#"><div class="w-9 h-9 rounded-lg bg-surface-container flex items-center justify-center transition-colors group-hover:bg-primary-container"><span class="material-symbols-outlined text-primary group-hover:text-on-primary-container text-[22px]">memory</span></div><div class="flex flex-col"><span class="font-headline-sm text-headline-sm tracking-tight text-on-surface">PC BUILDER STORE</span><span class="font-label-sm text-label-sm uppercase tracking-widest text-on-surface-variant">Linh ki&#7879;n m&#225;y t&#237;nh</span></div></a><nav class="flex items-center gap-space-xs"><a class="px-space-md py-space-sm rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="trang-chu" href="#">Trang ch&#7911;</a><a class="px-space-md py-space-sm rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="linh-kien" href="#">Linh ki&#7879;n</a><a class="px-space-md py-space-sm rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="pc-lap-san" href="#">X&#226;y d&#7921;ng PC</a></nav></div><div class="flex items-center gap-space-md flex-1 max-w-md justify-end"><div class="hidden md:flex items-center relative w-full max-w-xs"><form class="flex items-center relative w-full" role="search"><span class="material-symbols-outlined absolute left-3 text-on-surface-variant text-[18px] pointer-events-none">search</span><input aria-label="T&#236;m ki&#7871;m s&#7843;n ph&#7849;m" class="w-full bg-surface-container-low pl-9 pr-space-md py-2 rounded-lg font-body-sm text-body-sm text-on-surface placeholder:text-outline-variant focus:outline-none focus:bg-surface-container-high transition-colors" placeholder="T&#236;m CPU, GPU, RAM, SSD..." type="search"/></form></div><div class="flex items-center gap-space-sm"><a aria-label="Gi&#7887; h&#224;ng" class="w-10 h-10 rounded-lg bg-surface-container-low hover:bg-surface-container-high flex items-center justify-center relative transition-colors" data-path="gio-hang" href="#"><span class="material-symbols-outlined text-on-surface text-[20px]">shopping_bag</span></a><a aria-label="T&#224;i kho&#7843;n" class="w-10 h-10 rounded-lg bg-surface-container-low hover:bg-surface-container-high flex items-center justify-center transition-colors" data-path="tai-khoan" href="#"><span class="material-symbols-outlined text-on-surface text-[20px]">person</span></a></div></div></div></header>
+
+<main class="w-full pt-16 bg-surface min-h-[calc(100vh-280px)] build-pc-layout"><p class="text-body-sm text-on-surface-variant my-2">Th&#244;ng tin hi&#7875;n th&#7883; mang t&#237;nh minh h&#7885;a; c&#225;c thao t&#225;c c&#7847;n k&#7871;t n&#7889;i h&#7879; th&#7889;ng.</p><div class="flex flex-col w-full">
+<!-- Top Tech Banner / Schema Metadata Bar -->
+<section class="w-full bg-surface-container-lowest text-on-surface-variant py-2.5">
+<div class="max-w-[1440px] mx-auto px-margin-desktop flex flex-wrap items-center justify-between gap-space-sm text-tech-code-sm font-tech-code-sm">
+<div class="flex items-center gap-space-md flex-wrap">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-primary-container/15 text-primary font-bold">C&#7845;u h&#236;nh tham kh&#7843;o</span>
+<span class="text-outline">·</span>
+<span class="text-on-surface-variant tracking-tight">L&#7883;ch s&#7917; thay &#273;&#7893;i</span>
+</div>
+<div class="flex items-center gap-space-md text-outline">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[15px] text-tertiary">database</span>
+<span>tham kh&#7843;o THIẾT KẾ h&#7879; th&#7889;ng l&#432;u tr&#7919; (H&#7879; th&#7889;ng l&#432;u c&#7845;u h&#236;nh)</span>
+</span>
+<span class="hidden sm:inline">|</span>
+<span class="text-on-surface font-medium">[SESSION tham kh&#7843;o: GUEST_IDENT_VN_882]</span>
+</div>
+</div>
+</section>
+<!-- Header & Breadcrumbs Section -->
+<section class="w-full bg-surface-container-low py-space-xl">
+<div class="max-w-[1440px] mx-auto px-margin-desktop flex flex-col gap-space-md">
+<!-- Breadcrumb -->
+<nav aria-label="Breadcrumb" class="flex items-center gap-2 font-tech-code-sm text-tech-code-sm text-outline">
+<a class="hover:text-on-surface transition-colors" data-path="trang-chu" href="#">Trang chủ</a>
+<span>/</span>
+<a class="hover:text-on-surface transition-colors" data-path="X&#226;y d&#7921;ng PC" href="#">X&#226;y d&#7921;ng PC</a>
+<span>/</span>
+<span class="text-primary font-semibold">L&#7883;ch s&#7917; thay &#273;&#7893;i</span>
+</nav>
+<!-- Title + Action Strip -->
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-space-lg">
+<div class="max-w-3xl">
+<h1 class="font-headline-xl text-headline-xl text-on-surface tracking-tight font-bold">
+            Cấu hình đã lưu &amp; Lịch sử phiên bản
+          </h1><p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">Bản nháp chỉ lưu trên trình duyệt này; chưa được đồng bộ với tài khoản.</p>
+<div class="p-3 bg-surface-container-lowest rounded text-tech-code-sm font-tech-code-sm text-secondary flex items-start gap-2">
+<span class="material-symbols-outlined text-[16px] shrink-0 mt-0.5">info</span>
+<span>Bản nháp chưa được lưu vào tài khoản.</span>
+</div>
+<div class="flex items-center justify-end gap-2 pt-2">
+<button class="px-4 py-2 rounded bg-surface-container-high text-on-surface font-label-md text-label-md" onclick="closeModal()">Đóng</button>
+<button class="px-4 py-2 rounded bg-primary-container hover:bg-secondary-container text-on-primary-container font-label-md text-label-md font-semibold" onclick="confirmSync()">Lưu cấu hình vào tài khoản</button>
+</div>
+</div>
+</div>
+</div>
+<script>
+  let currentActiveBuild = '8842';
+  let currentDetailTab = 'items';
+
+  function showToast(message, icon = 'info') {
+    const toast = document.getElementById('system-toast');
+    const toastMsg = document.getElementById('toast-message');
+    const toastIcon = document.getElementById('toast-icon');
+    if (!toast) return;
+
+    toastMsg.textContent = message;
+    toastIcon.textContent = icon;
+    toast.classList.remove('translate-y-24', 'opacity-0', 'pointer-events-none');
+    toast.classList.add('translate-y-0', 'opacity-100');
+
+    setTimeout(() => {
+      toast.classList.add('translate-y-24', 'opacity-0', 'pointer-events-none');
+      toast.classList.remove('translate-y-0', 'opacity-100');
+    }, 4500);
+  }
+
+  function selectBuild(id) {
+    currentActiveBuild = id;
+    const card8842 = document.getElementById('card-bld-8842');
+    const card5120 = document.getElementById('card-bld-5120');
+    const cardDraft = document.getElementById('card-draft-local-09');
+
+    // Reset visual classes
+    [card8842, card5120, cardDraft].forEach(c => {
+      if (c) {
+        c.classList.remove('bg-gradient-to-r', 'from-primary-container/10', 'via-surface-container-low', 'to-surface-container-low');
+        const indicator = c.querySelector('.w-1\\.5');
+        if (indicator) indicator.className = 'w-1.5 absolute inset-y-0 left-0 bg-outline/40';
+      }
+    });
+
+    const targetBadge = document.getElementById('active-target-badge');
+    const detailTitle = document.getElementById('detail-title');
+    const metricPrice = document.getElementById('metric-price');
+    const metricCount = document.getElementById('metric-count');
+    const metricSync = document.getElementById('metric-sync');
+    const insufficientNotice = document.getElementById('insufficient-data-notice');
+    const revTimelineWrapper = document.getElementById('phiên bản-timeline-wrapper');
+    const revPanelTitle = document.getElementById('phiên bản-panel-title');
+
+    if (id === '8842') {
+      if (card8842) {
+        card8842.classList.add('bg-gradient-to-r', 'from-primary-container/10', 'via-surface-container-low', 'to-surface-container-low');
+        const ind = card8842.querySelector('.w-1\\.5');
+        if (ind) ind.className = 'w-1.5 absolute inset-y-0 left-0 bg-primary-container';
+      }
+      targetBadge.textContent = '#BLD-8842 / phiên bản 4 ';
+      detailTitle.textContent = 'Chi tiết linh kiện cấu hình #BLD-8842 — Bản sửa đổi phiên bản 4 [Dữ liệu mẫu]';
+      metricPrice.textContent = '42.570.000 ₫';
+      metricCount.textContent = '8 danh mục';
+      metricSync.innerHTML = '<span class="w-2.5 h-2.5 rounded-full bg-primary-container"></span> Bản ghi mẫu ';
+      
+      if (insufficientNotice) insufficientNotice.classList.add('hidden');
+      if (revTimelineWrapper) revTimelineWrapper.classList.remove('hidden');
+      if (revPanelTitle) revPanelTitle.textContent = 'Lịch sử phiên bản (l&#7883;ch s&#7917; phi&#234;n b&#7843;n) — #BLD-8842 [Dữ liệu mẫu]';
+      
+      renderItemsFor8842();
+    } else if (id === '5120') {
+      if (card5120) {
+        card5120.classList.add('bg-gradient-to-r', 'from-primary-container/10', 'via-surface-container-low', 'to-surface-container-low');
+        const ind = card5120.querySelector('.w-1\\.5');
+        if (ind) ind.className = 'w-1.5 absolute inset-y-0 left-0 bg-primary-container';
+      }
+      targetBadge.textContent = '#BLD-5120 / phiên bản 1 ';
+      detailTitle.textContent = 'Chi tiết linh kiện cấu hình #BLD-5120 — Bản sửa đổi phiên bản 1 [Dữ liệu mẫu]';
+      metricPrice.textContent = '68.900.000 ₫';
+      metricCount.textContent = '7 danh mục';
+      metricSync.innerHTML = '<span class="w-2.5 h-2.5 rounded-full bg-primary-container"></span> Bản ghi mẫu ';
+
+      if (currentDetailTab === 'revisions') {
+        if (insufficientNotice) insufficientNotice.classList.remove('hidden');
+        if (revTimelineWrapper) revTimelineWrapper.classList.add('hidden');
+      }
+      renderItemsFor5120();
+    } else if (id === 'draft') {
+      if (cardDraft) {
+        cardDraft.classList.add('bg-gradient-to-r', 'from-primary-container/10', 'via-surface-container-low', 'to-surface-container-low');
+        const ind = cardDraft.querySelector('.w-1\\.5');
+        if (ind) ind.className = 'w-1.5 absolute inset-y-0 left-0 bg-secondary';
+      }
+      targetBadge.textContent = '#DRAFT-LOCAL-09 / LƯU TRÌNH DUYỆT';
+      detailTitle.textContent = 'Chi tiết linh kiện #DRAFT-LOCAL-09 (Bản nháp tạm bộ nhớ trình duyệt)';
+      metricPrice.textContent = '13.450.000 ₫';
+      metricCount.textContent = '5 danh mục';
+      metricSync.innerHTML = '<span class="w-2.5 h-2.5 rounded-full bg-secondary"></span> Lưu tại LocalStorage';
+
+      if (insufficientNotice) insufficientNotice.classList.remove('hidden');
+      if (revTimelineWrapper) revTimelineWrapper.classList.add('hidden');
+      renderItemsForDraft();
+    }
+  }
+
+  function renderItemsFor8842() {
+    const container = document.getElementById('items-rows-container');
+    if (!container) return;
+    container.innerHTML = `
+      <div class="px-space-md py-3 flex items-center justify-between gap-space-md bg-surface-container-low hover:bg-surface-container-high transition-colors">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="w-9 h-9 rounded bg-surface-container-lowest flex items-center justify-center text-primary shrink-0"><span class="material-symbols-outlined text-[20px]">memory</span></div>
+          <div class="min-w-0">
+            <div class="flex items-center gap-2"><span class="font-tech-code-sm text-tech-code-sm px-1.5 py-0.5 rounded bg-surface-container-high text-outline">CPU</span><h4 class="font-label-md text-label-md font-semibold text-on-surface truncate">Intel Core i5-14600K</h4></div>
+            <p class="font-tech-code-sm text-tech-code-sm text-on-surface-variant truncate">14 nhân, 20 luồng, xung tối đa 5.3GHz · LGA1700 · TDP 125W</p>
+          </div>
+        </div>
+        <span class="font-tech-code-md text-tech-code-md font-bold text-on-surface shrink-0">8.290.000 ₫</span>
+      </div>
+      <div class="px-space-md py-3 flex items-center justify-between gap-space-md bg-surface-container-low hover:bg-surface-container-high transition-colors">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="w-9 h-9 rounded bg-surface-container-lowest flex items-center justify-center text-tertiary shrink-0"><span class="material-symbols-outlined text-[20px]">mode_fan</span></div>
+          <div class="min-w-0">
+            <div class="flex items-center gap-2"><span class="font-tech-code-sm text-tech-code-sm px-1.5 py-0.5 rounded bg-surface-container-high text-outline">Tản nhiệt</span><h4 class="font-label-md text-label-md font-semibold text-on-surface truncate">Thermalright Peerless Assassin 120 SE ARGB</h4></div>
+            <p class="font-tech-code-sm text-tech-code-sm text-on-surface-variant truncate">Dual Tower 6 ống đồng · Quạt kép PWM 120mm · Hỗ trợ LGA1700</p>
+          </div>
+        </div>
+        <span class="font-tech-code-md text-tech-code-md font-bold text-on-surface shrink-0">950.000 ₫</span>
+      </div>
+      <div class="px-space-md py-3 flex items-center justify-between gap-space-md bg-surface-container-low hover:bg-surface-container-high transition-colors">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="w-9 h-9 rounded bg-surface-container-lowest flex items-center justify-center text-primary shrink-0"><span class="material-symbols-outlined text-[20px]">developer_board</span></div>
+          <div class="min-w-0">
+            <div class="flex items-center gap-2"><span class="font-tech-code-sm text-tech-code-sm px-1.5 py-0.5 rounded bg-surface-container-high text-outline">Mainboard</span><h4 class="font-label-md text-label-md font-semibold text-on-surface truncate">MSI MAG B760 TOMAHAWK WIFI DDR5</h4></div>
+            <p class="font-tech-code-sm text-tech-code-sm text-on-surface-variant truncate">ATX · 12+1+1 Duet Rail VRM 75A · PCIe 5.0 · 3x M.2 Gen4</p>
+          </div>
+        </div>
+        <span class="font-tech-code-md text-tech-code-md font-bold text-on-surface shrink-0">5.490.000 ₫</span>
+      </div>
+      <div class="px-space-md py-3 flex items-center justify-between gap-space-md bg-surface-container-low hover:bg-surface-container-high transition-colors">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="w-9 h-9 rounded bg-surface-container-lowest flex items-center justify-center text-tertiary shrink-0"><span class="material-symbols-outlined text-[20px]">straighten</span></div>
+          <div class="min-w-0">
+            <div class="flex items-center gap-2"><span class="font-tech-code-sm text-tech-code-sm px-1.5 py-0.5 rounded bg-surface-container-high text-outline">RAM</span><h4 class="font-label-md text-label-md font-semibold text-on-surface truncate">Corsair Vengeance RGB 32GB (2x16GB) DDR5 6000MHz</h4></div>
+            <p class="font-tech-code-sm text-tech-code-sm text-on-surface-variant truncate">CL36 XMP 3.0 · Tản nhiệt nhôm xước đen · Dual Channel</p>
+          </div>
+        </div>
+        <span class="font-tech-code-md text-tech-code-md font-bold text-on-surface shrink-0">3.190.000 ₫</span>
+      </div>
+      <div class="px-space-md py-3 flex items-center justify-between gap-space-md bg-surface-container-low hover:bg-surface-container-high transition-colors">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="w-9 h-9 rounded bg-surface-container-lowest flex items-center justify-center text-primary shrink-0"><span class="material-symbols-outlined text-[20px]">view_in_ar</span></div>
+          <div class="min-w-0">
+            <div class="flex items-center gap-2"><span class="font-tech-code-sm text-tech-code-sm px-1.5 py-0.5 rounded bg-surface-container-high text-primary font-bold">VGA</span><h4 class="font-label-md text-label-md font-semibold text-on-surface truncate">ASUS TUF Gaming GeForce RTX 4070 Ti SUPER 16GB</h4></div>
+            <p class="font-tech-code-sm text-tech-code-sm text-on-surface-variant truncate">16GB GDDR6X 256-bit · 3 Fan Axial-tech · Kim loại nguyên khối</p>
+          </div>
+        </div>
+        <span class="font-tech-code-md text-tech-code-md font-bold text-primary shrink-0">24.890.000 ₫</span>
+      </div>
+      <div class="px-space-md py-3 flex items-center justify-between gap-space-md bg-surface-container-low hover:bg-surface-container-high transition-colors">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="w-9 h-9 rounded bg-surface-container-lowest flex items-center justify-center text-tertiary shrink-0"><span class="material-symbols-outlined text-[20px]">save</span></div>
+          <div class="min-w-0">
+            <div class="flex items-center gap-2"><span class="font-tech-code-sm text-tech-code-sm px-1.5 py-0.5 rounded bg-surface-container-high text-outline">SSD M.2</span><h4 class="font-label-md text-label-md font-semibold text-on-surface truncate">Kingston KC3000 1TB PCIe 4.0 NVMe M.2</h4></div>
+            <p class="font-tech-code-sm text-tech-code-sm text-on-surface-variant truncate">Đọc 7,000MB/s · Ghi 6,000MB/s · 3D TLC Micron · Heatsink Graphene</p>
+          </div>
+        </div>
+        <span class="font-tech-code-md text-tech-code-md font-bold text-on-surface shrink-0">2.450.000 ₫</span>
+      </div>
+      <div class="px-space-md py-3 flex items-center justify-between gap-space-md bg-surface-container-low hover:bg-surface-container-high transition-colors">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="w-9 h-9 rounded bg-surface-container-lowest flex items-center justify-center text-primary shrink-0"><span class="material-symbols-outlined text-[20px]">power</span></div>
+          <div class="min-w-0">
+            <div class="flex items-center gap-2"><span class="font-tech-code-sm text-tech-code-sm px-1.5 py-0.5 rounded bg-surface-container-high text-outline">Nguồn PSU</span><h4 class="font-label-md text-label-md font-semibold text-on-surface truncate">MSI MAG A750GL PCIE5 750W 80 Plus Gold</h4></div>
+            <p class="font-tech-code-sm text-tech-code-sm text-on-surface-variant truncate">Chuẩn ATX 3.0 · Cáp dẹt Full Modular · Đầu 16-pin 12V-2x6 Native</p>
+          </div>
+        </div>
+        <span class="font-tech-code-md text-tech-code-md font-bold text-on-surface shrink-0">2.690.000 ₫</span>
+      </div>
+      <div class="px-space-md py-3 flex items-center justify-between gap-space-md bg-surface-container-low hover:bg-surface-container-high transition-colors">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="w-9 h-9 rounded bg-surface-container-lowest flex items-center justify-center text-outline shrink-0"><span class="material-symbols-outlined text-[20px]">desktop_windows</span></div>
+          <div class="min-w-0">
+            <div class="flex items-center gap-2"><span class="font-tech-code-sm text-tech-code-sm px-1.5 py-0.5 rounded bg-surface-container-high text-outline">Vỏ Case</span><h4 class="font-label-md text-label-md font-semibold text-on-surface truncate">Montech AIR 903 MAX Black (4 Fan ARGB)</h4></div>
+            <p class="font-tech-code-sm text-tech-code-sm text-on-surface-variant truncate">Mid-Tower · Mặt lưới Mesh thoáng khí · Tích hợp sẵn 4 quạt 140mm</p>
+          </div>
+        </div>
+        <span class="font-tech-code-md text-tech-code-md font-bold text-on-surface shrink-0">1.620.000 ₫</span>
+      </div>
+    `;
+  }
+
+  function renderItemsFor5120() {
+    const container = document.getElementById('items-rows-container');
+    if (!container) return;
+    container.innerHTML = `
+      <div class="px-space-md py-3 flex items-center justify-between gap-space-md bg-surface-container-low hover:bg-surface-container-high transition-colors">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="w-9 h-9 rounded bg-surface-container-lowest flex items-center justify-center text-primary shrink-0"><span class="material-symbols-outlined text-[20px]">memory</span></div>
+          <div class="min-w-0">
+            <div class="flex items-center gap-2"><span class="font-tech-code-sm text-tech-code-sm px-1.5 py-0.5 rounded bg-surface-container-high text-outline">CPU</span><h4 class="font-label-md text-label-md font-semibold text-on-surface truncate">AMD Ryzen 9 7950X (16C/32T)</h4></div>
+            <p class="font-tech-code-sm text-tech-code-sm text-on-surface-variant truncate">Xung boost 5.7GHz · AM5 · TDP 170W</p>
+          </div>
+        </div>
+        <span class="font-tech-code-md text-tech-code-md font-bold text-on-surface shrink-0">14.900.000 ₫</span>
+      </div>
+      <div class="px-space-md py-3 flex items-center justify-between gap-space-md bg-surface-container-low hover:bg-surface-container-high transition-colors">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="w-9 h-9 rounded bg-surface-container-lowest flex items-center justify-center text-primary shrink-0"><span class="material-symbols-outlined text-[20px]">view_in_ar</span></div>
+          <div class="min-w-0">
+            <div class="flex items-center gap-2"><span class="font-tech-code-sm text-tech-code-sm px-1.5 py-0.5 rounded bg-surface-container-high text-primary font-bold">VGA</span><h4 class="font-label-md text-label-md font-semibold text-on-surface truncate">MSI GeForce RTX 4080 16GB GAMING X TRIO</h4></div>
+            <p class="font-tech-code-sm text-tech-code-sm text-on-surface-variant truncate">16GB GDDR6X · TRI FROZR 3 · Dual BIOS</p>
+          </div>
+        </div>
+        <span class="font-tech-code-md text-tech-code-md font-bold text-primary shrink-0">34.500.000 ₫</span>
+      </div>
+      <div class="px-space-md py-3 flex items-center justify-between gap-space-md bg-surface-container-low hover:bg-surface-container-high transition-colors">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="w-9 h-9 rounded bg-surface-container-lowest flex items-center justify-center text-tertiary shrink-0"><span class="material-symbols-outlined text-[20px]">mode_fan</span></div>
+          <div class="min-w-0">
+            <div class="flex items-center gap-2"><span class="font-tech-code-sm text-tech-code-sm px-1.5 py-0.5 rounded bg-surface-container-high text-outline">AIO Cooler</span><h4 class="font-label-md text-label-md font-semibold text-on-surface truncate">NZXT Kraken Elite 360 RGB</h4></div>
+            <p class="font-tech-code-sm text-tech-code-sm text-on-surface-variant truncate">Màn hình LCD 2.36 inch · Két tản nhiệt 360mm</p>
+          </div>
+        </div>
+        <span class="font-tech-code-md text-tech-code-md font-bold text-on-surface shrink-0">7.200.000 ₫</span>
+      </div>
+      <div class="px-space-md py-3 flex items-center justify-between gap-space-md bg-surface-container-low hover:bg-surface-container-high transition-colors">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="w-9 h-9 rounded bg-surface-container-lowest flex items-center justify-center text-primary shrink-0"><span class="material-symbols-outlined text-[20px]">developer_board</span></div>
+          <div class="min-w-0">
+            <div class="flex items-center gap-2"><span class="font-tech-code-sm text-tech-code-sm px-1.5 py-0.5 rounded bg-surface-container-high text-outline">Mainboard</span><h4 class="font-label-md text-label-md font-semibold text-on-surface truncate">ASUS ROG STRIX X670E-F GAMING WIFI</h4></div>
+            <p class="font-tech-code-sm text-tech-code-sm text-on-surface-variant truncate">16+2 Power Stages · PCIe 5.0 · DDR5</p>
+          </div>
+        </div>
+        <span class="font-tech-code-md text-tech-code-md font-bold text-on-surface shrink-0">12.300.000 ₫</span>
+      </div>
+    `;
+  }
+
+  function renderItemsForDraft() {
+    const container = document.getElementById('items-rows-container');
+    if (!container) return;
+    container.innerHTML = `
+      <div class="px-space-md py-3 flex items-center justify-between gap-space-md bg-surface-container-low hover:bg-surface-container-high transition-colors">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="w-9 h-9 rounded bg-surface-container-lowest flex items-center justify-center text-secondary shrink-0"><span class="material-symbols-outlined text-[20px]">memory</span></div>
+          <div class="min-w-0">
+            <div class="flex items-center gap-2"><span class="font-tech-code-sm text-tech-code-sm px-1.5 py-0.5 rounded bg-surface-container-high text-outline">CPU</span><h4 class="font-label-md text-label-md font-semibold text-on-surface truncate">Intel Core i3-13100F</h4></div>
+            <p class="font-tech-code-sm text-tech-code-sm text-on-surface-variant truncate">4 Nhân 8 Luồng · LGA1700</p>
+          </div>
+        </div>
+        <span class="font-tech-code-md text-tech-code-md font-bold text-on-surface shrink-0">2.650.000 ₫</span>
+      </div>
+      <div class="px-space-md py-3 flex items-center justify-between gap-space-md bg-surface-container-low hover:bg-surface-container-high transition-colors">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="w-9 h-9 rounded bg-surface-container-lowest flex items-center justify-center text-secondary shrink-0"><span class="material-symbols-outlined text-[20px]">view_in_ar</span></div>
+          <div class="min-w-0">
+            <div class="flex items-center gap-2"><span class="font-tech-code-sm text-tech-code-sm px-1.5 py-0.5 rounded bg-surface-container-high text-outline">VGA</span><h4 class="font-label-md text-label-md font-semibold text-on-surface truncate">GIGABYTE GeForce GTX 1650 D6 OC 4GB</h4></div>
+            <p class="font-tech-code-sm text-tech-code-sm text-on-surface-variant truncate">4GB GDDR6 · Dual fan</p>
+          </div>
+        </div>
+        <span class="font-tech-code-md text-tech-code-md font-bold text-on-surface shrink-0">3.990.000 ₫</span>
+      </div>
+    `;
+  }
+
+  function switchDetailTab(tab) {
+    currentDetailTab = tab;
+    const btnItems = document.getElementById('btn-view-items');
+    const btnRevs = document.getElementById('btn-view-revisions');
+    const viewItems = document.getElementById('inspector-items-view');
+    const viewRevs = document.getElementById('inspector-revisions-view');
+    const insufficientNotice = document.getElementById('insufficient-data-notice');
+    const revTimelineWrapper = document.getElementById('phiên bản-timeline-wrapper');
+
+    if (tab === 'items') {
+      btnItems.className = 'px-4 py-2 rounded bg-surface-container-high text-on-surface font-label-md text-label-md font-bold flex items-center gap-2 transition-colors';
+      btnRevs.className = 'px-4 py-2 rounded hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface font-label-md text-label-md flex items-center gap-2 transition-colors';
+      viewItems.classList.remove('hidden');
+      viewRevs.classList.add('hidden');
+      if (insufficientNotice) insufficientNotice.classList.add('hidden');
+    } else {
+      btnRevs.className = 'px-4 py-2 rounded bg-surface-container-high text-on-surface font-label-md text-label-md font-bold flex items-center gap-2 transition-colors';
+      btnItems.className = 'px-4 py-2 rounded hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface font-label-md text-label-md flex items-center gap-2 transition-colors';
+      viewItems.classList.add('hidden');
+      viewRevs.classList.remove('hidden');
+
+      if (currentActiveBuild === '5120' || currentActiveBuild === 'draft') {
+        if (insufficientNotice) insufficientNotice.classList.remove('hidden');
+        if (revTimelineWrapper) revTimelineWrapper.classList.add('hidden');
+      } else {
+        if (insufficientNotice) insufficientNotice.classList.add('hidden');
+        if (revTimelineWrapper) revTimelineWrapper.classList.remove('hidden');
+      }
+    }
+  }
+
+  function jumpToDetailTab(tab) {
+    switchDetailTab(tab);
+    const detailPanel = document.getElementById('detail-panel');
+    if (detailPanel) {
+      detailPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+  function setTab(filter) {
+    const card8842 = document.getElementById('card-bld-8842');
+    const card5120 = document.getElementById('card-bld-5120');
+    const cardDraft = document.getElementById('card-draft-local-09');
+    const workspace = document.getElementById('builds-workspace');
+    const emptyState = document.getElementById('empty-state-view');
+
+    const tabAll = document.getElementById('tab-all');
+    const tabDb = document.getElementById('tab-db');
+    const tabDraft = document.getElementById('tab-draft');
+    const tabEmpty = document.getElementById('tab-empty-minh h&#7885;a');
+
+    // Reset button styling
+    [tabAll, tabDb, tabDraft, tabEmpty].forEach(btn => {
+      if (btn) btn.className = 'px-3.5 py-1.5 rounded font-label-md text-label-md bg-surface-container-high text-on-surface-variant hover:text-on-surface transition-colors';
+    });
+
+    if (filter === 'empty') {
+      if (tabEmpty) tabEmpty.className = 'px-3.5 py-1.5 rounded font-label-md text-label-md bg-primary-container text-on-primary-container font-semibold transition-colors';
+      workspace.classList.add('hidden');
+      emptyState.classList.remove('hidden');
+      return;
+    }
+
+    workspace.classList.remove('hidden');
+    emptyState.classList.add('hidden');
+
+    if (filter === 'all') {
+      if (tabAll) tabAll.className = 'px-3.5 py-1.5 rounded font-label-md text-label-md bg-primary-container text-on-primary-container font-semibold transition-colors';
+      if (card8842) card8842.classList.remove('hidden');
+      if (card5120) card5120.classList.remove('hidden');
+      if (cardDraft) cardDraft.classList.remove('hidden');
+    } else if (filter === 'db') {
+      if (tabDb) tabDb.className = 'px-3.5 py-1.5 rounded font-label-md text-label-md bg-primary-container text-on-primary-container font-semibold transition-colors';
+      if (card8842) card8842.classList.remove('hidden');
+      if (card5120) card5120.classList.remove('hidden');
+      if (cardDraft) cardDraft.classList.add('hidden');
+      if (currentActiveBuild === 'draft') selectBuild('8842');
+    } else if (filter === 'draft') {
+      if (tabDraft) tabDraft.className = 'px-3.5 py-1.5 rounded font-label-md text-label-md bg-primary-container text-on-primary-container font-semibold transition-colors';
+      if (card8842) card8842.classList.add('hidden');
+      if (card5120) card5120.classList.add('hidden');
+      if (cardDraft) cardDraft.classList.remove('hidden');
+      selectBuild('draft');
+    }
+  }
+
+  function filterBuilds() {
+    const query = document.getElementById('search-input').value.toLowerCase();
+    const card8842 = document.getElementById('card-bld-8842');
+    const card5120 = document.getElementById('card-bld-5120');
+    const cardDraft = document.getElementById('card-draft-local-09');
+
+    const match8842 = 'bld-8842 obsidian core i5 rtx 4070 ti super'.includes(query);
+    const match5120 = 'bld-5120 titan workstation ryzen 9 rtx 4080'.includes(query);
+    const matchDraft = 'draft-local-09 bản nháp văn phòng esport i3 budget'.includes(query);
+
+    if (card8842) card8842.style.display = match8842 ? '' : 'none';
+    if (card5120) card5120.style.display = match5120 ? '' : 'none';
+    if (cardDraft) cardDraft.style.display = matchDraft ? '' : 'none';
+  }
+
+  function sortBuilds() {
+    const val = document.getElementById('sort-select').value;
+    const container = document.getElementById('cards-container');
+    const card8842 = document.getElementById('card-bld-8842');
+    const card5120 = document.getElementById('card-bld-5120');
+    const cardDraft = document.getElementById('card-draft-local-09');
+
+    if (val === 'price-desc') {
+      container.appendChild(card5120);
+      container.appendChild(card8842);
+      container.appendChild(cardDraft);
+    } else if (val === 'price-asc') {
+      container.appendChild(cardDraft);
+      container.appendChild(card8842);
+      container.appendChild(card5120);
+    } else {
+      container.appendChild(card8842);
+      container.appendChild(card5120);
+      container.appendChild(cardDraft);
+    }
+    showToast('Đã áp dụng sắp xếp: ' + val, 'swap_vert');
+  }
+
+  function simulateNewBuild() {
+    location.href = '../B01/code.html';
+  }
+
+  function continueEdit(buildCode) {
+    window.showPendingFeature('Chỉnh sửa cấu hình');
+  }
+
+  function previewRevision(revName, price) {
+    showToast('Dữ liệu phiên bản chỉ mang tính minh họa.', 'info');
+  }
+
+  function restoreRevisionPrompt(revName) {
+    showToast('Khôi phục phiên bản chưa được kết nối với hệ thống.', 'info');
+  }
+
+  function triggerLoginSyncModal() {
+    document.getElementById('login-sync-modal').classList.remove('hidden');
+    document.getElementById('login-sync-modal').classList.add('flex');
+  }
+
+  function closeModal() {
+    document.getElementById('login-sync-modal').classList.add('hidden');
+    document.getElementById('login-sync-modal').classList.remove('flex');
+  }
+
+  function confirmSync() {
+    closeModal();
+    showToast('Lưu cấu hình chưa được kết nối với hệ thống.', 'info');
+  }
+
+  function cloneBuild(code) {
+    showToast('Nhân bản cấu hình chưa được kết nối với hệ thống.', 'info');
+  }
+
+  function printSpecSheet() {
+    showToast('Tính năng xuất phiếu đang được phát triển.', 'info');
+  }
+
+  function simulatePriceCheck() {
+    showToast('Kiểm tra biến động giá cần kết nối dữ liệu.', 'info');
+  }
+</script></main><footer data-shared-component="site-footer" class="w-full bg-surface-container-lowest border-t border-surface-container-high/40"><div class="max-w-7xl mx-auto px-margin md:px-margin-tablet lg:px-margin-desktop py-space-xl"><div class="grid grid-cols-1 md:grid-cols-4 gap-space-xl mb-space-lg"><div><div class="flex items-center gap-space-sm mb-space-sm"><div class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center"><span class="material-symbols-outlined text-primary-container text-[20px]">memory</span></div><span class="font-headline-sm text-headline-sm text-on-surface">PC BUILDER STORE</span></div><p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">Linh ki&#7879;n m&#225;y t&#237;nh v&#224; c&#244;ng c&#7909; x&#226;y d&#7921;ng c&#7845;u h&#236;nh PC.</p></div><div><h3 class="font-headline-sm text-[16px] text-on-surface mb-space-sm">Kh&#225;m ph&#225;</h3><ul class="space-y-2 font-body-sm text-body-sm text-on-surface-variant"><li><a data-path="linh-kien" href="#">Linh ki&#7879;n m&#225;y t&#237;nh</a></li><li><a data-path="pc-lap-san" href="#">X&#226;y d&#7921;ng PC</a></li><li><a data-path="so-sanh" href="#">So s&#225;nh s&#7843;n ph&#7849;m</a></li></ul></div><div><h3 class="font-headline-sm text-[16px] text-on-surface mb-space-sm">H&#7895; tr&#7907;</h3><ul class="space-y-2 font-body-sm text-body-sm text-on-surface-variant"><li><a data-path="don-hang" href="#">Tra c&#7913;u &#273;&#417;n h&#224;ng</a></li><li><a data-path="tai-khoan" href="#">T&#224;i kho&#7843;n</a></li></ul></div><div><h3 class="font-headline-sm text-[16px] text-on-surface mb-space-sm">Mua s&#7855;m</h3><ul class="space-y-2 font-body-sm text-body-sm text-on-surface-variant"><li><a data-path="gio-hang" href="#">Gi&#7887; h&#224;ng</a></li><li><a data-path="trang-chu" href="#">Trang ch&#7911;</a></li></ul></div></div><div class="pt-space-md border-t border-surface-container-high/40 flex flex-col md:flex-row items-center justify-between gap-space-md"><span class="font-tech-code-sm text-tech-code-sm text-on-surface-variant">&#169; PC Builder Store</span></div></div></footer><script defer src="../../../components/interactions.js?v=18"></script></body></html>

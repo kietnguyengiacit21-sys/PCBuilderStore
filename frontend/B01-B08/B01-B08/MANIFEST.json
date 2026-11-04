@@ -1,0 +1,92 @@
+[
+  {
+    "screen": "B01",
+    "source_archive": "stitch_pc_builder_store_choosing(6).zip",
+    "extracted_files": [
+      "code.html",
+      "screen.png",
+      "DESIGN.md"
+    ],
+    "note": "Original archive contents extracted without editing."
+  },
+  {
+    "screen": "B02",
+    "source_archive": "stitch_pc_builder_store_IT-buildpc(4).zip",
+    "extracted_files": [
+      "code.html",
+      "screen.png",
+      "DESIGN.md"
+    ],
+    "note": "Original archive contents extracted without editing."
+  },
+  {
+    "screen": "B03",
+    "source_archive": "stitch_pc_builder_store_NonIT-buildpc(4).zip",
+    "extracted_files": [
+      "code.html",
+      "screen.png",
+      "DESIGN.md"
+    ],
+    "note": "Original archive contents extracted without editing."
+  },
+  {
+    "screen": "B04",
+    "source_archive": "stitch_pc_builder_store_compability-report(1).zip",
+    "extracted_files": [
+      "code.html",
+      "screen.png",
+      "DESIGN.md"
+    ],
+    "note": "Original archive contents extracted without editing."
+  },
+  {
+    "screen": "B05",
+    "source_archive": "stitch_pc_builder_store_power and budget(1).zip",
+    "extracted_files": [
+      "code.html",
+      "screen.png",
+      "DESIGN.md"
+    ],
+    "note": "Original archive contents extracted without editing."
+  },
+  {
+    "screen": "B06",
+    "source_archive": "stitch_pc_builder_store_benchmark(5).zip",
+    "extracted_files": [
+      "code.html",
+      "screen.png",
+      "DESIGN.md"
+    ],
+    "note": "Original archive contents extracted without editing."
+  },
+  {
+    "screen": "B07",
+    "source_archive": "stitch_pc_builder_store_recommendation(2).zip",
+    "extracted_files": [
+      "code.html",
+      "screen.png",
+      "DESIGN.md"
+    ],
+    "note": "Original archive contents extracted without editing."
+  },
+  {
+    "screen": "B08",
+    "source_archive": "stitch_pc_builder_store_saved_build(2).zip",
+    "extracted_files": [
+      "code.html",
+      "screen.png",
+      "DESIGN.md"
+    ],
+    "note": "Original archive contents extracted without editing."
+  },
+  {
+    "screen": "B06_corrected_HTML_reference",
+    "source_archive": "B06_benchmark_corrected(1).zip",
+    "extracted_files": [
+      "code.html",
+      "screen.png",
+      "DESIGN.md"
+    ],
+    "note": "Reference copy of the previously edited B06 HTML archive; original B06 folder remains unchanged."
+  }
+]

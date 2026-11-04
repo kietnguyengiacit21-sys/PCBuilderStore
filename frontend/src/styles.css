@@ -1,0 +1,33 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+.legacy-screen {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.legacy-screen > main {
+  width: 100%;
+  min-width: 0;
+  flex: 1 0 auto;
+  padding-top: 96px !important;
+}
+
+.legacy-screen > main main {
+  padding-top: 0 !important;
+}
+
+.legacy-screen > header[data-shared-component="site-header"] + .layout {
+  margin-top: 80px;
+}
+
+.legacy-screen > footer[data-shared-component="site-footer"] {
+  width: 100%;
+}

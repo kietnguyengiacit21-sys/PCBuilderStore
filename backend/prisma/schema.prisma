@@ -1,0 +1,648 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Roles {
+  role_id            Decimal @id @default(dbgenerated("next_unsigned_bigint('roles_role_id_seq_low'::regclass, 'roles_role_id_seq_high'::regclass)")) @db.Decimal(20, 0)
+  role_code          String  @unique(map: "uq_roles_code") @db.VarChar(40)
+  role_name          String  @db.VarChar(100)
+  description        String? @db.VarChar(500)
+  back_fk_users_role Users[] @relation("fk_users_role")
+
+  @@map("roles")
+}
+
+model Users {
+  user_id                             Decimal                 @id @default(dbgenerated("next_unsigned_bigint('users_user_id_seq_low'::regclass, 'users_user_id_seq_high'::regclass)")) @db.Decimal(20, 0)
+  role_id                             Decimal                 @db.Decimal(20, 0)
+  full_name                           String                  @db.VarChar(160)
+  email                               String                  @unique(map: "uq_users_email") @db.VarChar(254)
+  password_hash                       String                  @db.VarChar(255)
+  phone                               String?                 @db.VarChar(40)
+  customer_segment                    String                  @default("UNSPECIFIED") @db.VarChar(20)
+  account_status                      String                  @default("ACTIVE") @db.VarChar(20)
+  created_at                          DateTime                @default(now()) @db.Timestamp(0)
+  updated_at                          DateTime                @default(now()) @updatedAt @db.Timestamp(0)
+  fk_users_role_ref                   Roles                   @relation("fk_users_role", fields: [role_id], references: [role_id], onDelete: Restrict)
+  back_fk_carts_user                  Carts[]                 @relation("fk_carts_user")
+  back_fk_orders_user                 Orders[]                @relation("fk_orders_user")
+  back_fk_product_reviews_user        ProductReviews[]        @relation("fk_product_reviews_user")
+  back_fk_questionnaire_sessions_user QuestionnaireSessions[] @relation("fk_questionnaire_sessions_user")
+  back_fk_pc_builds_user              PcBuilds[]              @relation("fk_pc_builds_user")
+  back_fk_build_revisions_user        PcBuildRevisions[]      @relation("fk_build_revisions_user")
+  back_fk_recommendations_user        RecommendationRuns[]    @relation("fk_recommendations_user")
+
+  @@index([role_id], map: "ix_users_role")
+  @@map("users")
+}
+
+model Brands {
+  brand_id               Decimal    @id @default(dbgenerated("next_unsigned_bigint('brands_brand_id_seq_low'::regclass, 'brands_brand_id_seq_high'::regclass)")) @db.Decimal(20, 0)
+  brand_name             String     @unique(map: "uq_brands_name") @db.VarChar(120)
+  website_url            String?    @db.VarChar(500)
+  description            String?    @db.Text
+  is_active              Boolean    @default(true) @db.Boolean
+  back_fk_products_brand Products[] @relation("fk_products_brand")
+
+  @@map("brands")
+}
+
+model Categories {
+  category_id               Decimal      @id @default(dbgenerated("next_unsigned_bigint('categories_category_id_seq_low'::regclass, 'categories_category_id_seq_high'::regclass)")) @db.Decimal(20, 0)
+  parent_category_id        Decimal?     @db.Decimal(20, 0)
+  category_code             String       @unique(map: "uq_categories_code") @db.VarChar(60)
+  category_name             String       @db.VarChar(160)
+  description               String?      @db.Text
+  is_active                 Boolean      @default(true) @db.Boolean
+  fk_categories_parent_ref  Categories?  @relation("fk_categories_parent", fields: [parent_category_id], references: [category_id], onDelete: SetNull)
+  back_fk_categories_parent Categories[] @relation("fk_categories_parent")
+  back_fk_products_category Products[]   @relation("fk_products_category")
+
+  @@index([parent_category_id], map: "ix_categories_parent")
+  @@map("categories")
+}
+
+model ProductTypes {
+  product_type_id                  Decimal                       @id @default(dbgenerated("next_unsigned_bigint('product_types_product_type_id_seq_low'::regclass, 'product_types_product_type_id_seq_high'::regclass)")) @db.Decimal(20, 0)
+  type_code                        String                        @unique(map: "uq_product_types_code") @db.VarChar(60)
+  type_name                        String                        @db.VarChar(120)
+  description                      String?                       @db.Text
+  is_build_component               Boolean                       @default(false) @db.Boolean
+  is_active                        Boolean                       @default(true) @db.Boolean
+  back_fk_products_type            Products[]                    @relation("fk_products_type")
+  back_fk_attribute_def_type       ProductAttributeDefinitions[] @relation("fk_attribute_def_type")
+  back_fk_compat_rules_source_type CompatibilityRules[]          @relation("fk_compat_rules_source_type")
+  back_fk_compat_rules_target_type CompatibilityRules[]          @relation("fk_compat_rules_target_type")
+
+  @@map("product_types")
+}
+
+model Products {
+  product_id                         Decimal                  @id @default(dbgenerated("next_unsigned_bigint('products_product_id_seq_low'::regclass, 'products_product_id_seq_high'::regclass)")) @db.Decimal(20, 0)
+  product_type_id                    Decimal                  @db.Decimal(20, 0)
+  category_id                        Decimal                  @db.Decimal(20, 0)
+  brand_id                           Decimal?                 @db.Decimal(20, 0)
+  model_code                         String                   @unique(map: "uq_products_model_code") @db.VarChar(100)
+  product_name                       String                   @db.VarChar(240)
+  short_description                  String?                  @db.VarChar(500)
+  description                        String?                  @db.Text
+  product_status                     String                   @default("ACTIVE") @db.VarChar(24)
+  created_at                         DateTime                 @default(now()) @db.Timestamp(0)
+  updated_at                         DateTime                 @default(now()) @updatedAt @db.Timestamp(0)
+  fk_products_type_ref               ProductTypes             @relation("fk_products_type", fields: [product_type_id], references: [product_type_id], onDelete: Restrict)
+  fk_products_category_ref           Categories               @relation("fk_products_category", fields: [category_id], references: [category_id], onDelete: Restrict)
+  fk_products_brand_ref              Brands?                  @relation("fk_products_brand", fields: [brand_id], references: [brand_id], onDelete: SetNull)
+  back_fk_product_images_product     ProductImages[]          @relation("fk_product_images_product")
+  back_fk_attribute_values_product   ProductAttributeValues[] @relation("fk_attribute_values_product")
+  back_fk_offers_product             ProductOffers[]          @relation("fk_offers_product")
+  back_fk_product_connectors_product ProductConnectors[]      @relation("fk_product_connectors_product")
+  back_fk_relationship_source        ProductRelationships[]   @relation("fk_relationship_source")
+  back_fk_relationship_target        ProductRelationships[]   @relation("fk_relationship_target")
+  back_fk_product_reviews_product    ProductReviews[]         @relation("fk_product_reviews_product")
+  back_fk_benchmark_result_product   BenchmarkResults[]       @relation("fk_benchmark_result_product")
+
+  @@index([product_type_id, product_status], map: "ix_products_type_status")
+  @@index([category_id], map: "ix_products_category")
+  @@index([brand_id], map: "ix_products_brand")
+  @@index([product_name], map: "ix_products_name")
+  @@map("products")
+}
+
+model ProductImages {
+  image_id                      Decimal  @id @default(dbgenerated("next_unsigned_bigint('product_images_image_id_seq_low'::regclass, 'product_images_image_id_seq_high'::regclass)")) @db.Decimal(20, 0)
+  product_id                    Decimal  @db.Decimal(20, 0)
+  image_url                     String   @db.VarChar(1000)
+  alt_text                      String?  @db.VarChar(300)
+  is_primary                    Boolean  @default(false) @db.Boolean
+  sort_order                    Int      @default(0) @db.Integer
+  fk_product_images_product_ref Products @relation("fk_product_images_product", fields: [product_id], references: [product_id], onDelete: Cascade)
+
+  @@index([product_id, sort_order], map: "ix_product_images_product")
+  @@map("product_images")
+}
+
+model ProductAttributeDefinitions {
+  attribute_definition_id             Decimal                  @id @default(dbgenerated("next_unsigned_bigint('product_attribute_definitions_attribute_definition_id_seq_low'::regclass, 'product_attribute_definitions_attribute_definition_id_seq_high'::regclass)")) @db.Decimal(20, 0)
+  product_type_id                     Decimal                  @db.Decimal(20, 0)
+  attribute_code                      String                   @db.VarChar(100)
+  attribute_name                      String                   @db.VarChar(160)
+  data_type                           String                   @db.VarChar(20)
+  unit                                String?                  @db.VarChar(40)
+  is_filterable                       Boolean                  @default(false) @db.Boolean
+  is_build_critical                   Boolean                  @default(false) @db.Boolean
+  validation_json                     Json?                    @db.JsonB
+  fk_attribute_def_type_ref           ProductTypes             @relation("fk_attribute_def_type", fields: [product_type_id], references: [product_type_id], onDelete: Restrict)
+  back_fk_attribute_values_definition ProductAttributeValues[] @relation("fk_attribute_values_definition")
+
+  @@unique([product_type_id, attribute_code], map: "uq_attribute_def_type_code")
+  @@index([product_type_id], map: "ix_attribute_def_type")
+  @@map("product_attribute_definitions")
+}
+
+model ProductAttributeValues {
+  product_id                         Decimal                     @db.Decimal(20, 0)
+  attribute_definition_id            Decimal                     @db.Decimal(20, 0)
+  value_text                         String?                     @db.Text
+  value_decimal                      Decimal?                    @db.Decimal(20, 6)
+  value_integer                      Decimal?                    @db.Decimal(20, 0)
+  value_boolean                      Boolean?                    @db.Boolean
+  value_json                         Json?                       @db.JsonB
+  updated_at                         DateTime                    @default(now()) @updatedAt @db.Timestamp(0)
+  fk_attribute_values_product_ref    Products                    @relation("fk_attribute_values_product", fields: [product_id], references: [product_id], onDelete: Cascade)
+  fk_attribute_values_definition_ref ProductAttributeDefinitions @relation("fk_attribute_values_definition", fields: [attribute_definition_id], references: [attribute_definition_id], onDelete: Restrict)
+
+  @@id([product_id, attribute_definition_id])
+  @@index([attribute_definition_id], map: "ix_attribute_values_definition")
+  @@map("product_attribute_values")
+}
+
+model ProductOffers {
+  offer_id                           Decimal                  @id @default(dbgenerated("next_unsigned_bigint('product_offers_offer_id_seq_low'::regclass, 'product_offers_offer_id_seq_high'::regclass)")) @db.Decimal(20, 0)
+  product_id                         Decimal                  @db.Decimal(20, 0)
+  offer_code                         String                   @unique(map: "uq_product_offers_code") @db.VarChar(100)
+  condition_code                     String                   @default("NEW") @db.VarChar(24)
+  price                              Decimal                  @db.Decimal(15, 2)
+  currency_code                      String                   @default("VND") @db.Char(3)
+  stock_quantity                     Decimal                  @default(0) @db.Decimal(10, 0)
+  reserved_quantity                  Decimal                  @default(0) @db.Decimal(10, 0)
+  warranty_months                    Decimal                  @default(0) @db.Decimal(5, 0)
+  offer_status                       String                   @default("ACTIVE") @db.VarChar(24)
+  created_at                         DateTime                 @default(now()) @db.Timestamp(0)
+  updated_at                         DateTime                 @default(now()) @updatedAt @db.Timestamp(0)
+  fk_offers_product_ref              Products                 @relation("fk_offers_product", fields: [product_id], references: [product_id], onDelete: Restrict)
+  back_fk_cart_items_offer           CartItems[]              @relation("fk_cart_items_offer")
+  back_fk_order_items_offer          OrderItems[]             @relation("fk_order_items_offer")
+  back_fk_build_items_offer          PcBuildItems[]           @relation("fk_build_items_offer")
+  back_fk_recommendation_items_offer RecommendationItems[]    @relation("fk_recommendation_items_offer")
+  back_fk_replacement_offer          ReplacementSuggestions[] @relation("fk_replacement_offer")
+
+  @@index([product_id, offer_status], map: "ix_offers_product_status")
+  @@index([price], map: "ix_offers_price")
+  @@map("product_offers")
+}
+
+model ProductConnectors {
+  product_connector_id              Decimal  @id @default(dbgenerated("next_unsigned_bigint('product_connectors_product_connector_id_seq_low'::regclass, 'product_connectors_product_connector_id_seq_high'::regclass)")) @db.Decimal(20, 0)
+  product_id                        Decimal  @db.Decimal(20, 0)
+  connector_code                    String   @db.VarChar(80)
+  direction_code                    String   @db.VarChar(16)
+  quantity                          Decimal  @default(1) @db.Decimal(5, 0)
+  notes                             String?  @db.VarChar(500)
+  fk_product_connectors_product_ref Products @relation("fk_product_connectors_product", fields: [product_id], references: [product_id], onDelete: Cascade)
+
+  @@unique([product_id, connector_code, direction_code], map: "uq_product_connector")
+  @@map("product_connectors")
+}
+
+model ProductRelationships {
+  relationship_id            Decimal  @id @default(dbgenerated("next_unsigned_bigint('product_relationships_relationship_id_seq_low'::regclass, 'product_relationships_relationship_id_seq_high'::regclass)")) @db.Decimal(20, 0)
+  source_product_id          Decimal  @db.Decimal(20, 0)
+  target_product_id          Decimal  @db.Decimal(20, 0)
+  relationship_type          String   @db.VarChar(40)
+  status_code                String   @default("CONFIRMED") @db.VarChar(24)
+  source_note                String?  @db.VarChar(500)
+  created_at                 DateTime @default(now()) @db.Timestamp(0)
+  fk_relationship_source_ref Products @relation("fk_relationship_source", fields: [source_product_id], references: [product_id], onDelete: Restrict)
+  fk_relationship_target_ref Products @relation("fk_relationship_target", fields: [target_product_id], references: [product_id], onDelete: Restrict)
+
+  @@unique([source_product_id, target_product_id, relationship_type], map: "uq_product_relationship")
+  @@index([target_product_id, relationship_type], map: "ix_relationship_target")
+  @@map("product_relationships")
+}
+
+model CompatibilityRules {
+  rule_id                          Decimal             @id @default(dbgenerated("next_unsigned_bigint('compatibility_rules_rule_id_seq_low'::regclass, 'compatibility_rules_rule_id_seq_high'::regclass)")) @db.Decimal(20, 0)
+  rule_code                        String              @unique(map: "uq_compatibility_rules_code") @db.VarChar(100)
+  rule_name                        String              @db.VarChar(180)
+  source_product_type_id           Decimal?            @db.Decimal(20, 0)
+  target_product_type_id           Decimal?            @db.Decimal(20, 0)
+  evaluator_key                    String              @db.VarChar(100)
+  severity_code                    String              @default("WARNING") @db.VarChar(16)
+  parameters_json                  Json?               @db.JsonB
+  explanation_template             String?             @db.VarChar(1000)
+  priority                         Int                 @default(100) @db.Integer
+  is_active                        Boolean             @default(true) @db.Boolean
+  fk_compat_rules_source_type_ref  ProductTypes?       @relation("fk_compat_rules_source_type", fields: [source_product_type_id], references: [product_type_id], onDelete: SetNull)
+  fk_compat_rules_target_type_ref  ProductTypes?       @relation("fk_compat_rules_target_type", fields: [target_product_type_id], references: [product_type_id], onDelete: SetNull)
+  back_fk_build_check_results_rule BuildCheckResults[] @relation("fk_build_check_results_rule")
+
+  @@index([source_product_type_id, target_product_type_id, is_active], map: "ix_compatibility_rule_types")
+  @@map("compatibility_rules")
+}
+
+model Carts {
+  cart_id                 Decimal     @id @default(dbgenerated("next_unsigned_bigint('carts_cart_id_seq_low'::regclass, 'carts_cart_id_seq_high'::regclass)")) @db.Decimal(20, 0)
+  user_id                 Decimal?    @db.Decimal(20, 0)
+  guest_token             String?     @unique(map: "uq_carts_guest_token") @db.VarChar(128)
+  cart_status             String      @default("ACTIVE") @db.VarChar(24)
+  created_at              DateTime    @default(now()) @db.Timestamp(0)
+  updated_at              DateTime    @default(now()) @updatedAt @db.Timestamp(0)
+  fk_carts_user_ref       Users?      @relation("fk_carts_user", fields: [user_id], references: [user_id], onDelete: SetNull)
+  back_fk_cart_items_cart CartItems[] @relation("fk_cart_items_cart")
+
+  @@index([user_id, cart_status], map: "ix_carts_user_status")
+  @@map("carts")
+}
+
+model CartItems {
+  cart_item_id            Decimal       @id @default(dbgenerated("next_unsigned_bigint('cart_items_cart_item_id_seq_low'::regclass, 'cart_items_cart_item_id_seq_high'::regclass)")) @db.Decimal(20, 0)
+  cart_id                 Decimal       @db.Decimal(20, 0)
+  offer_id                Decimal       @db.Decimal(20, 0)
+  quantity                Decimal       @default(1) @db.Decimal(5, 0)
+  added_at                DateTime      @default(now()) @db.Timestamp(0)
+  fk_cart_items_cart_ref  Carts         @relation("fk_cart_items_cart", fields: [cart_id], references: [cart_id], onDelete: Cascade)
+  fk_cart_items_offer_ref ProductOffers @relation("fk_cart_items_offer", fields: [offer_id], references: [offer_id], onDelete: Restrict)
+
+  @@unique([cart_id, offer_id], map: "uq_cart_item_offer")
+  @@map("cart_items")
+}
+
+model Orders {
+  order_id                  Decimal      @id @default(dbgenerated("next_unsigned_bigint('orders_order_id_seq_low'::regclass, 'orders_order_id_seq_high'::regclass)")) @db.Decimal(20, 0)
+  order_number              String       @unique(map: "uq_orders_number") @db.VarChar(60)
+  user_id                   Decimal?     @db.Decimal(20, 0)
+  customer_name             String       @db.VarChar(160)
+  customer_email            String       @db.VarChar(254)
+  customer_phone            String?      @db.VarChar(40)
+  shipping_address          String       @db.Text
+  shipping_region           String?      @db.VarChar(160)
+  shipping_postal_code      String?      @db.VarChar(30)
+  order_status              String       @default("PENDING") @db.VarChar(24)
+  payment_method            String?      @db.VarChar(40)
+  payment_status            String       @default("UNPAID") @db.VarChar(24)
+  payment_reference         String?      @db.VarChar(180)
+  shipment_status           String       @default("NOT_SHIPPED") @db.VarChar(24)
+  shipping_carrier          String?      @db.VarChar(100)
+  tracking_number           String?      @db.VarChar(180)
+  subtotal                  Decimal      @default(0) @db.Decimal(15, 2)
+  shipping_fee              Decimal      @default(0) @db.Decimal(15, 2)
+  discount_amount           Decimal      @default(0) @db.Decimal(15, 2)
+  total_amount              Decimal      @default(0) @db.Decimal(15, 2)
+  placed_at                 DateTime     @default(now()) @db.Timestamp(0)
+  updated_at                DateTime     @default(now()) @updatedAt @db.Timestamp(0)
+  fk_orders_user_ref        Users?       @relation("fk_orders_user", fields: [user_id], references: [user_id], onDelete: SetNull)
+  back_fk_order_items_order OrderItems[] @relation("fk_order_items_order")
+
+  @@index([user_id, placed_at], map: "ix_orders_user_date")
+  @@index([order_status, placed_at], map: "ix_orders_status_date")
+  @@map("orders")
+}
+
+model OrderItems {
+  order_item_id            Decimal       @id @default(dbgenerated("next_unsigned_bigint('order_items_order_item_id_seq_low'::regclass, 'order_items_order_item_id_seq_high'::regclass)")) @db.Decimal(20, 0)
+  order_id                 Decimal       @db.Decimal(20, 0)
+  offer_id                 Decimal       @db.Decimal(20, 0)
+  product_name_snapshot    String        @db.VarChar(240)
+  offer_code_snapshot      String        @db.VarChar(100)
+  condition_snapshot       String        @db.VarChar(24)
+  quantity                 Decimal       @db.Decimal(5, 0)
+  unit_price               Decimal       @db.Decimal(15, 2)
+  line_total               Decimal       @db.Decimal(15, 2)
+  fk_order_items_order_ref Orders        @relation("fk_order_items_order", fields: [order_id], references: [order_id], onDelete: Cascade)
+  fk_order_items_offer_ref ProductOffers @relation("fk_order_items_offer", fields: [offer_id], references: [offer_id], onDelete: Restrict)
+
+  @@index([order_id], map: "ix_order_items_order")
+  @@index([offer_id], map: "ix_order_items_offer")
+  @@map("order_items")
+}
+
+model ProductReviews {
+  review_id                      Decimal  @id @default(dbgenerated("next_unsigned_bigint('product_reviews_review_id_seq_low'::regclass, 'product_reviews_review_id_seq_high'::regclass)")) @db.Decimal(20, 0)
+  product_id                     Decimal  @db.Decimal(20, 0)
+  user_id                        Decimal  @db.Decimal(20, 0)
+  rating                         Decimal  @db.Decimal(3, 0)
+  review_title                   String?  @db.VarChar(180)
+  review_text                    String?  @db.Text
+  review_status                  String   @default("PENDING") @db.VarChar(24)
+  created_at                     DateTime @default(now()) @db.Timestamp(0)
+  fk_product_reviews_product_ref Products @relation("fk_product_reviews_product", fields: [product_id], references: [product_id], onDelete: Cascade)
+  fk_product_reviews_user_ref    Users    @relation("fk_product_reviews_user", fields: [user_id], references: [user_id], onDelete: Cascade)
+
+  @@unique([product_id, user_id], map: "uq_product_review_user")
+  @@index([product_id, review_status], map: "ix_product_reviews_status")
+  @@map("product_reviews")
+}
+
+model UseCases {
+  use_case_id                Decimal                @id @default(dbgenerated("next_unsigned_bigint('use_cases_use_case_id_seq_low'::regclass, 'use_cases_use_case_id_seq_high'::regclass)")) @db.Decimal(20, 0)
+  use_case_code              String                 @unique(map: "uq_use_cases_code") @db.VarChar(60)
+  use_case_name              String                 @db.VarChar(140)
+  description                String?                @db.Text
+  is_active                  Boolean                @default(true) @db.Boolean
+  back_fk_options_use_case   QuestionnaireOptions[] @relation("fk_options_use_case")
+  back_fk_pc_builds_use_case PcBuilds[]             @relation("fk_pc_builds_use_case")
+
+  @@map("use_cases")
+}
+
+model QuestionnaireTemplates {
+  template_id                             Decimal                  @id @default(dbgenerated("next_unsigned_bigint('questionnaire_templates_template_id_seq_low'::regclass, 'questionnaire_templates_template_id_seq_high'::regclass)")) @db.Decimal(20, 0)
+  template_code                           String                   @db.VarChar(80)
+  template_name                           String                   @db.VarChar(180)
+  audience_segment                        String                   @default("BOTH") @db.VarChar(20)
+  version_number                          Decimal                  @default(1) @db.Decimal(10, 0)
+  is_active                               Boolean                  @default(true) @db.Boolean
+  back_fk_questions_template              QuestionnaireQuestions[] @relation("fk_questions_template")
+  back_fk_questionnaire_sessions_template QuestionnaireSessions[]  @relation("fk_questionnaire_sessions_template")
+
+  @@unique([template_code, version_number], map: "uq_questionnaire_template_version")
+  @@map("questionnaire_templates")
+}
+
+model QuestionnaireQuestions {
+  question_id                  Decimal                  @id @default(dbgenerated("next_unsigned_bigint('questionnaire_questions_question_id_seq_low'::regclass, 'questionnaire_questions_question_id_seq_high'::regclass)")) @db.Decimal(20, 0)
+  template_id                  Decimal                  @db.Decimal(20, 0)
+  depends_on_question_id       Decimal?                 @db.Decimal(20, 0)
+  question_code                String                   @db.VarChar(80)
+  question_text                String                   @db.VarChar(1000)
+  answer_type                  String                   @db.VarChar(24)
+  is_required                  Boolean                  @default(false) @db.Boolean
+  sort_order                   Int                      @default(0) @db.Integer
+  display_condition_json       Json?                    @db.JsonB
+  fk_questions_template_ref    QuestionnaireTemplates   @relation("fk_questions_template", fields: [template_id], references: [template_id], onDelete: Cascade)
+  fk_questions_dependency_ref  QuestionnaireQuestions?  @relation("fk_questions_dependency", fields: [depends_on_question_id], references: [question_id], onDelete: SetNull)
+  back_fk_questions_dependency QuestionnaireQuestions[] @relation("fk_questions_dependency")
+  back_fk_options_question     QuestionnaireOptions[]   @relation("fk_options_question")
+  back_fk_answers_question     QuestionnaireAnswers[]   @relation("fk_answers_question")
+
+  @@unique([template_id, question_code], map: "uq_question_code")
+  @@index([template_id, sort_order], map: "ix_questions_template_order")
+  @@map("questionnaire_questions")
+}
+
+model QuestionnaireOptions {
+  option_id               Decimal                @id @default(dbgenerated("next_unsigned_bigint('questionnaire_options_option_id_seq_low'::regclass, 'questionnaire_options_option_id_seq_high'::regclass)")) @db.Decimal(20, 0)
+  question_id             Decimal                @db.Decimal(20, 0)
+  mapped_use_case_id      Decimal?               @db.Decimal(20, 0)
+  option_code             String                 @db.VarChar(80)
+  option_label            String                 @db.VarChar(300)
+  numeric_value           Decimal?               @db.Decimal(18, 4)
+  option_data_json        Json?                  @db.JsonB
+  sort_order              Int                    @default(0) @db.Integer
+  fk_options_question_ref QuestionnaireQuestions @relation("fk_options_question", fields: [question_id], references: [question_id], onDelete: Cascade)
+  fk_options_use_case_ref UseCases?              @relation("fk_options_use_case", fields: [mapped_use_case_id], references: [use_case_id], onDelete: SetNull)
+  back_fk_answers_option  QuestionnaireAnswers[] @relation("fk_answers_option")
+
+  @@unique([question_id, option_code], map: "uq_question_option_code")
+  @@index([mapped_use_case_id], map: "ix_question_options_use_case")
+  @@map("questionnaire_options")
+}
+
+model QuestionnaireSessions {
+  questionnaire_session_id               Decimal                @id @default(dbgenerated("next_unsigned_bigint('questionnaire_sessions_questionnaire_session_id_seq_low'::regclass, 'questionnaire_sessions_questionnaire_session_id_seq_high'::regclass)")) @db.Decimal(20, 0)
+  template_id                            Decimal                @db.Decimal(20, 0)
+  user_id                                Decimal?               @db.Decimal(20, 0)
+  audience_segment                       String                 @db.VarChar(20)
+  session_status                         String                 @default("IN_PROGRESS") @db.VarChar(24)
+  budget_min                             Decimal?               @db.Decimal(15, 2)
+  budget_max                             Decimal?               @db.Decimal(15, 2)
+  region_code                            String?                @db.VarChar(80)
+  created_at                             DateTime               @default(now()) @db.Timestamp(0)
+  completed_at                           DateTime?              @db.Timestamp(0)
+  fk_questionnaire_sessions_template_ref QuestionnaireTemplates @relation("fk_questionnaire_sessions_template", fields: [template_id], references: [template_id], onDelete: Restrict)
+  fk_questionnaire_sessions_user_ref     Users?                 @relation("fk_questionnaire_sessions_user", fields: [user_id], references: [user_id], onDelete: SetNull)
+  back_fk_answers_session                QuestionnaireAnswers[] @relation("fk_answers_session")
+  back_fk_recommendations_questionnaire  RecommendationRuns[]   @relation("fk_recommendations_questionnaire")
+
+  @@index([user_id, created_at], map: "ix_questionnaire_sessions_user")
+  @@index([template_id, session_status], map: "ix_questionnaire_sessions_template")
+  @@map("questionnaire_sessions")
+}
+
+model QuestionnaireAnswers {
+  answer_id                Decimal                @id @default(dbgenerated("next_unsigned_bigint('questionnaire_answers_answer_id_seq_low'::regclass, 'questionnaire_answers_answer_id_seq_high'::regclass)")) @db.Decimal(20, 0)
+  questionnaire_session_id Decimal                @db.Decimal(20, 0)
+  question_id              Decimal                @db.Decimal(20, 0)
+  selected_option_id       Decimal?               @db.Decimal(20, 0)
+  answer_text              String?                @db.Text
+  answer_number            Decimal?               @db.Decimal(20, 6)
+  answer_boolean           Boolean?               @db.Boolean
+  answer_json              Json?                  @db.JsonB
+  created_at               DateTime               @default(now()) @db.Timestamp(0)
+  fk_answers_session_ref   QuestionnaireSessions  @relation("fk_answers_session", fields: [questionnaire_session_id], references: [questionnaire_session_id], onDelete: Cascade)
+  fk_answers_question_ref  QuestionnaireQuestions @relation("fk_answers_question", fields: [question_id], references: [question_id], onDelete: Restrict)
+  fk_answers_option_ref    QuestionnaireOptions?  @relation("fk_answers_option", fields: [selected_option_id], references: [option_id], onDelete: SetNull)
+
+  @@index([questionnaire_session_id, question_id], map: "ix_answers_session_question")
+  @@index([selected_option_id], map: "ix_answers_option")
+  @@map("questionnaire_answers")
+}
+
+model PcBuilds {
+  build_id                      Decimal            @id @default(dbgenerated("next_unsigned_bigint('pc_builds_build_id_seq_low'::regclass, 'pc_builds_build_id_seq_high'::regclass)")) @db.Decimal(20, 0)
+  user_id                       Decimal?           @db.Decimal(20, 0)
+  build_name                    String             @db.VarChar(180)
+  description                   String?            @db.Text
+  budget_min                    Decimal?           @db.Decimal(15, 2)
+  budget_max                    Decimal?           @db.Decimal(15, 2)
+  primary_use_case_id           Decimal?           @db.Decimal(20, 0)
+  target_resolution             String?            @db.VarChar(40)
+  build_status                  String             @default("DRAFT") @db.VarChar(24)
+  is_public                     Boolean            @default(false) @db.Boolean
+  created_at                    DateTime           @default(now()) @db.Timestamp(0)
+  updated_at                    DateTime           @default(now()) @updatedAt @db.Timestamp(0)
+  fk_pc_builds_user_ref         Users?             @relation("fk_pc_builds_user", fields: [user_id], references: [user_id], onDelete: SetNull)
+  fk_pc_builds_use_case_ref     UseCases?          @relation("fk_pc_builds_use_case", fields: [primary_use_case_id], references: [use_case_id], onDelete: SetNull)
+  back_fk_build_revisions_build PcBuildRevisions[] @relation("fk_build_revisions_build")
+
+  @@index([user_id, updated_at], map: "ix_pc_builds_user")
+  @@index([primary_use_case_id], map: "ix_pc_builds_use_case")
+  @@map("pc_builds")
+}
+
+model PcBuildRevisions {
+  build_revision_id                 Decimal                  @id @default(dbgenerated("next_unsigned_bigint('pc_build_revisions_build_revision_id_seq_low'::regclass, 'pc_build_revisions_build_revision_id_seq_high'::regclass)")) @db.Decimal(20, 0)
+  build_id                          Decimal                  @db.Decimal(20, 0)
+  revision_number                   Decimal                  @db.Decimal(10, 0)
+  revision_name                     String?                  @db.VarChar(180)
+  estimated_total                   Decimal                  @default(0) @db.Decimal(15, 2)
+  created_by                        Decimal?                 @db.Decimal(20, 0)
+  created_at                        DateTime                 @default(now()) @db.Timestamp(0)
+  fk_build_revisions_build_ref      PcBuilds                 @relation("fk_build_revisions_build", fields: [build_id], references: [build_id], onDelete: Cascade)
+  fk_build_revisions_user_ref       Users?                   @relation("fk_build_revisions_user", fields: [created_by], references: [user_id], onDelete: SetNull)
+  back_fk_build_items_revision      PcBuildItems[]           @relation("fk_build_items_revision")
+  back_fk_build_checks_revision     BuildCheckRuns[]         @relation("fk_build_checks_revision")
+  back_fk_system_benchmark_revision SystemBenchmarkResults[] @relation("fk_system_benchmark_revision")
+  back_fk_recommendations_revision  RecommendationRuns[]     @relation("fk_recommendations_revision")
+
+  @@unique([build_id, revision_number], map: "uq_build_revision_number")
+  @@map("pc_build_revisions")
+}
+
+model PcBuildItems {
+  build_item_id                   Decimal                  @id @default(dbgenerated("next_unsigned_bigint('pc_build_items_build_item_id_seq_low'::regclass, 'pc_build_items_build_item_id_seq_high'::regclass)")) @db.Decimal(20, 0)
+  build_revision_id               Decimal                  @db.Decimal(20, 0)
+  component_slot_code             String                   @db.VarChar(60)
+  offer_id                        Decimal                  @db.Decimal(20, 0)
+  quantity                        Decimal                  @default(1) @db.Decimal(5, 0)
+  unit_price_snapshot             Decimal                  @db.Decimal(15, 2)
+  added_at                        DateTime                 @default(now()) @db.Timestamp(0)
+  fk_build_items_revision_ref     PcBuildRevisions         @relation("fk_build_items_revision", fields: [build_revision_id], references: [build_revision_id], onDelete: Cascade)
+  fk_build_items_offer_ref        ProductOffers            @relation("fk_build_items_offer", fields: [offer_id], references: [offer_id], onDelete: Restrict)
+  back_fk_build_check_source_item BuildCheckResults[]      @relation("fk_build_check_source_item")
+  back_fk_build_check_target_item BuildCheckResults[]      @relation("fk_build_check_target_item")
+  back_fk_replacement_source_item ReplacementSuggestions[] @relation("fk_replacement_source_item")
+
+  @@unique([build_revision_id, component_slot_code], map: "uq_build_item_slot")
+  @@index([offer_id], map: "ix_build_items_offer")
+  @@map("pc_build_items")
+}
+
+model BuildCheckRuns {
+  build_check_run_id              Decimal             @id @default(dbgenerated("next_unsigned_bigint('build_check_runs_build_check_run_id_seq_low'::regclass, 'build_check_runs_build_check_run_id_seq_high'::regclass)")) @db.Decimal(20, 0)
+  build_revision_id               Decimal             @db.Decimal(20, 0)
+  overall_status                  String              @default("NOT_CHECKED") @db.VarChar(24)
+  total_price                     Decimal             @default(0) @db.Decimal(15, 2)
+  checked_rule_count              Decimal             @default(0) @db.Decimal(10, 0)
+  error_count                     Decimal             @default(0) @db.Decimal(10, 0)
+  warning_count                   Decimal             @default(0) @db.Decimal(10, 0)
+  checked_at                      DateTime            @default(now()) @db.Timestamp(0)
+  summary_json                    Json?               @db.JsonB
+  fk_build_checks_revision_ref    PcBuildRevisions    @relation("fk_build_checks_revision", fields: [build_revision_id], references: [build_revision_id], onDelete: Cascade)
+  back_fk_build_check_results_run BuildCheckResults[] @relation("fk_build_check_results_run")
+
+  @@index([build_revision_id, checked_at], map: "ix_build_checks_revision")
+  @@map("build_check_runs")
+}
+
+model BuildCheckResults {
+  build_check_result_id           Decimal             @id @default(dbgenerated("next_unsigned_bigint('build_check_results_build_check_result_id_seq_low'::regclass, 'build_check_results_build_check_result_id_seq_high'::regclass)")) @db.Decimal(20, 0)
+  build_check_run_id              Decimal             @db.Decimal(20, 0)
+  rule_id                         Decimal?            @db.Decimal(20, 0)
+  source_build_item_id            Decimal?            @db.Decimal(20, 0)
+  target_build_item_id            Decimal?            @db.Decimal(20, 0)
+  severity_code                   String              @db.VarChar(16)
+  result_status                   String              @db.VarChar(24)
+  message                         String              @db.VarChar(1200)
+  details_json                    Json?               @db.JsonB
+  fk_build_check_results_run_ref  BuildCheckRuns      @relation("fk_build_check_results_run", fields: [build_check_run_id], references: [build_check_run_id], onDelete: Cascade)
+  fk_build_check_results_rule_ref CompatibilityRules? @relation("fk_build_check_results_rule", fields: [rule_id], references: [rule_id], onDelete: SetNull)
+  fk_build_check_source_item_ref  PcBuildItems?       @relation("fk_build_check_source_item", fields: [source_build_item_id], references: [build_item_id], onDelete: SetNull)
+  fk_build_check_target_item_ref  PcBuildItems?       @relation("fk_build_check_target_item", fields: [target_build_item_id], references: [build_item_id], onDelete: SetNull)
+
+  @@index([build_check_run_id, severity_code], map: "ix_build_check_results_run")
+  @@index([rule_id], map: "ix_build_check_results_rule")
+  @@map("build_check_results")
+}
+
+model BenchmarkScenarios {
+  benchmark_scenario_id             Decimal                  @id @default(dbgenerated("next_unsigned_bigint('benchmark_scenarios_benchmark_scenario_id_seq_low'::regclass, 'benchmark_scenarios_benchmark_scenario_id_seq_high'::regclass)")) @db.Decimal(20, 0)
+  scenario_code                     String                   @unique(map: "uq_benchmark_scenario_code") @db.VarChar(100)
+  scenario_name                     String                   @db.VarChar(240)
+  workload_type                     String                   @db.VarChar(40)
+  workload_name                     String                   @db.VarChar(240)
+  resolution                        String?                  @db.VarChar(40)
+  quality_preset                    String?                  @db.VarChar(80)
+  scenario_version                  String?                  @db.VarChar(80)
+  extra_parameters_json             Json?                    @db.JsonB
+  back_fk_benchmark_result_scenario BenchmarkResults[]       @relation("fk_benchmark_result_scenario")
+  back_fk_system_benchmark_scenario SystemBenchmarkResults[] @relation("fk_system_benchmark_scenario")
+
+  @@map("benchmark_scenarios")
+}
+
+model BenchmarkResults {
+  benchmark_result_id              Decimal            @id @default(dbgenerated("next_unsigned_bigint('benchmark_results_benchmark_result_id_seq_low'::regclass, 'benchmark_results_benchmark_result_id_seq_high'::regclass)")) @db.Decimal(20, 0)
+  product_id                       Decimal            @db.Decimal(20, 0)
+  benchmark_scenario_id            Decimal            @db.Decimal(20, 0)
+  metric_code                      String             @db.VarChar(80)
+  metric_value                     Decimal            @db.Decimal(20, 6)
+  unit                             String             @db.VarChar(40)
+  result_kind                      String             @default("MEASURED") @db.VarChar(24)
+  source_name                      String?            @db.VarChar(240)
+  source_url                       String?            @db.VarChar(1000)
+  confidence_score                 Decimal?           @db.Decimal(5, 2)
+  equipment_json                   Json?              @db.JsonB
+  recorded_at                      DateTime?          @db.Timestamp(0)
+  fk_benchmark_result_product_ref  Products           @relation("fk_benchmark_result_product", fields: [product_id], references: [product_id], onDelete: Restrict)
+  fk_benchmark_result_scenario_ref BenchmarkScenarios @relation("fk_benchmark_result_scenario", fields: [benchmark_scenario_id], references: [benchmark_scenario_id], onDelete: Restrict)
+
+  @@index([product_id, benchmark_scenario_id, metric_code], map: "ix_benchmark_product_scenario")
+  @@index([benchmark_scenario_id, metric_code], map: "ix_benchmark_scenario_metric")
+  @@map("benchmark_results")
+}
+
+model SystemBenchmarkResults {
+  system_benchmark_result_id       Decimal            @id @default(dbgenerated("next_unsigned_bigint('system_benchmark_results_system_benchmark_result_id_seq_low'::regclass, 'system_benchmark_results_system_benchmark_result_id_seq_high'::regclass)")) @db.Decimal(20, 0)
+  build_revision_id                Decimal            @db.Decimal(20, 0)
+  benchmark_scenario_id            Decimal            @db.Decimal(20, 0)
+  metric_code                      String             @db.VarChar(80)
+  metric_value                     Decimal            @db.Decimal(20, 6)
+  unit                             String             @db.VarChar(40)
+  result_kind                      String             @default("ESTIMATED") @db.VarChar(24)
+  source_name                      String?            @db.VarChar(240)
+  confidence_score                 Decimal?           @db.Decimal(5, 2)
+  notes                            String?            @db.VarChar(1000)
+  created_at                       DateTime           @default(now()) @db.Timestamp(0)
+  fk_system_benchmark_revision_ref PcBuildRevisions   @relation("fk_system_benchmark_revision", fields: [build_revision_id], references: [build_revision_id], onDelete: Cascade)
+  fk_system_benchmark_scenario_ref BenchmarkScenarios @relation("fk_system_benchmark_scenario", fields: [benchmark_scenario_id], references: [benchmark_scenario_id], onDelete: Restrict)
+
+  @@index([build_revision_id, benchmark_scenario_id], map: "ix_system_benchmark_revision")
+  @@map("system_benchmark_results")
+}
+
+model RecommendationRuns {
+  recommendation_run_id                Decimal                  @id @default(dbgenerated("next_unsigned_bigint('recommendation_runs_recommendation_run_id_seq_low'::regclass, 'recommendation_runs_recommendation_run_id_seq_high'::regclass)")) @db.Decimal(20, 0)
+  user_id                              Decimal?                 @db.Decimal(20, 0)
+  questionnaire_session_id             Decimal?                 @db.Decimal(20, 0)
+  build_revision_id                    Decimal?                 @db.Decimal(20, 0)
+  recommendation_type                  String                   @db.VarChar(40)
+  method_key                           String                   @db.VarChar(100)
+  run_status                           String                   @default("COMPLETED") @db.VarChar(24)
+  budget_target                        Decimal?                 @db.Decimal(15, 2)
+  summary                              String?                  @db.Text
+  analysis_json                        Json?                    @db.JsonB
+  created_at                           DateTime                 @default(now()) @db.Timestamp(0)
+  fk_recommendations_user_ref          Users?                   @relation("fk_recommendations_user", fields: [user_id], references: [user_id], onDelete: SetNull)
+  fk_recommendations_questionnaire_ref QuestionnaireSessions?   @relation("fk_recommendations_questionnaire", fields: [questionnaire_session_id], references: [questionnaire_session_id], onDelete: SetNull)
+  fk_recommendations_revision_ref      PcBuildRevisions?        @relation("fk_recommendations_revision", fields: [build_revision_id], references: [build_revision_id], onDelete: SetNull)
+  back_fk_recommendation_items_run     RecommendationItems[]    @relation("fk_recommendation_items_run")
+  back_fk_replacement_run              ReplacementSuggestions[] @relation("fk_replacement_run")
+
+  @@index([user_id, created_at], map: "ix_recommendation_user_date")
+  @@index([questionnaire_session_id], map: "ix_recommendation_questionnaire")
+  @@index([build_revision_id], map: "ix_recommendation_build_revision")
+  @@map("recommendation_runs")
+}
+
+model RecommendationItems {
+  recommendation_item_id            Decimal            @id @default(dbgenerated("next_unsigned_bigint('recommendation_items_recommendation_item_id_seq_low'::regclass, 'recommendation_items_recommendation_item_id_seq_high'::regclass)")) @db.Decimal(20, 0)
+  recommendation_run_id             Decimal            @db.Decimal(20, 0)
+  offer_id                          Decimal            @db.Decimal(20, 0)
+  component_slot_code               String             @db.VarChar(60)
+  rank_number                       Decimal            @default(1) @db.Decimal(10, 0)
+  reason                            String?            @db.Text
+  price_snapshot                    Decimal            @db.Decimal(15, 2)
+  estimated_metrics_json            Json?              @db.JsonB
+  is_selected                       Boolean            @default(false) @db.Boolean
+  fk_recommendation_items_run_ref   RecommendationRuns @relation("fk_recommendation_items_run", fields: [recommendation_run_id], references: [recommendation_run_id], onDelete: Cascade)
+  fk_recommendation_items_offer_ref ProductOffers      @relation("fk_recommendation_items_offer", fields: [offer_id], references: [offer_id], onDelete: Restrict)
+
+  @@index([recommendation_run_id, component_slot_code, rank_number], map: "ix_recommendation_items_run")
+  @@map("recommendation_items")
+}
+
+model ReplacementSuggestions {
+  replacement_suggestion_id      Decimal             @id @default(dbgenerated("next_unsigned_bigint('replacement_suggestions_replacement_suggestion_id_seq_low'::regclass, 'replacement_suggestions_replacement_suggestion_id_seq_high'::regclass)")) @db.Decimal(20, 0)
+  recommendation_run_id          Decimal?            @db.Decimal(20, 0)
+  source_build_item_id           Decimal             @db.Decimal(20, 0)
+  replacement_offer_id           Decimal             @db.Decimal(20, 0)
+  rank_number                    Decimal             @default(1) @db.Decimal(10, 0)
+  price_difference               Decimal             @db.Decimal(15, 2)
+  performance_delta_percent      Decimal?            @db.Decimal(9, 3)
+  compatibility_status           String              @default("NOT_CHECKED") @db.VarChar(24)
+  explanation                    String?             @db.Text
+  analysis_json                  Json?               @db.JsonB
+  created_at                     DateTime            @default(now()) @db.Timestamp(0)
+  fk_replacement_run_ref         RecommendationRuns? @relation("fk_replacement_run", fields: [recommendation_run_id], references: [recommendation_run_id], onDelete: SetNull)
+  fk_replacement_source_item_ref PcBuildItems        @relation("fk_replacement_source_item", fields: [source_build_item_id], references: [build_item_id], onDelete: Cascade)
+  fk_replacement_offer_ref       ProductOffers       @relation("fk_replacement_offer", fields: [replacement_offer_id], references: [offer_id], onDelete: Restrict)
+
+  @@index([source_build_item_id, rank_number], map: "ix_replacement_source_item")
+  @@index([recommendation_run_id], map: "ix_replacement_run")
+  @@map("replacement_suggestions")
+}
