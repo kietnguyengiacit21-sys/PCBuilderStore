@@ -93,8 +93,8 @@ class PostgresCatalogIntegrationIT {
                 "benchmark_results", "system_benchmark_results", "recommendation_runs",
                 "recommendation_items", "replacement_suggestions");
         assertEquals(35, expectedTables.size());
-        assertTrue(tableNames.containsAll(expectedTables),
-                "All 35 application tables from the existing migration must exist.");
+        assertEquals(expectedTables, tableNames,
+                "The disposable schema must contain exactly the 35 application tables.");
         verifyCatalogColumnTypes();
         verifyCatalogIndexesAndForeignKeys();
     }
@@ -389,7 +389,7 @@ class PostgresCatalogIntegrationIT {
     private void verifyCatalogIndexesAndForeignKeys() {
         assertTrue(indexExists("ix_products_type_status"));
         assertTrue(indexExists("ix_offers_product_status"));
-        assertTrue(indexExists("ix_product_attribute_def_type"));
+        assertTrue(indexExists("ix_attribute_def_type"));
         assertTrue(foreignKeyExists("fk_products_type"));
         assertTrue(foreignKeyExists("fk_products_category"));
         assertTrue(foreignKeyExists("fk_offers_product"));

@@ -29,6 +29,24 @@ catalog SQL against PostgreSQL.
   sequence/function DDL. It must be applied only to a newly provisioned,
   disposable PostgreSQL database that supports those definitions.
 
+## Schema comparison and mismatches
+
+The integration test's table-name set was compared with the 35 `CREATE TABLE`
+statements in the migration. The test now requires an exact match, rather than
+only checking that the expected names are present. Its asserted catalog numeric,
+JSONB, and image column types and the fixture insert/delete columns were also
+checked against the migration definitions. Fixture foreign-key references and
+cleanup order are consistent with the declared constraints.
+
+| Test assertion | Migration definition | Finding |
+|---|---|---|
+| `ix_product_attribute_def_type` | `ix_attribute_def_type` on `product_attribute_definitions` | **Test expectation issue.** Corrected the test to check `ix_attribute_def_type`. No migration/schema change is needed. |
+
+No other schema mismatches were found in the reviewed table names, asserted
+column types, checked foreign-key names, or fixture/cleanup statements. This is a
+source-level comparison only; the migration was not executed, so it is not live
+database verification.
+
 ## Integration suite
 
 `backend-java/src/test/java/com/pc_builder_store/catalog/PostgresCatalogIntegrationIT.java`
