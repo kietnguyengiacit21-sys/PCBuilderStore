@@ -21,6 +21,9 @@ public class DatabaseConfiguration {
     public HikariDataSource dataSource(Environment environment) {
         String url = environment.getProperty("SPRING_DATASOURCE_URL");
         if (url == null || url.isBlank()) {
+            url = environment.getProperty("spring.datasource.url");
+        }
+        if (url == null || url.isBlank()) {
             url = environment.getProperty("DATABASE_URL", DEFAULT_DATABASE_URL);
         }
 
