@@ -8,6 +8,7 @@ backend/dist/
 !.env.example
 coverage/
 **/dist/
+**/target/
 **/.vite/
 **/.vitest-cache/
 .turbo/
