@@ -82,7 +82,7 @@ public class CatalogRepository {
                 ) ORDER BY pi."sort_order", pi."image_id")
                 FROM "product_images" pi
                 WHERE pi."product_id" = p."product_id"
-                  AND pi."image_url" ~ '^https?://[^[:space:]]+$'
+                  AND (pi."image_url" COLLATE "C") ~ '^https?://[^[:space:]]+$'
               ), '[]'::jsonb)::text AS "imagesJson",
               EXISTS (
                 SELECT 1

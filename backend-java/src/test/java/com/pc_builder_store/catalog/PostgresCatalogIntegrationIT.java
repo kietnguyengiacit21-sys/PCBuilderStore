@@ -180,7 +180,9 @@ class PostgresCatalogIntegrationIT {
                   ('https://example.test/phase3a.png', 'valid image', TRUE, 1),
                   ('https://user:password@example.test/private.png', 'embedded credentials', FALSE, 2),
                   ('https://bad host/image.png', 'invalid URL', FALSE, 3),
-                  ('ftp://example.test/file.png', 'unsupported protocol', FALSE, 4)
+                  ('ftp://example.test/file.png', 'unsupported protocol', FALSE, 4),
+                  ('http://example.test/phase3a-http.png', 'valid HTTP image', FALSE, 5),
+                  ('https://user:password@example.test/private.png', 'embedded credentials', FALSE, 6)
                 ) AS image(url, alt, primary_image, position)
                 WHERE p.model_code = ?
                 """,
@@ -240,9 +242,10 @@ class PostgresCatalogIntegrationIT {
         assertEquals("\"DDR5\"", textFacet.path("values").get(0).path("value").asString());
         assertEquals("DDR5", textFacet.path("values").get(0).path("label").asString());
 
-        assertEquals("3200.250000",
+        BigDecimal decimalFacetValue = new BigDecimal(
                 findFacet(data.path("attributes"), fixtureType, "it_decimal")
                         .path("values").get(0).path("value").asString());
+        assertEquals(0, decimalFacetValue.compareTo(new BigDecimal("3200.250000")));
         assertEquals("16",
                 findFacet(data.path("attributes"), fixtureType, "it_integer")
                         .path("values").get(0).path("value").asString());
@@ -344,13 +347,15 @@ class PostgresCatalogIntegrationIT {
         assertEquals(7, product.path("offers").get(0).path("availableQuantity").intValue());
         assertTrue(product.path("offers").get(0).path("isDemo").booleanValue());
         assertEquals("DDR5", product.path("specifications").path("it_text").asString());
-        assertEquals(new BigDecimal("3200.250000"),
-                product.path("specifications").path("it_decimal").decimalValue());
+        BigDecimal actualDecimal = product.path("specifications")
+                .path("it_decimal").decimalValue();
+        assertEquals(0, actualDecimal.compareTo(new BigDecimal("3200.250000")));
         assertEquals(16, product.path("specifications").path("it_integer").intValue());
         assertTrue(product.path("specifications").path("it_boolean").booleanValue());
         assertEquals(2, product.path("specifications").path("it_json").path("channel").intValue());
-        assertEquals(1, product.path("images").size());
+        assertEquals(2, product.path("images").size());
         assertEquals("https://example.test/phase3a.png", product.path("images").get(0).path("url").asString());
+        assertEquals("http://example.test/phase3a-http.png", product.path("images").get(1).path("url").asString());
         assertTrue(product.path("demoData").booleanValue());
         assertTrue(response.path("notice").asString().contains("DEMO-"));
     }
