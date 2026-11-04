@@ -79,10 +79,18 @@ not configured or run in this phase.
 ## Environment variables
 
 The database URL can be supplied through either `SPRING_DATASOURCE_URL` or
-`DATABASE_URL`. `SPRING_DATASOURCE_URL` takes precedence. Standard PostgreSQL
-`postgresql://` and `postgres://` URLs are normalized to JDBC URLs; JDBC URLs are
-also accepted directly. The default URL points to a local database and contains no
-credentials.
+`DATABASE_URL`. `SPRING_DATASOURCE_URL` takes precedence. Supported formats are:
+
+- JDBC: `jdbc:postgresql://host:5432/database?sslmode=require`. Supply credentials
+  separately with the username and password variables below.
+- PostgreSQL URI: `postgresql://username:password@host:5432/database?sslmode=require`.
+- PostgreSQL alias: `postgres://username:password@host:5432/database?sslmode=require`.
+
+URI credentials are percent-decoded, and query parameters such as `sslmode` are
+preserved when the URI is converted to a JDBC URL. For URI formats, explicit
+`SPRING_DATASOURCE_USERNAME` and `SPRING_DATASOURCE_PASSWORD` values take
+precedence over credentials embedded in the URI. The default URL points to a local
+database and contains no credentials.
 
 Set credentials separately with `SPRING_DATASOURCE_USERNAME` and
 `SPRING_DATASOURCE_PASSWORD`. For example, in PowerShell:
@@ -94,8 +102,8 @@ $env:SPRING_DATASOURCE_PASSWORD = "your-database-password"
 .\mvnw.cmd spring-boot:run
 ```
 
-Alternatively, set `SPRING_DATASOURCE_URL` to a `jdbc:postgresql://...` URL. Keep
-credentials out of source control and logs.
+Alternatively, set `SPRING_DATASOURCE_URL` to a `jdbc:postgresql://...` URL and
+supply credentials separately. Keep credentials out of source control and logs.
 
 `CORS_ALLOWED_ORIGINS` is a comma-separated list of exact frontend origins. It
 defaults to `http://localhost:5173`; add the deployed Vercel frontend origin when it
