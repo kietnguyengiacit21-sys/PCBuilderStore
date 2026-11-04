@@ -37,6 +37,9 @@ The API listens on port 8080 by default:
 
 - `GET http://localhost:8080/api/health`
 - `GET http://localhost:8080/api/health/db`
+- `GET http://localhost:8080/api/catalog/facets`
+- `GET http://localhost:8080/api/catalog/products`
+- `GET http://localhost:8080/api/catalog/products/{modelCode}`
 
 Build and test with:
 
@@ -53,6 +56,12 @@ returns HTTP 503 when the configured database cannot be reached.
 ```text
 backend-java/
   src/main/java/com/pc_builder_store/
+    catalog/
+      controller/  Catalog HTTP routes
+      dto/         Catalog response and query records
+      exception/   Catalog query and not-found exceptions
+      repository/  Parameterized PostgreSQL catalog queries
+      service/     Catalog query validation and orchestration
     common/       Shared API response types
     config/       DataSource and CORS configuration
     controller/   HTTP routes and request/response mapping
@@ -68,6 +77,11 @@ backend-java/
 Controllers handle HTTP concerns and return DTOs. Services coordinate application
 logic. Repositories perform database access. DTOs define API payloads and keep
 database access details out of HTTP responses.
+
+The catalog product detail route allows encoded slashes in model codes. Embedded
+Tomcat is configured to decode `%2F` so the existing frontend URL form
+`/api/catalog/products/KF432C16BB%2F8` continues to work; a real embedded-Tomcat
+HTTP test covers this behavior.
 
 ## JdbcTemplate
 

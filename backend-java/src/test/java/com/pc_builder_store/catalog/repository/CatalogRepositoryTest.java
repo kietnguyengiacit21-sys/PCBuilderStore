@@ -1,0 +1,190 @@
+package com.pc_builder_store.catalog.repository;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import com.pc_builder_store.catalog.dto.CatalogProduct;
+import com.pc_builder_store.catalog.dto.CatalogQuery;
+import com.pc_builder_store.catalog.dto.CatalogQuery.AttributeFilter;
+import com.pc_builder_store.catalog.dto.CatalogQuery.Direction;
+import com.pc_builder_store.catalog.dto.CatalogQuery.Sort;
+import com.pc_builder_store.catalog.exception.InvalidCatalogQueryException;
+import java.math.BigDecimal;
+import java.sql.ResultSet;
+import java.util.List;
+import java.util.Map;
+import org.junit.jupiter.api.Test;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.jdbc.core.namedparam.SqlParameterSource;
+import tools.jackson.databind.json.JsonMapper;
+
+class CatalogRepositoryTest {
+
+    private final NamedParameterJdbcTemplate jdbcTemplate =
+            mock(NamedParameterJdbcTemplate.class);
+    private final CatalogRepository repository =
+            new CatalogRepository(jdbcTemplate, JsonMapper.builder().build());
+
+    @Test
+    void buildsParameterizedSearchAndAttributeFilters() {
+        CatalogQuery query = new CatalogQuery(
+                2, 15, "unsafe%' OR TRUE --", "GPU", null, "Acme",
+                null, null, Sort.NAME, Direction.DESC,
+                List.of(new AttributeFilter("memory_type", "DDR5")));
+
+        CatalogRepository.SqlQuery where = repository.productWhere(query);
+
+        assertTrue(where.sql().contains(":search"));
+        assertTrue(where.sql().contains(":type"));
+        assertTrue(where.sql().contains(":brand"));
+        assertTrue(where.sql().contains("CAST(:attributeValue0 AS jsonb)"));
+        assertFalse(where.sql().contains("unsafe"));
+        assertEquals("%unsafe%' OR TRUE --%", where.parameters().getValue("search"));
+        assertEquals("\"DDR5\"", where.parameters().getValue("attributeValue0"));
+    }
+
+    @Test
+    void keepsPriceBoundsOnTheSameActiveOffer() {
+        CatalogQuery query = new CatalogQuery(
+                1, 20, null, null, null, null,
+                new BigDecimal("100.00"), new BigDecimal("200.00"),
+                Sort.PRICE, Direction.DESC, List.of());
+
+        CatalogRepository.SqlQuery where = repository.productWhere(query);
+
+        assertEquals(1, countOccurrences(where.sql(), "EXISTS (SELECT 1 FROM \"product_offers\" pf"));
+        assertTrue(where.sql().contains("pf.\"price\" >= :minPrice"));
+        assertTrue(where.sql().contains("pf.\"price\" <= :maxPrice"));
+        assertTrue(where.sql().contains("pf.\"offer_status\" = 'ACTIVE'"));
+        assertEquals(new BigDecimal("100.00"), where.parameters().getValue("minPrice"));
+        assertEquals(new BigDecimal("200.00"), where.parameters().getValue("maxPrice"));
+    }
+
+    @Test
+    void treatsWhitespaceAttributeValuesAsJsonStrings() {
+        CatalogRepository.SqlQuery where = repository.productWhere(new CatalogQuery(
+                1, 20, null, null, null, null, null, null,
+                Sort.NAME, Direction.ASC,
+                List.of(new AttributeFilter("description", "   "))));
+
+        assertEquals("\"   \"", where.parameters().getValue("attributeValue0"));
+    }
+
+    @Test
+    void sendsFilterValuesAsParametersWhenExecutingQueries() {
+        when(jdbcTemplate.queryForObject(
+                anyString(), any(SqlParameterSource.class), eq(Long.class))).thenReturn(1L);
+        when(jdbcTemplate.query(
+                anyString(), any(SqlParameterSource.class), any(RowMapper.class))).thenReturn(List.of());
+
+        repository.findProducts(new CatalogQuery(
+                1, 20, "model", "GPU", "GRAPHICS_CARD", "Acme",
+                new BigDecimal("10.00"), new BigDecimal("20.00"),
+                Sort.PRICE, Direction.ASC, List.of()));
+
+        org.mockito.ArgumentCaptor<String> sqlCaptor =
+                org.mockito.ArgumentCaptor.forClass(String.class);
+        org.mockito.ArgumentCaptor<SqlParameterSource> parametersCaptor =
+                org.mockito.ArgumentCaptor.forClass(SqlParameterSource.class);
+        org.mockito.Mockito.verify(jdbcTemplate).queryForObject(
+                sqlCaptor.capture(), parametersCaptor.capture(), eq(Long.class));
+        assertTrue(sqlCaptor.getValue().contains(":search"));
+        assertTrue(sqlCaptor.getValue().contains(":minPrice"));
+        assertFalse(sqlCaptor.getValue().contains("10.00"));
+        assertEquals("%model%", parametersCaptor.getValue().getValue("search"));
+        assertEquals("GPU", parametersCaptor.getValue().getValue("type"));
+    }
+
+    @Test
+    void appliesPriceSortAndPaginationWithBoundParameters() {
+        when(jdbcTemplate.queryForObject(
+                anyString(), any(SqlParameterSource.class), eq(Long.class))).thenReturn(25L);
+        when(jdbcTemplate.query(
+                anyString(), any(SqlParameterSource.class), any(RowMapper.class))).thenReturn(List.of());
+
+        repository.findProducts(new CatalogQuery(
+                3, 10, null, null, null, null, null, null,
+                Sort.PRICE, Direction.DESC, List.of()));
+
+        org.mockito.ArgumentCaptor<String> sqlCaptor =
+                org.mockito.ArgumentCaptor.forClass(String.class);
+        org.mockito.ArgumentCaptor<SqlParameterSource> parametersCaptor =
+                org.mockito.ArgumentCaptor.forClass(SqlParameterSource.class);
+        org.mockito.Mockito.verify(jdbcTemplate).query(
+                sqlCaptor.capture(), parametersCaptor.capture(), any(RowMapper.class));
+        assertTrue(sqlCaptor.getValue().contains("DESC NULLS LAST, p.\"product_name\" ASC"));
+        assertTrue(sqlCaptor.getValue().contains("LIMIT :limit OFFSET :offset"));
+        assertEquals(10, parametersCaptor.getValue().getValue("limit"));
+        assertEquals(20L, parametersCaptor.getValue().getValue("offset"));
+    }
+
+    @Test
+    void rejectsAttributeCodesNotMarkedAsFilterable() {
+        when(jdbcTemplate.queryForList(
+                anyString(), org.mockito.ArgumentMatchers.<Map<String, ?>>any(), eq(String.class)))
+                .thenReturn(List.of("supported"));
+
+        assertThrows(InvalidCatalogQueryException.class, () -> repository.findProducts(
+                new CatalogQuery(
+                        1, 20, null, null, null, null, null, null,
+                        Sort.NAME, Direction.ASC,
+                        List.of(new AttributeFilter("unsupported", "value")))));
+    }
+
+    @Test
+    void mapsPostgresJsonTextToTypedResponseFields() throws Exception {
+        ResultSet row = mock(ResultSet.class);
+        when(row.getString("productId")).thenReturn("18446744073709551615");
+        when(row.getString("modelCode")).thenReturn("KF432C16BB/8");
+        when(row.getString("productName")).thenReturn("Memory kit");
+        when(row.getString("status")).thenReturn("ACTIVE");
+        when(row.getString("productType")).thenReturn("MEMORY");
+        when(row.getString("productTypeName")).thenReturn("Memory");
+        when(row.getString("categoryCode")).thenReturn("RAM");
+        when(row.getString("categoryName")).thenReturn("Memory");
+        when(row.getString("offersJson")).thenReturn("""
+                [{"offerCode":"DEMO-KIT","condition":"NEW","price":123.45,"currency":"VND",
+                  "stockQuantity":10,"reservedQuantity":3,"availableQuantity":7,
+                  "warrantyMonths":12,"status":"ACTIVE","isDemo":true}]
+                """);
+        when(row.getString("specificationsJson")).thenReturn(
+                "{\"capacity_gb\":16,\"supports_xmp\":true}");
+        when(row.getString("imagesJson")).thenReturn("""
+                [{"url":"https://user:password@example.com/image.png","altText":"bad","isPrimary":true},
+                 {"url":"https://example.com:99999/image.png","altText":"bad port","isPrimary":true},
+                 {"url":"https://example.com/image.png","altText":"good","isPrimary":false}]
+                """);
+        when(row.getBoolean("demoData")).thenReturn(true);
+
+        CatalogProduct product = repository.mapProduct(row, 0);
+
+        assertEquals("18446744073709551615", product.productId());
+        assertEquals("KF432C16BB/8", product.modelCode());
+        assertEquals(new BigDecimal("123.45"), product.offers().get(0).price());
+        assertEquals(7, product.offers().get(0).availableQuantity());
+        assertTrue(product.offers().get(0).isDemo());
+        assertEquals(16, product.specifications().path("capacity_gb").intValue());
+        assertTrue(product.specifications().path("supports_xmp").booleanValue());
+        assertEquals(1, product.images().size());
+        assertEquals("https://example.com/image.png", product.images().get(0).url());
+        assertTrue(product.demoData());
+    }
+
+    private int countOccurrences(String value, String match) {
+        int count = 0;
+        int index = 0;
+        while ((index = value.indexOf(match, index)) >= 0) {
+            count++;
+            index += match.length();
+        }
+        return count;
+    }
+}
