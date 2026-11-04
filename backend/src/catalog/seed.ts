@@ -103,7 +103,7 @@ function stableJson(value: unknown): string {
 async function ensureLookupRows(
   executor: RawExecutor,
   rows: CatalogSeedRow[],
-): Promise<void> {
+): Promise<Map<string, string>> {
   const types = new Map(rows.map((row) => [row.productTypeCode, row.productTypeCode]));
   for (const typeCode of types.keys()) {
     const typeName = productTypeNames[typeCode];
@@ -145,6 +145,56 @@ async function ensureLookupRows(
     `);
   }
 
+  const actualTypes = await executor.$queryRaw<Array<{
+    type_code: string;
+    type_name: string;
+    is_build_component: boolean;
+    is_active: boolean;
+  }>>(Prisma.sql`
+    SELECT "type_code", "type_name", "is_build_component", "is_active"
+    FROM "product_types"
+    WHERE "type_code" IN (${Prisma.join([...types.keys()])})
+  `);
+  for (const typeCode of types.keys()) {
+    const actual = actualTypes.find((row) => row.type_code === typeCode);
+    if (
+      !actual ||
+      actual.type_name !== productTypeNames[typeCode] ||
+      !actual.is_active ||
+      actual.is_build_component !== (typeCode !== "PC" && typeCode !== "ACCESSORY")
+    ) {
+      throw new Error(`Existing catalog product type ${typeCode} differs from the reviewed catalog definition.`);
+    }
+  }
+
+  const actualCategories = await executor.$queryRaw<Array<{
+    category_code: string;
+    category_name: string;
+    is_active: boolean;
+  }>>(Prisma.sql`
+    SELECT "category_code", "category_name", "is_active"
+    FROM "categories"
+    WHERE "category_code" IN (${Prisma.join([...categories.keys()])})
+  `);
+  for (const categoryCode of categories.keys()) {
+    const actual = actualCategories.find((row) => row.category_code === categoryCode);
+    if (!actual || actual.category_name !== categoryNames[categoryCode] || !actual.is_active) {
+      throw new Error(`Existing catalog category ${categoryCode} differs from the reviewed catalog definition.`);
+    }
+  }
+
+  const actualBrands = await executor.$queryRaw<Array<{ brand_name: string; is_active: boolean }>>(Prisma.sql`
+    SELECT "brand_name", "is_active"
+    FROM "brands"
+    WHERE "brand_name" IN (${Prisma.join([...brands.keys()])})
+  `);
+  for (const brandName of brands.keys()) {
+    const actual = actualBrands.find((row) => row.brand_name === brandName);
+    if (!actual || actual.brand_name !== brandName || !actual.is_active) {
+      throw new Error(`Existing catalog brand ${brandName} is inactive or differs from the reviewed catalog name.`);
+    }
+  }
+
   const definitions = new Map<string, { typeCode: string; code: string; valueType: string }>();
   for (const row of rows) {
     for (const [attributeCode, value] of Object.entries(row.specifications)) {
@@ -158,6 +208,7 @@ async function ensureLookupRows(
     }
   }
 
+  const definitionIds = new Map<string, string>();
   for (const [key, definition] of definitions) {
     const metadata = attributeMetadata[key];
     if (!metadata) {
@@ -181,14 +232,15 @@ async function ensureLookupRows(
     `);
 
     const actual = await executor.$queryRaw<Array<{
+      attribute_definition_id: string;
       data_type: string;
       attribute_name: string;
       unit: string | null;
       is_filterable: boolean;
       is_build_critical: boolean;
     }>>(Prisma.sql`
-      SELECT ad."data_type"
-        , ad."attribute_name", ad."unit", ad."is_filterable", ad."is_build_critical"
+      SELECT ad."attribute_definition_id"::text AS "attribute_definition_id",
+        ad."data_type", ad."attribute_name", ad."unit", ad."is_filterable", ad."is_build_critical"
       FROM "product_attribute_definitions" ad
       JOIN "product_types" pt ON pt."product_type_id" = ad."product_type_id"
       WHERE pt."type_code" = ${definition.typeCode}
@@ -197,7 +249,8 @@ async function ensureLookupRows(
     const existingDefinition = actual[0];
     if (
       actual.length !== 1 ||
-      existingDefinition?.data_type !== definition.valueType ||
+      !existingDefinition ||
+      existingDefinition.data_type !== definition.valueType ||
       existingDefinition.attribute_name !== metadata.name ||
       existingDefinition.unit !== metadata.unit ||
       existingDefinition.is_filterable !== metadata.isFilterable ||
@@ -205,7 +258,10 @@ async function ensureLookupRows(
     ) {
       throw new Error(`Existing catalog attribute ${key} differs from the reviewed catalog definition.`);
     }
+    definitionIds.set(key, existingDefinition.attribute_definition_id);
   }
+
+  return definitionIds;
 }
 
 function catalogAttributeTypeForDefinition(key: string): string {
@@ -243,7 +299,7 @@ async function insertProduct(
   executor: RawExecutor,
   row: CatalogSeedRow,
 ): Promise<{ productId: string; inserted: boolean }> {
-  const description = row.dataNotes;
+  const description = `DEMO CATALOG SEED v1\n${row.dataNotes}`;
   const inserted = await executor.$queryRaw<Array<{ product_id: string }>>(Prisma.sql`
     INSERT INTO "products"
       ("product_type_id", "category_id", "brand_id", "model_code", "product_name", "short_description", "description", "product_status")
@@ -329,17 +385,12 @@ async function insertAttributes(
   executor: RawExecutor,
   row: CatalogSeedRow,
   productId: string,
+  definitionIds: ReadonlyMap<string, string>,
 ): Promise<number> {
   let insertedCount = 0;
   for (const [attributeCode, value] of Object.entries(row.specifications)) {
     const attributeType = typedValues(value);
-    const definition = await executor.$queryRaw<Array<{ attribute_definition_id: string }>>(Prisma.sql`
-      SELECT ad."attribute_definition_id"::text AS "attribute_definition_id"
-      FROM "product_attribute_definitions" ad
-      JOIN "product_types" pt ON pt."product_type_id" = ad."product_type_id"
-      WHERE pt."type_code" = ${row.productTypeCode} AND ad."attribute_code" = ${attributeCode}
-    `);
-    const attributeDefinitionId = definition[0]?.attribute_definition_id;
+    const attributeDefinitionId = definitionIds.get(`${row.productTypeCode}:${attributeCode}`);
     if (!attributeDefinitionId) {
       throw new Error(`Missing attribute definition ${row.productTypeCode}:${attributeCode}.`);
     }
@@ -395,7 +446,7 @@ export async function seedCatalog(
   if (rows.length === 0) {
     throw new Error("Refusing to run an empty catalog seed.");
   }
-  await ensureLookupRows(executor, rows);
+  const definitionIds = await ensureLookupRows(executor, rows);
 
   let productModelsInserted = 0;
   let productModelsAlreadySeeded = 0;
@@ -411,7 +462,7 @@ export async function seedCatalog(
     if (await insertOffer(executor, row, product.productId)) {
       offersInserted += 1;
     }
-    attributesInserted += await insertAttributes(executor, row, product.productId);
+    attributesInserted += await insertAttributes(executor, row, product.productId, definitionIds);
   }
 
   return {

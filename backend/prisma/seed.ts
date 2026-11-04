@@ -37,33 +37,39 @@ const useCases = [
 async function seed(): Promise<void> {
   const csv = await readFile(new URL("../../seed/catalog-150-products.csv", import.meta.url), "utf8");
   const catalogRows = parseCatalogCsv(csv);
+  if (catalogRows.length !== 150) {
+    throw new Error(`Expected exactly 150 demo catalog models; received ${catalogRows.length}.`);
+  }
 
   const summary = await prisma.$transaction(async (transaction) => {
-  for (const [roleCode, roleName, description] of roles) {
-    await transaction.$executeRaw`
-      INSERT INTO roles (role_code, role_name, description)
-      VALUES (${roleCode}, ${roleName}, ${description})
-      ON CONFLICT (role_code) DO NOTHING
-    `;
-  }
+    for (const [roleCode, roleName, description] of roles) {
+      await transaction.$executeRaw`
+        INSERT INTO roles (role_code, role_name, description)
+        VALUES (${roleCode}, ${roleName}, ${description})
+        ON CONFLICT (role_code) DO NOTHING
+      `;
+    }
 
-  for (const [typeCode, typeName, description, isBuildComponent] of productTypes) {
-    await transaction.$executeRaw`
-      INSERT INTO product_types (type_code, type_name, description, is_build_component)
-      VALUES (${typeCode}, ${typeName}, ${description}, ${isBuildComponent})
-      ON CONFLICT (type_code) DO NOTHING
-    `;
-  }
+    for (const [typeCode, typeName, description, isBuildComponent] of productTypes) {
+      await transaction.$executeRaw`
+        INSERT INTO product_types (type_code, type_name, description, is_build_component)
+        VALUES (${typeCode}, ${typeName}, ${description}, ${isBuildComponent})
+        ON CONFLICT (type_code) DO NOTHING
+      `;
+    }
 
-  for (const [useCaseCode, useCaseName, description] of useCases) {
-    await transaction.$executeRaw`
-      INSERT INTO use_cases (use_case_code, use_case_name, description)
-      VALUES (${useCaseCode}, ${useCaseName}, ${description})
-      ON CONFLICT (use_case_code) DO NOTHING
-    `;
-  }
+    for (const [useCaseCode, useCaseName, description] of useCases) {
+      await transaction.$executeRaw`
+        INSERT INTO use_cases (use_case_code, use_case_name, description)
+        VALUES (${useCaseCode}, ${useCaseName}, ${description})
+        ON CONFLICT (use_case_code) DO NOTHING
+      `;
+    }
 
     return seedCatalog(transaction, catalogRows);
+  }, {
+    maxWait: 10_000,
+    timeout: 120_000,
   });
   console.info("Demo catalog seed complete:", summary);
 }

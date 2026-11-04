@@ -1,7 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createRoot, type Root } from "react-dom/client";
 import { routeByDataPath, routeForLegacyPath, sourceToLegacyPath } from "./pages";
 import type { ScreenRoute } from "./pages";
 import { getMarkup } from "./pages";
+import CatalogPage from "./CatalogPage";
 import sharedInteractions from "../components/interactions.js?raw";
 
 interface LegacyDocument {
@@ -20,9 +22,22 @@ function toLegacyDocument(markup: string, screen: ScreenRoute): LegacyDocument {
   const documentSource = new DOMParser().parseFromString(markup, "text/html");
   const sourcePath = sourceToLegacyPath(screen.source);
   const scripts = Array.from(documentSource.body.querySelectorAll("script"));
+  const isCatalogPage = [
+    "/customer/home",
+    "/customer/parts",
+    "/customer/product",
+    "/customer/compare",
+  ].includes(screen.path);
 
   for (const script of scripts) {
     script.remove();
+  }
+  if (isCatalogPage) {
+    const main = documentSource.body.querySelector("main");
+    if (main) {
+      main.replaceChildren();
+      main.dataset.catalogRoot = screen.path;
+    }
   }
 
   const anchors = Array.from(
@@ -95,7 +110,7 @@ function toLegacyDocument(markup: string, screen: ScreenRoute): LegacyDocument {
     bodyClass: documentSource.body.className,
     bodyMarkup: documentSource.body.innerHTML,
     title: documentSource.title || screen.title,
-    scripts,
+    scripts: isCatalogPage ? [] : scripts,
     headResources,
   };
 }
@@ -107,6 +122,7 @@ interface LegacyScreenProps {
 export default function LegacyScreen({ screen }: LegacyScreenProps) {
   const [page, setPage] = useState<LegacyDocument>();
   const [error, setError] = useState<string>();
+  const legacyDocumentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let active = true;
@@ -191,6 +207,22 @@ export default function LegacyScreen({ screen }: LegacyScreenProps) {
     };
   }, [page, screen.source]);
 
+  useEffect(() => {
+    if (
+      !page ||
+      !["/customer/home", "/customer/parts", "/customer/product", "/customer/compare"].includes(screen.path)
+    ) {
+      return;
+    }
+    const catalogMount = legacyDocumentRef.current?.querySelector<HTMLElement>("[data-catalog-root]");
+    if (!catalogMount) {
+      throw new Error(`Missing catalog mount for ${screen.path}.`);
+    }
+    const root: Root = createRoot(catalogMount);
+    root.render(<CatalogPage path={screen.path} />);
+    return () => root.unmount();
+  }, [page, screen.path]);
+
   if (error) {
     return (
       <main className="mx-auto max-w-3xl p-8" role="alert">
@@ -206,6 +238,7 @@ export default function LegacyScreen({ screen }: LegacyScreenProps) {
 
   return (
     <div
+      ref={legacyDocumentRef}
       className="legacy-screen"
       dangerouslySetInnerHTML={{ __html: page.bodyMarkup }}
     />

@@ -99,6 +99,9 @@ function parseCatalogQuery(params: URLSearchParams): CatalogQuery {
   if (minPrice !== undefined && maxPrice !== undefined && Number(minPrice) > Number(maxPrice)) {
     invalidQuery('"minPrice" cannot exceed "maxPrice".');
   }
+  if ([minPrice, maxPrice].some((price) => price !== undefined && Number(price) > 9999999999999.99)) {
+    invalidQuery("Price filters exceed the supported database range.");
+  }
 
   const sortValue = singleValue(params, "sort") ?? "name";
   if (sortValue !== "name" && sortValue !== "price") {
@@ -152,23 +155,22 @@ function productWhere(query: CatalogQuery): Prisma.Sql[] {
   const clauses: Prisma.Sql[] = [Prisma.sql`p."product_status" = 'ACTIVE'`];
   if (query.query) {
     const pattern = `%${query.query}%`;
-    clauses.push(Prisma.sql`(p."product_name" ILIKE ${pattern} OR p."model_code" ILIKE ${pattern})`);
+    clauses.push(Prisma.sql`(
+      p."product_name" COLLATE "C" ILIKE ${pattern} COLLATE "C"
+      OR p."model_code" COLLATE "C" ILIKE ${pattern} COLLATE "C"
+    )`);
   }
   if (query.type) clauses.push(Prisma.sql`pt."type_code" = ${query.type}`);
   if (query.category) clauses.push(Prisma.sql`c."category_code" = ${query.category}`);
   if (query.brand) clauses.push(Prisma.sql`b."brand_name" = ${query.brand}`);
-  if (query.minPrice !== undefined) {
+  if (query.minPrice !== undefined || query.maxPrice !== undefined) {
     clauses.push(Prisma.sql`
-      EXISTS (SELECT 1 FROM "product_offers" pf
+      EXISTS (SELECT 1
+        FROM "product_offers" pf
         WHERE pf."product_id" = p."product_id" AND pf."offer_status" = 'ACTIVE'
-          AND pf."price" >= ${query.minPrice}::numeric)
-    `);
-  }
-  if (query.maxPrice !== undefined) {
-    clauses.push(Prisma.sql`
-      EXISTS (SELECT 1 FROM "product_offers" pf
-        WHERE pf."product_id" = p."product_id" AND pf."offer_status" = 'ACTIVE'
-          AND pf."price" <= ${query.maxPrice}::numeric)
+          ${query.minPrice === undefined ? Prisma.empty : Prisma.sql`AND pf."price" >= ${query.minPrice}::numeric`}
+          ${query.maxPrice === undefined ? Prisma.empty : Prisma.sql`AND pf."price" <= ${query.maxPrice}::numeric`}
+      )
     `);
   }
   for (const filter of query.attributes) {
@@ -194,6 +196,37 @@ function productWhere(query: CatalogQuery): Prisma.Sql[] {
     `);
   }
   return clauses;
+}
+
+function validImageUrl(value: unknown): boolean {
+  if (typeof value !== "string") return false;
+  try {
+    const url = new URL(value);
+    return (
+      (url.protocol === "http:" || url.protocol === "https:") &&
+      url.hostname.length > 0 &&
+      !url.username &&
+      !url.password
+    );
+  } catch {
+    return false;
+  }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function filterValidProductImages(products: unknown[]): unknown[] {
+  return products.map((product) => {
+    if (!isRecord(product)) return product;
+    const record = product;
+    if (!Array.isArray(record.images)) return product;
+    return {
+      ...record,
+      images: record.images.filter((image) => isRecord(image) && validImageUrl(image.url)),
+    };
+  });
 }
 
 const productSelection = Prisma.sql`
@@ -249,7 +282,12 @@ const productSelection = Prisma.sql`
       WHERE pi."product_id" = p."product_id"
         AND pi."image_url" ~ '^https?://[^[:space:]]+$'
     ), '[]'::jsonb) AS "images",
-    TRUE AS "demoData"
+    EXISTS (
+      SELECT 1
+      FROM "product_offers" demo_offer
+      WHERE demo_offer."product_id" = p."product_id"
+        AND demo_offer."offer_code" LIKE 'DEMO-%'
+    ) AS "demoData"
   FROM "products" p
   JOIN "product_types" pt ON pt."product_type_id" = p."product_type_id"
   JOIN "categories" c ON c."category_id" = p."category_id"
@@ -258,6 +296,81 @@ const productSelection = Prisma.sql`
 
 export function createCatalogRouter(database: CatalogDatabase): Router {
   const router = Router();
+
+  router.get("/facets", async (_request, response) => {
+    const [productTypes, categories, brands, attributes] = await Promise.all([
+      database.queryRaw<Array<{ value: string; label: string }>>(Prisma.sql`
+        SELECT DISTINCT pt."type_code" AS "value", pt."type_name" AS "label"
+        FROM "product_types" pt
+        JOIN "products" p ON p."product_type_id" = pt."product_type_id"
+        WHERE pt."is_active" = TRUE AND p."product_status" = 'ACTIVE'
+        ORDER BY pt."type_name"
+      `),
+      database.queryRaw<Array<{ value: string; label: string }>>(Prisma.sql`
+        SELECT DISTINCT c."category_code" AS "value", c."category_name" AS "label"
+        FROM "categories" c
+        JOIN "products" p ON p."category_id" = c."category_id"
+        WHERE c."is_active" = TRUE AND p."product_status" = 'ACTIVE'
+        ORDER BY c."category_name"
+      `),
+      database.queryRaw<Array<{ value: string; label: string }>>(Prisma.sql`
+        SELECT DISTINCT b."brand_name" AS "value", b."brand_name" AS "label"
+        FROM "brands" b
+        JOIN "products" p ON p."brand_id" = b."brand_id"
+        WHERE b."is_active" = TRUE AND p."product_status" = 'ACTIVE'
+        ORDER BY b."brand_name"
+      `),
+      database.queryRaw<Array<{ productType: string; code: string; label: string; value: unknown }>>(Prisma.sql`
+        SELECT DISTINCT
+          pt."type_code" AS "productType",
+          ad."attribute_code" AS "code",
+          ad."attribute_name" AS "label",
+          COALESCE(
+            to_jsonb(av."value_text"),
+            to_jsonb(av."value_decimal"),
+            to_jsonb(av."value_integer"),
+            to_jsonb(av."value_boolean"),
+            av."value_json"
+          ) AS "value"
+        FROM "product_attribute_definitions" ad
+        JOIN "product_attribute_values" av
+          ON av."attribute_definition_id" = ad."attribute_definition_id"
+        JOIN "products" p ON p."product_id" = av."product_id"
+        JOIN "product_types" pt ON pt."product_type_id" = p."product_type_id"
+        WHERE ad."is_filterable" = TRUE AND p."product_status" = 'ACTIVE'
+        ORDER BY pt."type_code", ad."attribute_name"
+      `),
+    ]);
+    const groupedAttributes = new Map<string, {
+      productType: string;
+      code: string;
+      label: string;
+      values: { label: string; value: string }[];
+    }>();
+    for (const attribute of attributes) {
+      const key = `${attribute.productType}:${attribute.code}`;
+      const current = groupedAttributes.get(key) ?? {
+        productType: attribute.productType,
+        code: attribute.code,
+        label: attribute.label,
+        values: [],
+      };
+      const value = JSON.stringify(attribute.value);
+      if (!current.values.some((item) => item.value === value)) {
+        current.values.push({ label: String(attribute.value), value });
+      }
+      groupedAttributes.set(key, current);
+    }
+
+    response.json({
+      data: {
+        productTypes,
+        categories,
+        brands,
+        attributes: [...groupedAttributes.values()],
+      },
+    });
+  });
 
   router.get("/products", async (request, response) => {
     const query = parseCatalogQuery(new URL(request.originalUrl, "http://localhost").searchParams);
@@ -302,20 +415,20 @@ export function createCatalogRouter(database: CatalogDatabase): Router {
 
     const total = countRows[0]?.total ?? 0;
     response.json({
-      data: products,
+      data: filterValidProductImages(products),
       pagination: {
         page: query.page,
         limit: query.limit,
         total,
         totalPages: Math.ceil(total / query.limit),
       },
-      notice: "Giá và tồn kho trong catalog là dữ liệu demo, không phải dữ liệu bán hàng trực tiếp.",
+      notice: "Giá và tồn kho của các offer mã DEMO- là dữ liệu minh họa, không phải thông tin bán hàng trực tiếp.",
     });
   });
 
   router.get("/products/:modelCode", async (request, response) => {
     const modelCode = request.params.modelCode;
-    if (!/^[A-Za-z0-9._-]{1,100}$/.test(modelCode)) {
+    if (!modelCode || modelCode.length > 100 || /[\u0000-\u001f\u007f]/.test(modelCode)) {
       invalidQuery("Product model code is invalid.");
     }
     const products = await database.queryRaw<unknown[]>(Prisma.sql`
@@ -327,8 +440,8 @@ export function createCatalogRouter(database: CatalogDatabase): Router {
       throw new HttpError(404, "PRODUCT_NOT_FOUND", "The requested product was not found.");
     }
     response.json({
-      data: products[0],
-      notice: "Giá và tồn kho trong catalog là dữ liệu demo, không phải dữ liệu bán hàng trực tiếp.",
+      data: filterValidProductImages([products[0]])[0],
+      notice: "Giá và tồn kho của các offer mã DEMO- là dữ liệu minh họa, không phải thông tin bán hàng trực tiếp.",
     });
   });
 

@@ -104,6 +104,31 @@ function nonNegativeInteger(value: string, column: string, line: number): number
   return parsed;
 }
 
+function boundedText(
+  row: Record<string, string>,
+  column: string,
+  maximum: number,
+  line: number,
+): string {
+  const value = requiredValue(row, column, line);
+  if ([...value].length > maximum) {
+    throw new Error(`CSV row ${line}: ${column} cannot exceed ${maximum} characters.`);
+  }
+  return value;
+}
+
+function demoPrice(value: string, line: number): string {
+  if (!/^\d+(?:\.\d{1,2})?$/.test(value)) {
+    throw new Error(`CSV row ${line}: demo_price_vnd must be a non-negative decimal with at most 2 places.`);
+  }
+  const [whole = "0", fraction = ""] = value.split(".");
+  const scaled = BigInt(`${whole}${fraction.padEnd(2, "0")}`);
+  if (scaled > 999999999999999n) {
+    throw new Error(`CSV row ${line}: demo_price_vnd exceeds the product_offers.price database limit.`);
+  }
+  return value;
+}
+
 function isJsonRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -153,29 +178,67 @@ export function parseCatalogCsv(input: string): CatalogSeedRow[] {
       }
     }
 
-    const currencyCode = requiredValue(row, "currency_code", line);
+    const currencyCode = boundedText(row, "currency_code", 3, line);
     if (!/^[A-Z]{3}$/.test(currencyCode)) {
       throw new Error(`CSV row ${line}: currency_code must be three uppercase letters.`);
     }
 
-    const price = requiredValue(row, "demo_price_vnd", line);
-    if (!/^\d+(?:\.\d{1,2})?$/.test(price)) {
-      throw new Error(`CSV row ${line}: demo_price_vnd must be a non-negative decimal with at most 2 places.`);
+    const price = demoPrice(requiredValue(row, "demo_price_vnd", line), line);
+    const productTypeCode = boundedText(row, "product_type_code", 60, line);
+    const categoryCode = boundedText(row, "category_code", 60, line);
+    const conditionCode = boundedText(row, "condition_code", 24, line);
+    if (!/^[A-Z][A-Z0-9_]*$/.test(productTypeCode) || !/^[A-Z][A-Z0-9_]*$/.test(categoryCode)) {
+      throw new Error(`CSV row ${line}: product_type_code or category_code is invalid.`);
+    }
+    if (!/^[A-Z][A-Z0-9_]*$/.test(conditionCode)) {
+      throw new Error(`CSV row ${line}: condition_code is invalid.`);
+    }
+    if ([...modelCode].length > 95) {
+      throw new Error(`CSV row ${line}: model_code cannot exceed 95 characters because its DEMO offer code is limited to 100.`);
+    }
+
+    const demoStockQuantity = nonNegativeInteger(
+      requiredValue(row, "demo_stock_quantity", line),
+      "demo_stock_quantity",
+      line,
+    );
+    if (demoStockQuantity > 4294967295) {
+      throw new Error(`CSV row ${line}: demo_stock_quantity exceeds the product_offers.stock_quantity database limit.`);
+    }
+    const demoWarrantyMonths = nonNegativeInteger(
+      requiredValue(row, "warranty_months_demo", line),
+      "warranty_months_demo",
+      line,
+    );
+    if (demoWarrantyMonths > 65535) {
+      throw new Error(`CSV row ${line}: warranty_months_demo exceeds the product_offers.warranty_months database limit.`);
+    }
+    const specificationEntries = Object.entries(specifications);
+    for (const [attributeCode, value] of specificationEntries) {
+      if (
+        typeof value === "number" &&
+        (!Number.isFinite(value) ||
+          (Number.isInteger(value) && !Number.isSafeInteger(value)) ||
+          Math.abs(value) > 99999999999999.999999 ||
+          (!Number.isInteger(value) && Number(value.toFixed(6)) !== value))
+      ) {
+        throw new Error(`CSV row ${line}: numeric specification "${attributeCode}" exceeds the database precision.`);
+      }
     }
 
     return {
       modelCode,
-      productName: requiredValue(row, "product_name", line),
-      brandName: requiredValue(row, "brand_name", line),
-      productTypeCode: requiredValue(row, "product_type_code", line),
-      categoryCode: requiredValue(row, "category_code", line),
-      shortDescription: requiredValue(row, "short_description", line),
-      conditionCode: requiredValue(row, "condition_code", line),
+      productName: boundedText(row, "product_name", 240, line),
+      brandName: boundedText(row, "brand_name", 120, line),
+      productTypeCode,
+      categoryCode,
+      shortDescription: boundedText(row, "short_description", 500, line),
+      conditionCode,
       currencyCode,
       demoPrice: price,
-      demoStockQuantity: nonNegativeInteger(requiredValue(row, "demo_stock_quantity", line), "demo_stock_quantity", line),
-      demoWarrantyMonths: nonNegativeInteger(requiredValue(row, "warranty_months_demo", line), "warranty_months_demo", line),
-      specifications: specifications as CatalogSeedRow["specifications"],
+      demoStockQuantity,
+      demoWarrantyMonths,
+      specifications: JSON.parse(row["specifications_json"] ?? "{}") as CatalogSeedRow["specifications"],
       dataNotes: requiredValue(row, "data_notes", line),
     };
   });
@@ -184,7 +247,15 @@ export function parseCatalogCsv(input: string): CatalogSeedRow[] {
 export function catalogAttributeType(value: unknown): "TEXT" | "INTEGER" | "DECIMAL" | "BOOLEAN" | "JSON" {
   if (typeof value === "string") return "TEXT";
   if (typeof value === "boolean") return "BOOLEAN";
-  if (typeof value === "number") return Number.isInteger(value) ? "INTEGER" : "DECIMAL";
+  if (typeof value === "number") {
+    if (!Number.isFinite(value)) {
+      throw new Error("Catalog specification numbers must be finite.");
+    }
+    if (Number.isInteger(value) && !Number.isSafeInteger(value)) {
+      throw new Error("Catalog integer specifications must be in the safe integer range.");
+    }
+    return Number.isInteger(value) ? "INTEGER" : "DECIMAL";
+  }
   if (Array.isArray(value) || isJsonRecord(value)) return "JSON";
   throw new Error("Catalog specification values must be strings, numbers, booleans, arrays, or objects.");
 }

@@ -37,3 +37,7 @@ Seed SQL column names and conflict targets generally match the generated physica
 Do not execute the supplied SQL as-is. Any integration should parse/validate the CSV, use parameterized database operations, preserve existing conflicting records, and fail/report model-code collisions unless they can be proven to be records owned by this demo seed. No schema change or migration is needed for the catalog API, but the staging database must already have the approved schema.
 
 This report is based on reading source files and static schema comparison only. No database connection, SQL execution, seed import, or migration was performed.
+
+## Follow-up implementation status
+
+The read-only catalog integration was added after this initial compatibility review. The previous statement that catalog routes and a catalog seed runner were absent describes the state at the time of that review and is superseded by [catalog-integration-report.md](./catalog-integration-report.md). The follow-up still performed no migration, SQL seed execution, or database import.
