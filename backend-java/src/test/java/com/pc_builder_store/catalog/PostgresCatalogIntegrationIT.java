@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigDecimal;
+import java.net.CookieManager;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
@@ -13,6 +14,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -27,6 +29,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
@@ -36,11 +39,16 @@ import tools.jackson.databind.ObjectMapper;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class PostgresCatalogIntegrationIT {
 
+    private static final String TEST_PASSWORD = "LocalIntegrationPassword@2026";
+
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @LocalServerPort
     private int port;
@@ -59,6 +67,14 @@ class PostgresCatalogIntegrationIT {
     private String productTwo;
     private String productThree;
     private String inactiveProduct;
+    private String gpuProduct;
+    private boolean gpuProductTypeFixtureInserted;
+    private String adminEmail;
+    private String salesEmail;
+    private String customerEmail;
+    private final List<String> insertedRoleFixtures = new ArrayList<>();
+    private Map<String, GpuDefinitionSnapshot> originalGpuDefinitions = Map.of();
+    private boolean gpuDefinitionSnapshotCaptured;
 
     @BeforeAll
     void verifyDisposableDatabaseAndMigratedSchema() {
@@ -115,6 +131,14 @@ class PostgresCatalogIntegrationIT {
         productTwo = fixturePrefix + "RANGE";
         productThree = fixturePrefix + "NO-OFFER";
         inactiveProduct = fixturePrefix + "INACTIVE";
+        gpuProduct = fixturePrefix + "GPU";
+        gpuProductTypeFixtureInserted = false;
+        adminEmail = fixturePrefix.toLowerCase(Locale.ROOT) + "admin@example.test";
+        salesEmail = fixturePrefix.toLowerCase(Locale.ROOT) + "sales@example.test";
+        customerEmail = fixturePrefix.toLowerCase(Locale.ROOT) + "customer@example.test";
+        insertedRoleFixtures.clear();
+        originalGpuDefinitions = Map.of();
+        gpuDefinitionSnapshotCaptured = false;
 
         jdbcTemplate.update(
                 "INSERT INTO brands (brand_name, is_active) VALUES (?, TRUE), (?, TRUE), (?, TRUE)",
@@ -192,6 +216,18 @@ class PostgresCatalogIntegrationIT {
     @AfterEach
     void removeOnlyFixtures() {
         jdbcTemplate.update(
+                "DELETE FROM users WHERE email IN (?, ?, ?)",
+                adminEmail, salesEmail, customerEmail);
+        for (String roleCode : insertedRoleFixtures) {
+            jdbcTemplate.update(
+                    """
+                    DELETE FROM "roles" r
+                    WHERE r."role_code" = ?
+                      AND NOT EXISTS (SELECT 1 FROM "users" u WHERE u."role_id" = r."role_id")
+                    """,
+                    roleCode);
+        }
+        jdbcTemplate.update(
                 """
                 DELETE FROM product_images
                 WHERE product_id IN (SELECT product_id FROM products WHERE model_code LIKE ?)
@@ -216,6 +252,24 @@ class PostgresCatalogIntegrationIT {
                 WHERE product_type_id IN (SELECT product_type_id FROM product_types WHERE type_code = ?)
                 """,
                 fixtureType);
+        if (gpuProductTypeFixtureInserted) {
+            jdbcTemplate.update(
+                    """
+                    DELETE FROM product_attribute_definitions ad
+                    USING product_types pt
+                    WHERE pt.product_type_id = ad.product_type_id
+                      AND pt.type_code = 'GPU'
+                    """);
+            jdbcTemplate.update(
+                    """
+                    DELETE FROM product_types pt
+                    WHERE pt.type_code = 'GPU'
+                      AND NOT EXISTS (
+                        SELECT 1 FROM products p WHERE p.product_type_id = pt.product_type_id
+                      )
+                    """);
+        }
+        restoreGpuDefinitions();
         jdbcTemplate.update("DELETE FROM product_types WHERE type_code IN (?, ?)", fixtureType, inactiveType);
         jdbcTemplate.update(
                 "DELETE FROM categories WHERE category_code IN (?, ?, ?)",
@@ -373,6 +427,263 @@ class PostgresCatalogIntegrationIT {
                 .path("data").path("modelCode").asString());
     }
 
+    @Test
+    void authenticatedAdminHttpUpdatePersistsGpuValuesAndEnforcesRoleAndValidation() throws Exception {
+        ensureGpuProductTypeFixture();
+        insertProduct(gpuProduct, "Phase 3A GPU", "GPU", fixtureCategory, fixtureBrand, "ACTIVE");
+        ensureRoleFixture("ADMIN", "Administrator");
+        ensureRoleFixture("SALES", "Sales");
+        ensureRoleFixture("CUSTOMER", "Customer");
+        insertTestUser("ADMIN", adminEmail);
+        insertTestUser("SALES", salesEmail);
+        insertTestUser("CUSTOMER", customerEmail);
+        originalGpuDefinitions = snapshotGpuDefinitions("gpu_chip", "display_outputs");
+        gpuDefinitionSnapshotCaptured = true;
+
+        HttpClient anonymousClient = HttpClient.newHttpClient();
+        HttpResponse<String> anonymousMe = get(anonymousClient, "/api/auth/me");
+        assertEquals(401, anonymousMe.statusCode(), anonymousMe.body());
+
+        HttpResponse<String> definitionsResponse = get(
+                anonymousClient, "/api/catalog/attribute-definitions");
+        assertEquals(200, definitionsResponse.statusCode(), definitionsResponse.body());
+        JsonNode definitions = objectMapper.readTree(definitionsResponse.body()).path("data");
+        JsonNode gpuChipDefinition = attributeDefinition(definitions, "gpu_chip");
+        assertEquals("Chip đồ họa", gpuChipDefinition.path("label").asString());
+        assertEquals("GPU chip", gpuChipDefinition.path("englishLabel").asString());
+        assertEquals("GPU_SILICON", gpuChipDefinition.path("specificationScope").asString());
+        JsonNode vramDefinition = attributeDefinition(definitions, "vram_gb");
+        assertEquals("INTEGER", vramDefinition.path("dataType").asString());
+        assertEquals("GB", vramDefinition.path("unit").asString());
+        JsonNode outputsDefinition = attributeDefinition(definitions, "display_outputs");
+        assertEquals("Cổng xuất hình", outputsDefinition.path("label").asString());
+        assertEquals("Display outputs", outputsDefinition.path("englishLabel").asString());
+        assertEquals("JSON_ARRAY", outputsDefinition.path("inputMode").asString());
+        assertEquals("BOARD_VARIANT", outputsDefinition.path("specificationScope").asString());
+
+        HttpResponse<String> publicProduct = get(
+                anonymousClient, "/api/catalog/products/" + encode(gpuProduct));
+        assertEquals(200, publicProduct.statusCode(), publicProduct.body());
+        JsonNode initialProduct = objectMapper.readTree(publicProduct.body()).path("data");
+        assertEquals("GPU", initialProduct.path("productType").asString());
+        assertTrue(initialProduct.path("specifications").isEmpty());
+
+        AuthenticatedClient admin = login(adminEmail);
+        HttpResponse<String> saved = putJson(
+                admin,
+                "/api/catalog/admin/products/" + encode(gpuProduct) + "/specifications",
+                """
+                {"specifications":{
+                  "gpu_chip":"Phase 3A integration fixture",
+                  "display_outputs":[
+                    {"type":"DisplayPort","count":3,"version":"2.1a"},
+                    {"type":"HDMI","count":1,"version":"2.1b"}
+                  ]
+                }}
+                """);
+        assertEquals(200, saved.statusCode(), saved.body());
+        JsonNode savedProduct = objectMapper.readTree(saved.body()).path("data");
+        assertEquals("Phase 3A integration fixture",
+                savedProduct.path("specifications").path("gpu_chip").asString());
+        assertEquals(2, savedProduct.path("specifications").path("display_outputs").size());
+
+        HttpResponse<String> readBack = get(
+                admin.client(), "/api/catalog/products/" + encode(gpuProduct));
+        assertEquals(200, readBack.statusCode(), readBack.body());
+        JsonNode persistedSpecifications = objectMapper.readTree(readBack.body())
+                .path("data").path("specifications");
+        assertEquals("Phase 3A integration fixture",
+                persistedSpecifications.path("gpu_chip").asString());
+        assertEquals("DisplayPort",
+                persistedSpecifications.path("display_outputs").get(0).path("type").asString());
+
+        HttpResponse<String> invalid = putJson(
+                admin,
+                "/api/catalog/admin/products/" + encode(gpuProduct) + "/specifications",
+                "{\"specifications\":{\"vram_gb\":\"sixteen\"}}");
+        assertEquals(400, invalid.statusCode(), invalid.body());
+
+        for (String email : List.of(salesEmail, customerEmail)) {
+            AuthenticatedClient unauthorized = login(email);
+            HttpResponse<String> denied = putJson(
+                    unauthorized,
+                    "/api/catalog/admin/products/" + encode(gpuProduct) + "/specifications",
+                    "{\"specifications\":{\"gpu_chip\":\"Unauthorized change\"}}");
+            assertEquals(403, denied.statusCode(), denied.body());
+        }
+
+        AuthenticatedClient anonymousWithCsrf = newCsrfClient();
+        HttpResponse<String> unauthenticatedUpdate = putJson(
+                anonymousWithCsrf,
+                "/api/catalog/admin/products/" + encode(gpuProduct) + "/specifications",
+                "{\"specifications\":{\"gpu_chip\":\"Unauthorized change\"}}");
+        assertEquals(401, unauthenticatedUpdate.statusCode(), unauthenticatedUpdate.body());
+
+        HttpResponse<String> unchanged = get(
+                admin.client(), "/api/catalog/products/" + encode(gpuProduct));
+        JsonNode unchangedSpecifications = objectMapper.readTree(unchanged.body())
+                .path("data").path("specifications");
+        assertEquals("Phase 3A integration fixture",
+                unchangedSpecifications.path("gpu_chip").asString());
+        assertEquals(2, unchangedSpecifications.path("display_outputs").size());
+    }
+
+    private void insertTestUser(String roleCode, String email) {
+        int inserted = jdbcTemplate.update(
+                """
+                INSERT INTO "users"
+                  ("role_id", "full_name", "email", "password_hash", "phone",
+                   "customer_segment", "account_status")
+                SELECT "role_id", ?, ?, ?, NULL, 'UNSPECIFIED', 'ACTIVE'
+                FROM "roles"
+                WHERE "role_code" = ?
+                """,
+                "Phase 3A " + roleCode,
+                email,
+                passwordEncoder.encode(TEST_PASSWORD),
+                roleCode);
+        assertEquals(1, inserted, "The integration database must contain role " + roleCode + ".");
+    }
+
+    private void ensureRoleFixture(String roleCode, String roleName) {
+        int inserted = jdbcTemplate.update(
+                """
+                INSERT INTO "roles" ("role_code", "role_name", "description")
+                VALUES (?, ?, 'Temporary PostgreSQL integration-test role')
+                ON CONFLICT ("role_code") DO NOTHING
+                """,
+                roleCode,
+                roleName);
+        if (inserted == 1) {
+            insertedRoleFixtures.add(roleCode);
+        }
+    }
+
+    private void ensureGpuProductTypeFixture() {
+        int inserted = jdbcTemplate.update(
+                """
+                INSERT INTO "product_types"
+                  ("type_code", "type_name", "description", "is_build_component", "is_active")
+                VALUES ('GPU', 'Graphics card', 'Temporary integration-test product type', TRUE, TRUE)
+                ON CONFLICT ("type_code") DO NOTHING
+                """);
+        gpuProductTypeFixtureInserted = inserted == 1;
+    }
+
+    private JsonNode attributeDefinition(JsonNode definitions, String code) {
+        for (JsonNode definition : definitions) {
+            if ("GPU".equals(definition.path("productType").asString())
+                    && code.equals(definition.path("code").asString())) {
+                return definition;
+            }
+        }
+        throw new AssertionError("GPU attribute definition not found: " + code);
+    }
+
+    private Map<String, GpuDefinitionSnapshot> snapshotGpuDefinitions(String... codes) {
+        Map<String, GpuDefinitionSnapshot> snapshots = new LinkedHashMap<>();
+        for (String code : codes) {
+            List<Map<String, Object>> rows = jdbcTemplate.queryForList(
+                    """
+                    SELECT ad."attribute_name", ad."data_type", ad."unit",
+                           ad."is_filterable", ad."is_build_critical"
+                    FROM "product_attribute_definitions" ad
+                    JOIN "product_types" pt ON pt."product_type_id" = ad."product_type_id"
+                    WHERE pt."type_code" = 'GPU' AND ad."attribute_code" = ?
+                    """,
+                    code);
+            if (!rows.isEmpty()) {
+                Map<String, Object> row = rows.getFirst();
+                snapshots.put(code, new GpuDefinitionSnapshot(
+                        (String) row.get("attribute_name"),
+                        (String) row.get("data_type"),
+                        (String) row.get("unit"),
+                        Boolean.TRUE.equals(row.get("is_filterable")),
+                        Boolean.TRUE.equals(row.get("is_build_critical"))));
+            }
+        }
+        return snapshots;
+    }
+
+    private void restoreGpuDefinitions() {
+        if (!gpuDefinitionSnapshotCaptured) {
+            return;
+        }
+        for (String code : List.of("gpu_chip", "display_outputs")) {
+            GpuDefinitionSnapshot original = originalGpuDefinitions.get(code);
+            if (original == null) {
+                jdbcTemplate.update(
+                        """
+                        DELETE FROM "product_attribute_definitions" ad
+                        USING "product_types" pt
+                        WHERE pt."product_type_id" = ad."product_type_id"
+                          AND pt."type_code" = 'GPU'
+                          AND ad."attribute_code" = ?
+                          AND NOT EXISTS (
+                            SELECT 1 FROM "product_attribute_values" av
+                            WHERE av."attribute_definition_id" = ad."attribute_definition_id"
+                          )
+                        """,
+                        code);
+            } else {
+                jdbcTemplate.update(
+                        """
+                        UPDATE "product_attribute_definitions" ad
+                        SET "attribute_name" = ?, "data_type" = ?, "unit" = ?,
+                            "is_filterable" = ?, "is_build_critical" = ?
+                        FROM "product_types" pt
+                        WHERE pt."product_type_id" = ad."product_type_id"
+                          AND pt."type_code" = 'GPU'
+                          AND ad."attribute_code" = ?
+                        """,
+                        original.name(),
+                        original.dataType(),
+                        original.unit(),
+                        original.filterable(),
+                        original.buildCritical(),
+                        code);
+            }
+        }
+    }
+
+    private AuthenticatedClient login(String email) throws Exception {
+        AuthenticatedClient client = newCsrfClient();
+        HttpRequest request = HttpRequest.newBuilder(URI.create(
+                        "http://localhost:" + port + "/api/auth/login"))
+                .header("Accept", "application/json")
+                .header("Content-Type", "application/json")
+                .header("X-XSRF-TOKEN", client.csrfToken())
+                .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(
+                        Map.of("email", email, "password", TEST_PASSWORD))))
+                .build();
+        HttpResponse<String> response = client.client().send(
+                request, HttpResponse.BodyHandlers.ofString());
+        assertEquals(200, response.statusCode(), response.body());
+        return client;
+    }
+
+    private AuthenticatedClient newCsrfClient() throws Exception {
+        HttpClient client = HttpClient.newBuilder()
+                .cookieHandler(new CookieManager())
+                .build();
+        HttpResponse<String> response = get(client, "/api/auth/csrf");
+        assertEquals(200, response.statusCode(), response.body());
+        String csrfToken = objectMapper.readTree(response.body()).path("token").asString();
+        assertFalse(csrfToken.isBlank(), "The CSRF endpoint must return a token.");
+        return new AuthenticatedClient(client, csrfToken);
+    }
+
+    private HttpResponse<String> putJson(
+            AuthenticatedClient client, String path, String json) throws Exception {
+        HttpRequest request = HttpRequest.newBuilder(URI.create("http://localhost:" + port + path))
+                .header("Accept", "application/json")
+                .header("Content-Type", "application/json")
+                .header("X-XSRF-TOKEN", client.csrfToken())
+                .PUT(HttpRequest.BodyPublishers.ofString(json))
+                .build();
+        return client.client().send(request, HttpResponse.BodyHandlers.ofString());
+    }
+
     private void verifyCatalogColumnTypes() {
         assertColumnType("brands", "brand_id", "numeric", 20, 0);
         assertColumnType("categories", "category_id", "numeric", 20, 0);
@@ -510,12 +821,16 @@ class PostgresCatalogIntegrationIT {
     }
 
     private HttpResponse<String> get(String path) throws Exception {
+        return get(httpClient, path);
+    }
+
+    private HttpResponse<String> get(HttpClient client, String path) throws Exception {
         HttpRequest request = HttpRequest.newBuilder(
                         URI.create("http://localhost:" + port + path))
                 .header("Accept", "application/json")
                 .GET()
                 .build();
-        return httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        return client.send(request, HttpResponse.BodyHandlers.ofString());
     }
 
     private String query(String path, Map<String, String> parameters) {
@@ -570,5 +885,16 @@ class PostgresCatalogIntegrationIT {
         String modelCode = products.get(0).path("modelCode").asString();
         assertNotNull(modelCode);
         return modelCode;
+    }
+
+    private record AuthenticatedClient(HttpClient client, String csrfToken) {
+    }
+
+    private record GpuDefinitionSnapshot(
+            String name,
+            String dataType,
+            String unit,
+            boolean filterable,
+            boolean buildCritical) {
     }
 }

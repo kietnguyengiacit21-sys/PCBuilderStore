@@ -4,10 +4,14 @@ import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 
 import com.pc_builder_store.catalog.dto.CatalogAttributeFacet;
+import com.pc_builder_store.catalog.dto.CatalogAttributeDefinition;
 import com.pc_builder_store.catalog.dto.CatalogFacets;
 import com.pc_builder_store.catalog.dto.CatalogImage;
 import com.pc_builder_store.catalog.dto.CatalogOffer;
@@ -24,6 +28,7 @@ import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.PlatformTransactionManager;
 import tools.jackson.databind.json.JsonMapper;
 
 @SpringBootTest
@@ -35,6 +40,9 @@ class CatalogControllerTest {
 
     @MockitoBean
     private CatalogRepository catalogRepository;
+
+    @MockitoBean
+    private PlatformTransactionManager transactionManager;
 
     @Test
     void returnsFacetResponseInFrontendShape() throws Exception {
@@ -54,6 +62,31 @@ class CatalogControllerTest {
                 .andExpect(jsonPath("$.data.categories[0].label").value("Memory"))
                 .andExpect(jsonPath("$.data.brands[0].value").value("Acme"))
                 .andExpect(jsonPath("$.data.attributes[0].values[0].value").value("16"));
+    }
+
+    @Test
+    void returnsAllTypedAttributeDefinitionsWithoutChangingFacetContract() throws Exception {
+        when(catalogRepository.getAttributeDefinitions()).thenReturn(List.of(
+                new CatalogAttributeDefinition("CPU", "core_count", "Core Count", "INTEGER", "cores", true),
+                new CatalogAttributeDefinition("CPU", "architecture", "Architecture", "TEXT", null, false),
+                new CatalogAttributeDefinition(
+                        "GPU", "memory_type", "Loại bộ nhớ đồ họa", "TEXT", null, false,
+                        "Graphics memory type", null, "SELECT", List.of("GDDR6", "GDDR7"), "BOARD_VARIANT")));
+
+        mockMvc.perform(get("/api/catalog/attribute-definitions"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[0].productType").value("CPU"))
+                .andExpect(jsonPath("$.data[0].code").value("core_count"))
+                .andExpect(jsonPath("$.data[0].dataType").value("INTEGER"))
+                .andExpect(jsonPath("$.data[0].unit").value("cores"))
+                .andExpect(jsonPath("$.data[0].filterable").value(true))
+                .andExpect(jsonPath("$.data[0].englishLabel").value("Core Count"))
+                .andExpect(jsonPath("$.data[0].subtype").doesNotExist())
+                .andExpect(jsonPath("$.data[1].dataType").value("TEXT"))
+                .andExpect(jsonPath("$.data[1].filterable").value(false))
+                .andExpect(jsonPath("$.data[2].inputMode").value("SELECT"))
+                .andExpect(jsonPath("$.data[2].options[1]").value("GDDR7"))
+                .andExpect(jsonPath("$.data[2].specificationScope").value("BOARD_VARIANT"));
     }
 
     @Test
@@ -137,6 +170,63 @@ class CatalogControllerTest {
     }
 
     @Test
+    void deniesUnauthenticatedGpuSpecificationUpdates() throws Exception {
+        mockMvc.perform(put("/api/catalog/admin/products/GPU-TEST/specifications")
+                        .with(csrf())
+                        .contentType("application/json")
+                        .content("{\"specifications\":{\"vram_gb\":16}}"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void deniesCustomerGpuSpecificationUpdates() throws Exception {
+        mockMvc.perform(put("/api/catalog/admin/products/GPU-TEST/specifications")
+                        .with(csrf())
+                        .with(user("customer").roles("CUSTOMER"))
+                        .contentType("application/json")
+                        .content("{\"specifications\":{\"vram_gb\":16}}"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void deniesSalesGpuSpecificationUpdates() throws Exception {
+        mockMvc.perform(put("/api/catalog/admin/products/GPU-TEST/specifications")
+                        .with(csrf())
+                        .with(user("sales").roles("SALES"))
+                        .contentType("application/json")
+                        .content("{\"specifications\":{\"vram_gb\":16}}"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void persistsGpuSpecificationUpdatesThroughTheCatalogRepository() throws Exception {
+        when(catalogRepository.findActiveProduct("GPU-TEST")).thenReturn(Optional.of(gpuProduct()));
+
+        mockMvc.perform(put("/api/catalog/admin/products/GPU-TEST/specifications")
+                        .with(csrf())
+                        .with(user("admin").roles("ADMIN"))
+                        .contentType("application/json")
+                        .content("""
+                                {"specifications":{
+                                  "vram_gb":16,
+                                  "memory_type":"GDDR7",
+                                  "display_outputs":[
+                                    {"type":"DisplayPort","count":3,"version":"2.1a"},
+                                    {"type":"HDMI","count":1,"version":"2.1b"}
+                                  ]
+                                }}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.productType").value("GPU"));
+
+        verify(catalogRepository).updateGpuSpecifications(
+                org.mockito.ArgumentMatchers.eq("GPU-TEST"),
+                org.mockito.ArgumentMatchers.argThat(specifications ->
+                        specifications.get("display_outputs").isArray()
+                                && "GDDR7".equals(specifications.get("memory_type").textValue())));
+    }
+
+    @Test
     void returnsSanitizedServiceUnavailableWhenCatalogDatabaseFails() throws Exception {
         when(catalogRepository.findProducts(org.mockito.ArgumentMatchers.any()))
                 .thenThrow(new DataAccessResourceFailureException(
@@ -177,6 +267,26 @@ class CatalogControllerTest {
                         true)),
                 JsonMapper.builder().build().readTree("{\"capacity_gb\":16}"),
                 List.of(new CatalogImage("https://example.com/image.png", null, true)),
+                true);
+    }
+
+    private CatalogProduct gpuProduct() throws Exception {
+        CatalogProduct product = product();
+        return new CatalogProduct(
+                product.productId(),
+                "GPU-TEST",
+                "Graphics card",
+                null,
+                "GPU description",
+                "ACTIVE",
+                "GPU",
+                "Graphics card",
+                "GPU",
+                "Graphics card",
+                "Manufacturer",
+                product.offers(),
+                JsonMapper.builder().build().readTree("{\"vram_gb\":16}"),
+                product.images(),
                 true);
     }
 }

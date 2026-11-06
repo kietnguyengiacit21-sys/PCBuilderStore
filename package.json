@@ -9,7 +9,7 @@
     "node": ">=20.19.0 <25"
   },
   "scripts": {
-    "dev": "concurrently -k -n web,api -c cyan,magenta \"npm:dev --workspace=frontend\" \"npm:dev --workspace=backend\"",
+    "dev": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/dev.ps1",
     "build": "npm run build --workspace=frontend && npm run typecheck --workspace=backend",
     "test": "npm run test --workspace=backend",
     "db:validate": "npm run db:validate --workspace=backend",

@@ -6,6 +6,7 @@ import "../components/shell.css";
 import "../components/interactions.css";
 import "../components/layout-fixes.css";
 import "../components/admin-shell.css";
+import "./v2/theme.css";
 
 const rootElement = document.getElementById("root");
 

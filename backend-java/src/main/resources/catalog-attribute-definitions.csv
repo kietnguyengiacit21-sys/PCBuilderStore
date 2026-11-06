@@ -1,0 +1,177 @@
+product_type,code,label_vi,label_en,data_type,unit,filterable,build_critical,subtype,input_mode,options,specification_scope
+ACCESSORY,accessory_type,Loại phụ kiện,Accessory type,TEXT,,false,false,,,,
+ACCESSORY,mouse_max_dpi,DPI tối đa,Maximum DPI,INTEGER,DPI,true,false,MOUSE,,,
+ACCESSORY,mouse_polling_rate_hz,Tần số polling,Polling rate,INTEGER,Hz,true,false,MOUSE,,,
+ACCESSORY,mouse_button_count,Số nút,Button count,INTEGER,count,false,false,MOUSE,,,
+ACCESSORY,mouse_connectivity_modes,Kết nối,Connectivity modes,JSON,,false,false,MOUSE,,,
+ACCESSORY,keyboard_layout,Bố cục bàn phím,Keyboard layout,TEXT,,true,false,KEYBOARD,,,
+ACCESSORY,keyboard_switch_type,Loại switch,Switch type,TEXT,,true,false,KEYBOARD,,,
+ACCESSORY,keyboard_connectivity_modes,Kết nối,Connectivity modes,JSON,,false,false,KEYBOARD,,,
+ACCESSORY,keyboard_key_count,Số phím,Key count,INTEGER,keys,false,false,KEYBOARD,,,
+ACCESSORY,keyboard_backlight,Đèn nền,Backlight,BOOLEAN,,false,false,KEYBOARD,,,
+ACCESSORY,monitor_panel_size_in,Kích thước màn hình,Panel size,DECIMAL,in,true,false,MONITOR,,,
+ACCESSORY,monitor_resolution,Độ phân giải,Resolution,TEXT,,true,false,MONITOR,,,
+ACCESSORY,monitor_refresh_rate_hz,Tần số quét,Refresh rate,INTEGER,Hz,true,false,MONITOR,,,
+ACCESSORY,monitor_response_time_ms,Thời gian phản hồi,Response time,DECIMAL,ms,false,false,MONITOR,,,
+ACCESSORY,monitor_panel_type,Công nghệ tấm nền,Panel type,TEXT,,true,false,MONITOR,,,
+ACCESSORY,monitor_brightness_nits,Độ sáng,Brightness,INTEGER,nits,false,false,MONITOR,,,
+ACCESSORY,monitor_video_inputs,Cổng hình ảnh,Video inputs,JSON,,false,false,MONITOR,,,
+ACCESSORY,headset_driver_size_mm,Kích thước driver,Driver size,INTEGER,mm,false,false,HEADSET,,,
+ACCESSORY,headset_impedance_ohm,Trở kháng,Impedance,DECIMAL,ohm,false,false,HEADSET,,,
+ACCESSORY,headset_microphone_type,Loại micro,Microphone type,TEXT,,false,false,HEADSET,,,
+ACCESSORY,headset_connectivity_modes,Kết nối,Connectivity modes,JSON,,false,false,HEADSET,,,
+CASE,case_form_factor,Kiểu dáng case,Case form factor,TEXT,,true,false,,,,
+CASE,max_cooler_height_mm,Chiều cao tản nhiệt tối đa,Maximum cooler height,INTEGER,mm,false,true,,,,
+CASE,max_gpu_length_mm,Chiều dài GPU tối đa,Maximum GPU length,INTEGER,mm,false,true,,,,
+CASE,max_psu_length_mm,Chiều dài bộ nguồn tối đa,Maximum PSU length,INTEGER,mm,false,false,,,,
+CASE,motherboard_form_factors,Chuẩn bo mạch chủ hỗ trợ,Supported motherboard form factors,JSON,,true,true,,,,
+CASE,expansion_slot_count,Số khe mở rộng,Expansion slot count,INTEGER,slots,false,false,,,,
+CASE,drive_bays,Khoang ổ đĩa,Drive bays,JSON,,false,false,,,,
+CASE,included_fans,Quạt đi kèm,Included fans,JSON,,false,false,,,,
+CASE,fan_mounts,Vị trí lắp quạt,Fan mounts,JSON,,false,false,,,,
+CASE,radiator_support,Hỗ trợ radiator,Radiator support,JSON,,false,false,,,,
+CASE,front_io_ports,Cổng kết nối mặt trước,Front I/O ports,JSON,,false,false,,,,
+CASE,dimensions_mm,Kích thước case,Case dimensions,JSON,mm,false,false,,,,
+CASE,weight_kg,Khối lượng,Weight,DECIMAL,kg,false,false,,,,
+CASE,cable_clearance_mm,Khoảng trống đi dây,Cable clearance,INTEGER,mm,false,false,,,,
+COOLER,cooler_type,Loại tản nhiệt,Cooler type,TEXT,,true,false,,,,
+COOLER,cooler_height_mm,Chiều cao tản nhiệt,Cooler height,INTEGER,mm,false,true,,,,
+COOLER,supported_sockets,Socket hỗ trợ,Supported sockets,JSON,,true,true,,,,
+COOLER,radiator_dimensions_mm,Kích thước radiator,Radiator dimensions,JSON,mm,false,false,,,,
+COOLER,fan_size_mm,Kích thước quạt,Fan size,INTEGER,mm,false,false,,,,
+COOLER,fan_count,Số quạt,Fan count,INTEGER,count,false,false,,,,
+COOLER,fan_speed_rpm,Tốc độ quạt,Fan speed,JSON,rpm,false,false,,,,
+COOLER,airflow_cfm,Lưu lượng gió,Airflow,DECIMAL,CFM,false,false,,,,
+COOLER,static_pressure_mmh2o,Áp suất tĩnh,Static pressure,DECIMAL,mmH2O,false,false,,,,
+COOLER,noise_db_a,Độ ồn,Noise level,DECIMAL,dB(A),false,false,,,,
+COOLER,pump_speed_rpm,Tốc độ bơm,Pump speed,JSON,rpm,false,false,,,,
+COOLER,connector_types,Đầu nối,Connector types,JSON,,false,false,,,,
+COOLER,dimensions_mm,Kích thước sản phẩm,Product dimensions,JSON,mm,false,false,,,,
+COOLER,weight_kg,Khối lượng,Weight,DECIMAL,kg,false,false,,,,
+CPU,socket,Socket,Socket,TEXT,,true,true,,,,
+CPU,architecture,Vi kiến trúc,Microarchitecture,TEXT,,false,false,,,,
+CPU,core_count,Số nhân,Core count,INTEGER,cores,true,true,,,,
+CPU,thread_count,Số luồng,Thread count,INTEGER,threads,true,false,,,,
+CPU,base_clock_ghz,Xung cơ bản,Base clock,DECIMAL,GHz,true,false,,,,
+CPU,max_boost_clock_ghz,Xung tăng tốc tối đa,Maximum boost clock,DECIMAL,GHz,true,false,,,,
+CPU,cache_l2_mb,Bộ nhớ đệm L2,L2 cache,DECIMAL,MB,false,false,,,,
+CPU,cache_l3_mb,Bộ nhớ đệm L3,L3 cache,DECIMAL,MB,false,false,,,,
+CPU,tdp_watt,Công suất thiết kế nhiệt,TDP,INTEGER,W,false,false,,,,
+CPU,max_turbo_power_watt,Công suất turbo tối đa,Maximum turbo power,INTEGER,W,false,false,,,,
+CPU,integrated_graphics,Đồ họa tích hợp,Integrated graphics,TEXT,,false,false,,,,
+CPU,memory_types_supported,Chuẩn bộ nhớ hỗ trợ,Supported memory types,JSON,,false,true,,,,
+CPU,max_memory_gb,Dung lượng bộ nhớ tối đa,Maximum memory capacity,INTEGER,GB,false,false,,,,
+CPU,max_memory_data_rate_mt_s,Tốc độ bộ nhớ tối đa,Maximum memory data rate,INTEGER,MT/s,false,false,,,,
+CPU,memory_channels,Số kênh bộ nhớ,Memory channels,INTEGER,channels,false,false,,,,
+CPU,pcie_generation,Thế hệ PCI Express,PCI Express generation,TEXT,,false,false,,,,
+CPU,instruction_sets,Tập lệnh hỗ trợ,Instruction sets,JSON,,false,false,,,,
+CPU,max_operating_temp_c,Nhiệt độ hoạt động tối đa,Maximum operating temperature,DECIMAL,°C,false,false,,,,
+GPU,gpu_chip,Chip đồ họa,GPU chip,TEXT,,true,true,,,,GPU_SILICON
+GPU,architecture,Vi kiến trúc,Architecture,TEXT,,false,false,,,,GPU_SILICON
+GPU,processor_unit_label,Loại đơn vị xử lý,Processing unit terminology,TEXT,,false,false,,,,GPU_SILICON
+GPU,processor_unit_count,Số đơn vị xử lý,Processing unit count,INTEGER,units,false,false,,,,GPU_SILICON
+GPU,base_clock_mhz,Xung cơ bản,Base clock,DECIMAL,MHz,false,false,,,,BOARD_VARIANT
+GPU,boost_clock_mhz,Xung tăng tốc,Boost clock,DECIMAL,MHz,false,false,,,,BOARD_VARIANT
+GPU,vram_gb,Dung lượng VRAM,VRAM capacity,INTEGER,GB,true,true,,,,BOARD_VARIANT
+GPU,memory_type,Loại bộ nhớ đồ họa,Graphics memory type,TEXT,,true,true,,SELECT,GDDR5|GDDR5X|GDDR6|GDDR6X|GDDR7|HBM2|HBM2e|HBM3|HBM3e,BOARD_VARIANT
+GPU,memory_bus_width_bit,Độ rộng bus bộ nhớ,Memory bus width,INTEGER,bit,true,false,,,,BOARD_VARIANT
+GPU,memory_data_rate_gbps,Tốc độ dữ liệu bộ nhớ,Memory data rate,DECIMAL,Gbps,false,false,,,,BOARD_VARIANT
+GPU,memory_bandwidth_gbs,Băng thông bộ nhớ,Memory bandwidth,DECIMAL,GB/s,false,false,,,,BOARD_VARIANT
+GPU,pcie_generation,Thế hệ PCI Express,PCI Express generation,TEXT,,false,false,,SELECT,PCIe 3.0|PCIe 4.0|PCIe 5.0|PCIe 6.0,BOARD_VARIANT
+GPU,pcie_link_width,Số lane PCI Express,PCI Express link width,TEXT,,false,false,,SELECT,x1|x2|x4|x8|x16,BOARD_VARIANT
+GPU,display_outputs,Cổng xuất hình,Display outputs,JSON,,false,false,,JSON_ARRAY,,BOARD_VARIANT
+GPU,board_power_watt,Công suất bo mạch,Board power,INTEGER,W,false,false,,,,BOARD_VARIANT
+GPU,recommended_psu_watt,Nguồn đề xuất,Recommended PSU,INTEGER,W,false,false,,,,BOARD_VARIANT
+GPU,power_connectors,Đầu cấp nguồn,Power connectors,JSON,,false,false,,JSON_ARRAY,,BOARD_VARIANT
+GPU,board_length_mm,Chiều dài card,Board length,DECIMAL,mm,false,false,,,,BOARD_VARIANT
+GPU,slot_thickness,Độ dày card,Slot thickness,DECIMAL,slots,false,false,,,,BOARD_VARIANT
+GPU,cooling_design,Thiết kế tản nhiệt,Cooling design,TEXT,,false,false,,,,BOARD_VARIANT
+MOTHERBOARD,socket,Socket CPU hỗ trợ,CPU socket,TEXT,,true,true,,,,
+MOTHERBOARD,chipset,Chipset,Chipset,TEXT,,true,true,,,,
+MOTHERBOARD,form_factor,Kích thước bo mạch chủ,Motherboard form factor,TEXT,,true,true,,,,
+MOTHERBOARD,memory_type,Thế hệ bộ nhớ hỗ trợ,Supported memory generation,TEXT,,true,true,,,,
+MOTHERBOARD,memory_slot_count,Số khe bộ nhớ,Memory slot count,INTEGER,slots,false,false,,,,
+MOTHERBOARD,max_memory_gb,Dung lượng bộ nhớ tối đa,Maximum memory capacity,INTEGER,GB,false,false,,,,
+MOTHERBOARD,max_memory_data_rate_mt_s,Tốc độ bộ nhớ tối đa,Maximum memory data rate,INTEGER,MT/s,false,false,,,,
+MOTHERBOARD,pcie_slots,Khe PCI Express,PCI Express slots,JSON,,false,false,,,,
+MOTHERBOARD,m2_slot_count,Số khe M.2,M.2 slot count,INTEGER,slots,false,false,,,,
+MOTHERBOARD,sata_port_count,Số cổng SATA,SATA port count,INTEGER,ports,false,false,,,,
+MOTHERBOARD,usb_ports,Cổng USB,USB ports,JSON,,false,false,,,,
+MOTHERBOARD,ethernet_speed_gbps,Tốc độ Ethernet,Ethernet speed,DECIMAL,Gbps,false,false,,,,
+MOTHERBOARD,wireless_standards,Chuẩn Wi-Fi,Wireless standards,JSON,,false,false,,,,
+MOTHERBOARD,bluetooth_version,Phiên bản Bluetooth,Bluetooth version,TEXT,,false,false,,,,
+MOTHERBOARD,audio_codec,Bộ giải mã âm thanh,Audio codec,TEXT,,false,false,,,,
+MOTHERBOARD,audio_channels,Kênh âm thanh,Audio channels,TEXT,,false,false,,,,
+MOTHERBOARD,bios_features,Tính năng BIOS,BIOS features,JSON,,false,false,,,,
+MOTHERBOARD,board_dimensions_mm,Kích thước bo mạch,Board dimensions,JSON,mm,false,false,,,,
+MOTHERBOARD,internal_connectors,Cổng kết nối nội bộ,Internal connectors,JSON,,false,false,,,,
+PC,bom_status,Trạng thái thông tin cấu hình,Configuration data status,TEXT,,false,false,,,,
+PC,configuration_summary,Tóm tắt cấu hình được ghi nhận,Recorded configuration summary,JSON,,false,false,,,,
+PC,configuration_items,Thành phần cấu hình có định danh,Identified configuration components,JSON,,false,false,,,,
+PC,system_dimensions_mm,Kích thước hệ thống,System dimensions,JSON,mm,false,false,,,,
+PSU,wattage,Công suất định mức,Rated wattage,INTEGER,W,true,true,,,,
+PSU,efficiency_rating,Chứng nhận hiệu suất,Efficiency certification,TEXT,,true,false,,,,
+PSU,atx_version,Phiên bản ATX,ATX version,TEXT,,true,false,,,,
+PSU,modularity,Thiết kế dây nguồn,Cable modularity,TEXT,,true,false,,,,
+PSU,rail_12v_output_watt,Công suất đường 12V,12V rail output,INTEGER,W,false,false,,,,
+PSU,rail_12v_current_a,Dòng điện đường 12V,12V rail current,DECIMAL,A,false,false,,,,
+PSU,connectors,Đầu nối nguồn,Power connectors,JSON,,false,false,,,,
+PSU,input_voltage_range_v,Dải điện áp đầu vào,Input voltage range,JSON,V,false,false,,,,
+PSU,fan_size_mm,Kích thước quạt,Fan size,INTEGER,mm,false,false,,,,
+PSU,noise_db_a,Độ ồn,Noise level,DECIMAL,dB(A),false,false,,,,
+PSU,protection_features,Tính năng bảo vệ,Protection features,JSON,,false,false,,,,
+PSU,dimensions_mm,Kích thước bộ nguồn,PSU dimensions,JSON,mm,false,false,,,,
+PSU,weight_kg,Khối lượng,Weight,DECIMAL,kg,false,false,,,,
+PSU,hold_up_time_ms,Thời gian duy trì,Hold-up time,DECIMAL,ms,false,false,,,,
+PSU,operating_temperature_c,Nhiệt độ hoạt động,Operating temperature,JSON,°C,false,false,,,,
+RAM,capacity_gb,Tổng dung lượng,Total capacity,INTEGER,GB,true,true,,,,
+RAM,module_capacity_gb,Dung lượng mỗi thanh,Capacity per module,INTEGER,GB,false,false,,,,
+RAM,modules_per_kit,Số thanh trong bộ,Modules per kit,INTEGER,modules,false,false,,,,
+RAM,memory_type,Thế hệ bộ nhớ,Memory generation,TEXT,,true,true,,,,
+RAM,speed_mhz,Tốc độ theo đơn vị MHz lưu trong catalog,Stored MHz speed,INTEGER,MHz,true,false,,,,
+RAM,data_rate_mt_s,Tốc độ truyền dữ liệu,Data rate,INTEGER,MT/s,true,false,,,,
+RAM,cas_latency_cycles,Độ trễ CAS,CAS latency,INTEGER,cycles,false,false,,,,
+RAM,memory_timings_cycles,Thông số timing bộ nhớ,Memory timings,JSON,cycles,false,false,,,,
+RAM,voltage_v,Điện áp,Voltage,DECIMAL,V,false,false,,,,
+RAM,memory_profiles,Hồ sơ ép xung bộ nhớ,Memory overclocking profiles,JSON,,false,false,,,,
+RAM,ecc,Hỗ trợ ECC,ECC support,BOOLEAN,,false,false,,,,
+RAM,registered,Loại registered,Registered memory,BOOLEAN,,false,false,,,,
+RAM,form_factor,Kiểu thanh bộ nhớ,Memory form factor,TEXT,,true,false,,,,
+RAM,module_height_mm,Chiều cao thanh nhớ,Module height,DECIMAL,mm,false,false,,,,
+RAM,lighting,Đèn RGB,RGB lighting,BOOLEAN,,false,false,,,,
+STORAGE,drive_type,Loại ổ lưu trữ,Drive type,TEXT,,true,true,,,,
+STORAGE,capacity_gb,Dung lượng lưu trữ,Storage capacity,INTEGER,GB,true,true,,,,
+STORAGE,form_factor,Kích thước ổ,Drive form factor,TEXT,,true,true,,,,
+STORAGE,interface,Giao tiếp ổ đĩa,Drive interface,TEXT,,true,true,,,,
+STORAGE,protocol,Giao thức lưu trữ,Storage protocol,TEXT,,true,false,,,,
+STORAGE,pcie_generation,Thế hệ PCI Express,PCI Express generation,TEXT,,false,false,,,,
+STORAGE,nand_type,Loại NAND,NAND type,TEXT,,false,false,,,,
+STORAGE,controller,Bộ điều khiển,Controller,TEXT,,false,false,,,,
+STORAGE,dram_cache,Bộ nhớ đệm DRAM,DRAM cache,BOOLEAN,,false,false,,,,
+STORAGE,cache_mb,Dung lượng bộ nhớ đệm,Cache capacity,INTEGER,MB,false,false,,,,
+STORAGE,sequential_read_mb_s,Tốc độ đọc tuần tự,Sequential read speed,INTEGER,MB/s,false,false,,,,
+STORAGE,sequential_write_mb_s,Tốc độ ghi tuần tự,Sequential write speed,INTEGER,MB/s,false,false,,,,
+STORAGE,random_read_iops,IOPS đọc ngẫu nhiên,Random read IOPS,INTEGER,IOPS,false,false,,,,
+STORAGE,random_write_iops,IOPS ghi ngẫu nhiên,Random write IOPS,INTEGER,IOPS,false,false,,,,
+STORAGE,endurance_tbw,Độ bền ghi TBW,Endurance TBW,INTEGER,TBW,false,false,,,,
+STORAGE,mtbf_hours,Thời gian MTBF,MTBF,INTEGER,hours,false,false,,,,
+STORAGE,rpm,Tốc độ quay,RPM,INTEGER,rpm,false,false,,,,
+STORAGE,dimensions_mm,Kích thước ổ,Drive dimensions,JSON,mm,false,false,,,,
+STORAGE,weight_g,Khối lượng,Weight,DECIMAL,g,false,false,,,,
+GPU,memory_clock_mhz,Xung bộ nhớ,Memory clock,DECIMAL,MHz,false,false,,NUMBER,,BOARD_VARIANT
+GPU,max_display_resolution,Độ phân giải hiển thị tối đa,Maximum display resolution,TEXT,,false,false,,TEXT,,BOARD_VARIANT
+GPU,max_display_refresh_rate_hz,Tần số quét tối đa,Maximum display refresh rate,INTEGER,Hz,false,false,,NUMBER,,BOARD_VARIANT
+GPU,display_stream_compression,Hỗ trợ Display Stream Compression (DSC),Display Stream Compression (DSC) support,BOOLEAN,,false,false,,BOOLEAN,,BOARD_VARIANT
+GPU,max_simultaneous_displays,Số màn hình tối đa,Maximum simultaneous displays,INTEGER,displays,false,false,,NUMBER,,BOARD_VARIANT
+GPU,hdcp_version,Phiên bản HDCP,HDCP version,TEXT,,false,false,,SELECT,1.4|2.2|2.3,BOARD_VARIANT
+GPU,directx_support,Hỗ trợ DirectX,DirectX support,TEXT,,false,false,,TEXT,,GPU_SILICON
+GPU,opengl_version,Phiên bản OpenGL,OpenGL version,TEXT,,false,false,,TEXT,,GPU_SILICON
+GPU,vulkan_version,Phiên bản Vulkan,Vulkan version,TEXT,,false,false,,TEXT,,GPU_SILICON
+GPU,gpu_technologies,Công nghệ đồ họa,Graphics technologies,TEXT,,false,false,,TEXTAREA,,GPU_SILICON
+GPU,fan_count,Số quạt,Fan count,INTEGER,fans,false,false,,NUMBER,,BOARD_VARIANT
+GPU,board_width_mm,Chiều rộng card,Card width,DECIMAL,mm,false,false,,NUMBER,,BOARD_VARIANT
+GPU,board_height_mm,Chiều cao card,Card height,DECIMAL,mm,false,false,,NUMBER,,BOARD_VARIANT
+GPU,supported_operating_systems,Hệ điều hành hỗ trợ,Supported operating systems,JSON,,false,false,,JSON_ARRAY,,BOARD_VARIANT
+GPU,multi_gpu_support,Hỗ trợ đa GPU,Multi-GPU support,BOOLEAN,,false,false,,BOOLEAN,,BOARD_VARIANT
+GPU,included_accessories,Phụ kiện đi kèm,Included accessories,JSON,,false,false,,JSON_ARRAY,,BOARD_VARIANT
+GPU,included_documentation,Tài liệu đi kèm,Included documentation,JSON,,false,false,,JSON_ARRAY,,BOARD_VARIANT

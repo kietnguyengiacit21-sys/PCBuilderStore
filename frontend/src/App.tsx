@@ -1,7 +1,10 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import HealthPage from "./HealthPage";
-import LegacyScreen from "./LegacyScreen";
 import { screens } from "./pages";
+import V2FoundationPreview, { V2AdminShellPreview } from "./v2/V2FoundationPreview";
+import V2ScreenRouter from "./v2/V2ScreenRouter";
+import { AuthProvider } from "./v2/auth";
+import { ComparisonProvider } from "./v2/comparison-store";
 
 function NotFound() {
   return (
@@ -16,17 +19,27 @@ function NotFound() {
 
 export default function App() {
   return (
-    <Routes>
-      <Route path="/" element={<Navigate to="/customer/home" replace />} />
-      <Route path="/system/health" element={<HealthPage />} />
-      {screens.map((screen) => (
-        <Route
-          key={screen.path}
-          path={screen.path}
-          element={<LegacyScreen screen={screen} />}
-        />
-      ))}
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+    <AuthProvider>
+      <ComparisonProvider>
+        <Routes>
+          <Route path="/" element={<Navigate to="/customer/home" replace />} />
+          <Route path="/system/health" element={<HealthPage />} />
+          {import.meta.env.DEV && (
+            <>
+              <Route path="/system/v2-preview" element={<V2FoundationPreview />} />
+              <Route path="/system/v2-admin-preview" element={<V2AdminShellPreview />} />
+            </>
+          )}
+          {screens.map((screen) => (
+            <Route
+              key={screen.path}
+              path={screen.path}
+              element={<V2ScreenRouter screen={screen} />}
+            />
+          ))}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </ComparisonProvider>
+    </AuthProvider>
   );
 }

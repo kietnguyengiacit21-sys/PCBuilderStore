@@ -1,6 +1,8 @@
 package com.pc_builder_store.catalog.service;
 
+import com.pc_builder_store.catalog.CatalogSpecificationValidator;
 import com.pc_builder_store.catalog.dto.CatalogFacets;
+import com.pc_builder_store.catalog.dto.CatalogAttributeDefinition;
 import com.pc_builder_store.catalog.dto.CatalogProduct;
 import com.pc_builder_store.catalog.dto.CatalogProductPage;
 import com.pc_builder_store.catalog.dto.CatalogQuery;
@@ -18,6 +20,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import tools.jackson.databind.JsonNode;
 
 @Service
 public class CatalogService {
@@ -44,6 +48,10 @@ public class CatalogService {
         return catalogRepository.getFacets();
     }
 
+    public List<CatalogAttributeDefinition> getAttributeDefinitions() {
+        return catalogRepository.getAttributeDefinitions();
+    }
+
     public CatalogProductPage getProducts(Map<String, String[]> parameters) {
         CatalogQuery query = parseQuery(parameters);
         CatalogRepository.ProductPage page = catalogRepository.findProducts(query);
@@ -64,6 +72,19 @@ public class CatalogService {
         }
         return catalogRepository.findActiveProduct(modelCode)
                 .orElseThrow(CatalogProductNotFoundException::new);
+    }
+
+    @Transactional
+    public CatalogProduct updateGpuSpecifications(
+            String modelCode,
+            Map<String, JsonNode> specifications) {
+        if (modelCode == null || modelCode.isEmpty() || modelCode.length() > 100
+                || modelCode.chars().anyMatch(character -> character <= 0x1f || character == 0x7f)) {
+            throw invalid("Product model code is invalid.");
+        }
+        CatalogSpecificationValidator.validateGpuValues(specifications);
+        catalogRepository.updateGpuSpecifications(modelCode, specifications);
+        return getProduct(modelCode);
     }
 
     public String demoNotice() {

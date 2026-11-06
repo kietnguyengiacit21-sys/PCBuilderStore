@@ -1,6 +1,8 @@
 export interface CatalogOffer {
   offerCode: string;
   condition: string;
+  conditionPercentage?: number | null;
+  conditionDescription?: string | null;
   price: string | number;
   currency: string;
   stockQuantity: number;
@@ -43,6 +45,20 @@ export interface CatalogAttributeFacet {
   code: string;
   label: string;
   values: { label: string; value: string }[];
+}
+
+export interface CatalogAttributeDefinition {
+  productType: string;
+  code: string;
+  label: string;
+  dataType: "TEXT" | "DECIMAL" | "INTEGER" | "BOOLEAN" | "JSON";
+  unit: string | null;
+  filterable: boolean;
+  englishLabel?: string;
+  subtype?: string | null;
+  inputMode?: "TEXT" | "TEXTAREA" | "NUMBER" | "BOOLEAN" | "JSON" | "JSON_ARRAY" | "SELECT" | null;
+  options?: string[];
+  specificationScope?: "GPU_SILICON" | "BOARD_VARIANT" | null;
 }
 
 export interface CatalogFacets {
@@ -140,4 +156,58 @@ export async function fetchCatalogProduct(
 
 export function fetchCatalogFacets(signal?: AbortSignal): Promise<{ data: CatalogFacets }> {
   return fetchPayload<{ data: CatalogFacets }>("/facets", signal);
+}
+
+export function fetchCatalogAttributeDefinitions(
+  signal?: AbortSignal,
+): Promise<{ data: CatalogAttributeDefinition[] }> {
+  return fetchPayload<{ data: CatalogAttributeDefinition[] }>("/attribute-definitions", signal);
+}
+
+export async function updateGpuCatalogSpecifications(
+  modelCode: string,
+  specifications: Record<string, unknown>,
+): Promise<void> {
+  const csrfResponse = await fetch(`${apiBaseUrl}/auth/csrf`, {
+    credentials: "include",
+    headers: { Accept: "application/json" },
+  });
+  if (!csrfResponse.ok) {
+    throw new Error(`Could not obtain a CSRF token (HTTP ${csrfResponse.status}).`);
+  }
+  const csrfPayload: unknown = await csrfResponse.json();
+  if (typeof csrfPayload !== "object" || csrfPayload === null
+      || !("token" in csrfPayload) || typeof csrfPayload.token !== "string") {
+    throw new Error("Authentication service returned an invalid CSRF token.");
+  }
+
+  const response = await fetch(
+    `${apiBaseUrl}/catalog/admin/products/${encodeURIComponent(modelCode)}/specifications`,
+    {
+      method: "PUT",
+      credentials: "include",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        "X-XSRF-TOKEN": csrfPayload.token,
+      },
+      body: JSON.stringify({ specifications }),
+    },
+  );
+  if (!response.ok) {
+    let message = `GPU specification update failed (HTTP ${response.status}).`;
+    try {
+      const payload: unknown = await response.json();
+      if (typeof payload === "object" && payload !== null && "error" in payload) {
+        const error = payload.error;
+        if (typeof error === "object" && error !== null && "message" in error
+            && typeof error.message === "string") {
+          message = error.message;
+        }
+      }
+    } catch {
+      throw new Error(`Catalog API returned an invalid error response (HTTP ${response.status}).`);
+    }
+    throw new Error(message);
+  }
 }

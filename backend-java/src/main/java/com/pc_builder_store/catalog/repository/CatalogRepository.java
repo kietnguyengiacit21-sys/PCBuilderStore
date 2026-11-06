@@ -1,12 +1,15 @@
 package com.pc_builder_store.catalog.repository;
 
+import com.pc_builder_store.catalog.AttributeDefinitionRegistry;
 import com.pc_builder_store.catalog.dto.CatalogAttributeFacet;
+import com.pc_builder_store.catalog.dto.CatalogAttributeDefinition;
 import com.pc_builder_store.catalog.dto.CatalogFacets;
 import com.pc_builder_store.catalog.dto.CatalogImage;
 import com.pc_builder_store.catalog.dto.CatalogOffer;
 import com.pc_builder_store.catalog.dto.CatalogOption;
 import com.pc_builder_store.catalog.dto.CatalogProduct;
 import com.pc_builder_store.catalog.dto.CatalogQuery;
+import com.pc_builder_store.catalog.exception.CatalogProductNotFoundException;
 import com.pc_builder_store.catalog.dto.CatalogQuery.AttributeFilter;
 import com.pc_builder_store.catalog.dto.CatalogQuery.Direction;
 import com.pc_builder_store.catalog.dto.CatalogQuery.Sort;
@@ -130,6 +133,154 @@ public class CatalogRepository {
                 """);
         List<CatalogAttributeFacet> attributes = attributeFacets();
         return new CatalogFacets(productTypes, categories, brands, attributes);
+    }
+
+    public List<CatalogAttributeDefinition> getAttributeDefinitions() {
+        Map<String, CatalogAttributeDefinition> definitions = new LinkedHashMap<>();
+        jdbcTemplate.query(
+                """
+                SELECT pt."type_code" AS "productType",
+                       ad."attribute_code" AS "code",
+                       ad."attribute_name" AS "label",
+                       ad."data_type" AS "dataType",
+                       ad."unit" AS "unit",
+                       ad."is_filterable" AS "filterable"
+                FROM "product_attribute_definitions" ad
+                JOIN "product_types" pt
+                  ON pt."product_type_id" = ad."product_type_id"
+                ORDER BY pt."type_code", ad."attribute_name", ad."attribute_code"
+                """,
+                Map.of(),
+                (resultSet, rowNumber) -> {
+                    String productType = resultSet.getString("productType");
+                    String code = resultSet.getString("code");
+                    AttributeDefinitionRegistry.Definition metadata = AttributeDefinitionRegistry
+                            .find(productType, code)
+                            .orElse(null);
+                    CatalogAttributeDefinition definition = new CatalogAttributeDefinition(
+                            productType,
+                            code,
+                            metadata == null ? resultSet.getString("label") : metadata.labelVi(),
+                            metadata == null ? resultSet.getString("dataType") : metadata.dataType(),
+                            metadata == null ? resultSet.getString("unit") : metadata.unit(),
+                            metadata == null ? resultSet.getBoolean("filterable") : metadata.filterable(),
+                            metadata == null ? resultSet.getString("label") : metadata.labelEn(),
+                            metadata == null ? null : metadata.subtype(),
+                            metadata == null ? null : metadata.inputMode(),
+                            metadata == null ? List.of() : metadata.options(),
+                            metadata == null ? null : metadata.specificationScope());
+                    definitions.put(productType + ":" + code, definition);
+                    return definition;
+                });
+        for (AttributeDefinitionRegistry.Definition metadata : AttributeDefinitionRegistry.all()) {
+            definitions.putIfAbsent(
+                    metadata.productType() + ":" + metadata.code(),
+                    new CatalogAttributeDefinition(
+                            metadata.productType(),
+                            metadata.code(),
+                            metadata.labelVi(),
+                            metadata.dataType(),
+                            metadata.unit(),
+                            metadata.filterable(),
+                            metadata.labelEn(),
+                            metadata.subtype(),
+                            metadata.inputMode(),
+                            metadata.options(),
+                            metadata.specificationScope()));
+        }
+        return definitions.values().stream()
+                .sorted(java.util.Comparator.comparing(CatalogAttributeDefinition::productType)
+                        .thenComparing(CatalogAttributeDefinition::label)
+                        .thenComparing(CatalogAttributeDefinition::code))
+                .toList();
+    }
+
+    public void updateGpuSpecifications(String modelCode, Map<String, JsonNode> specifications) {
+        List<Map<String, Object>> products = jdbcTemplate.queryForList(
+                """
+                SELECT p."product_id" AS "productId",
+                       pt."product_type_id" AS "productTypeId",
+                       pt."type_code" AS "productType"
+                FROM "products" p
+                JOIN "product_types" pt ON pt."product_type_id" = p."product_type_id"
+                WHERE p."model_code" = :modelCode AND p."product_status" = 'ACTIVE'
+                """,
+                Map.of("modelCode", modelCode));
+        if (products.isEmpty()) {
+            throw new CatalogProductNotFoundException();
+        }
+        Map<String, Object> product = products.getFirst();
+        if (!"GPU".equals(product.get("productType"))) {
+            throw new InvalidCatalogQueryException("Only GPU product specifications can be updated here.");
+        }
+        long productId = ((Number) product.get("productId")).longValue();
+        long productTypeId = ((Number) product.get("productTypeId")).longValue();
+
+        for (Map.Entry<String, JsonNode> entry : specifications.entrySet()) {
+            AttributeDefinitionRegistry.Definition definition = AttributeDefinitionRegistry
+                    .find("GPU", entry.getKey())
+                    .orElseThrow(() -> new InvalidCatalogQueryException(
+                            "Unsupported GPU specification: " + entry.getKey() + "."));
+            Long definitionId = jdbcTemplate.queryForObject(
+                    """
+                    INSERT INTO "product_attribute_definitions"
+                      ("product_type_id", "attribute_code", "attribute_name", "data_type", "unit",
+                       "is_filterable", "is_build_critical")
+                    VALUES (:productTypeId, :code, :label, :dataType, :unit, :filterable, :buildCritical)
+                    ON CONFLICT ("product_type_id", "attribute_code") DO UPDATE SET
+                      "attribute_name" = EXCLUDED."attribute_name",
+                      "data_type" = EXCLUDED."data_type",
+                      "unit" = EXCLUDED."unit",
+                      "is_filterable" = EXCLUDED."is_filterable",
+                      "is_build_critical" = EXCLUDED."is_build_critical"
+                    RETURNING "attribute_definition_id"
+                    """,
+                    new MapSqlParameterSource()
+                            .addValue("productTypeId", productTypeId)
+                            .addValue("code", definition.code())
+                            .addValue("label", definition.labelVi())
+                            .addValue("dataType", definition.dataType())
+                            .addValue("unit", definition.unit())
+                            .addValue("filterable", definition.filterable())
+                            .addValue("buildCritical", definition.buildCritical()),
+                    Long.class);
+            JsonNode value = entry.getValue();
+            if (value == null || value.isNull()) {
+                jdbcTemplate.update(
+                        """
+                        DELETE FROM "product_attribute_values"
+                        WHERE "product_id" = :productId AND "attribute_definition_id" = :definitionId
+                        """,
+                        new MapSqlParameterSource()
+                                .addValue("productId", productId)
+                                .addValue("definitionId", definitionId));
+                continue;
+            }
+            String dataType = definition.dataType();
+            jdbcTemplate.update(
+                    """
+                    INSERT INTO "product_attribute_values"
+                      ("product_id", "attribute_definition_id", "value_text", "value_decimal",
+                       "value_integer", "value_boolean", "value_json")
+                    VALUES (:productId, :definitionId, :textValue, :decimalValue,
+                            :integerValue, :booleanValue, CAST(:jsonValue AS jsonb))
+                    ON CONFLICT ("product_id", "attribute_definition_id") DO UPDATE SET
+                      "value_text" = EXCLUDED."value_text",
+                      "value_decimal" = EXCLUDED."value_decimal",
+                      "value_integer" = EXCLUDED."value_integer",
+                      "value_boolean" = EXCLUDED."value_boolean",
+                      "value_json" = EXCLUDED."value_json",
+                      "updated_at" = CURRENT_TIMESTAMP
+                    """,
+                    new MapSqlParameterSource()
+                            .addValue("productId", productId)
+                            .addValue("definitionId", definitionId)
+                            .addValue("textValue", "TEXT".equals(dataType) ? value.textValue() : null)
+                            .addValue("decimalValue", "DECIMAL".equals(dataType) ? value.decimalValue() : null)
+                            .addValue("integerValue", "INTEGER".equals(dataType) ? value.longValue() : null)
+                            .addValue("booleanValue", "BOOLEAN".equals(dataType) ? value.booleanValue() : null)
+                            .addValue("jsonValue", "JSON".equals(dataType) ? value.toString() : null));
+        }
     }
 
     public ProductPage findProducts(CatalogQuery query) {

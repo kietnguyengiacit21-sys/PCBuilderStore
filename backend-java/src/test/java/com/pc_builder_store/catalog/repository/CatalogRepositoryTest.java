@@ -10,6 +10,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.pc_builder_store.catalog.dto.CatalogAttributeDefinition;
 import com.pc_builder_store.catalog.dto.CatalogProduct;
 import com.pc_builder_store.catalog.dto.CatalogQuery;
 import com.pc_builder_store.catalog.dto.CatalogQuery.AttributeFilter;
@@ -176,6 +177,38 @@ class CatalogRepositoryTest {
         assertEquals(1, product.images().size());
         assertEquals("https://example.com/image.png", product.images().get(0).url());
         assertTrue(product.demoData());
+    }
+
+    @Test
+    void registryMetadataOverridesStaleStoredGpuLabelsAndUnits() throws Exception {
+        when(jdbcTemplate.query(
+                anyString(),
+                org.mockito.ArgumentMatchers.<Map<String, ?>>any(),
+                any(RowMapper.class)))
+                .thenAnswer(invocation -> {
+                    @SuppressWarnings("unchecked")
+                    RowMapper<CatalogAttributeDefinition> rowMapper = invocation.getArgument(2);
+                    ResultSet row = mock(ResultSet.class);
+                    when(row.getString("productType")).thenReturn("GPU");
+                    when(row.getString("code")).thenReturn("vram_gb");
+                    when(row.getString("label")).thenReturn("Old VRAM label");
+                    when(row.getString("dataType")).thenReturn("DECIMAL");
+                    when(row.getString("unit")).thenReturn("old-unit");
+                    when(row.getBoolean("filterable")).thenReturn(false);
+                    return List.of(rowMapper.mapRow(row, 0));
+                });
+
+        CatalogAttributeDefinition definition = repository.getAttributeDefinitions().stream()
+                .filter(item -> item.productType().equals("GPU") && item.code().equals("vram_gb"))
+                .findFirst()
+                .orElseThrow();
+
+        assertEquals("Dung lượng VRAM", definition.label());
+        assertEquals("VRAM capacity", definition.englishLabel());
+        assertEquals("INTEGER", definition.dataType());
+        assertEquals("GB", definition.unit());
+        assertTrue(definition.filterable());
+        assertEquals("BOARD_VARIANT", definition.specificationScope());
     }
 
     private int countOccurrences(String value, String match) {
