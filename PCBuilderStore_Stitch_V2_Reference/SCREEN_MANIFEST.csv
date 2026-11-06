@@ -1,0 +1,23 @@
+﻿screen_id,label,group,route,source_zip,folder,files,html_title,tailwind_cdn,google_fonts,zip_bytes
+C01,Homepage,Customer,/customer/home,stitch_pc_builder_store_homepage(4).zip,Customer/C01-homepage,code.html; screen.png; DESIGN.md,,True,True,355777
+C02,Parts Search,Customer,/customer/parts,stitch_pc_builder_store_partSearch(3).zip,Customer/C02-parts-search,code.html; screen.png; DESIGN.md,,True,True,488166
+C03,Product Detail,Customer,/customer/product,stitch_pc_builder_store_details(1).zip,Customer/C03-product-detail,code.html; screen.png; DESIGN.md,,True,True,507871
+C04,Cart,Customer,/customer/cart,stitch_pc_builder_store_cart(1).zip,Customer/C04-cart,code.html; screen.png; DESIGN.md,,True,True,585336
+C05,Checkout,Customer,/customer/checkout,stitch_pc_builder_store_purchaseDetail(1).zip,Customer/C05-checkout,code.html; screen.png; DESIGN.md,,True,True,454091
+C06,Order Result,Customer,/customer/order-result,stitch_pc_builder_store_purchaseStatus.zip,Customer/C06-order-result,code.html; screen.png; DESIGN.md,,True,True,469112
+C07,Register,Customer,/customer/register,stitch_pc_builder_store_register(2).zip,Customer/C07-register,code.html; screen.png; DESIGN.md,,True,True,516936
+C08,Login,Customer,/customer/login,stitch_pc_builder_store_sign-in.zip,Customer/C08-login,code.html; screen.png; DESIGN.md,,True,True,616780
+C10,Account Overview,Customer,/customer/account,stitch_pc_builder_store_profile.zip,Customer/C10-account-overview,code.html; screen.png; DESIGN.md,,True,True,345797
+C11,Order History,Customer,/customer/orders,stitch_pc_builder_store_purchaseList.zip,Customer/C11-order-history,code.html; screen.png; DESIGN.md,,True,True,354995
+C12,Order Detail,Customer,/customer/order-detail,stitch_pc_builder_store_orderDetail(2).zip,Customer/C12-order-detail,code.html; screen.png; DESIGN.md,,True,True,451650
+C17,Product Comparison,Customer,/customer/compare,stitch_pc_builder_store_partComparision.zip,Customer/C17-product-comparison,code.html; screen.png; DESIGN.md,,True,True,395060
+A01,Staff Login,Admin,/admin/login,stitch_pc_builder_store_staffSign-In.zip,Admin/A01-staff-login,code.html; screen.png; DESIGN.md,,True,True,388883
+A02,Admin Dashboard,Admin,/admin/dashboard,stitch_pc_builder_store_staffDashboard.zip,Admin/A02-admin-dashboard,code.html; screen.png; DESIGN.md,,True,True,413292
+A03,Product Management,Admin,/admin/products,stitch_pc_builder_store_productManage.zip,Admin/A03-product-management,code.html; screen.png; DESIGN.md,,True,True,562336
+A04,Product Create Edit,Admin,/admin/product-edit,stitch_pc_builder_store_CRUDProduct.zip,Admin/A04-product-create-edit,code.html; screen.png; DESIGN.md,,True,True,415221
+A05,CSV Import,Admin,/admin/csv-import,stitch_pc_builder_store_importCSV.zip,Admin/A05-csv-import,code.html; screen.png; DESIGN.md,,True,True,461279
+A07,Category Management,Admin,/admin/categories,stitch_pc_builder_store_categoriesManage(1).zip,Admin/A07-category-management,code.html; screen.png; DESIGN.md,,True,True,578711
+A08,Brand Management,Admin,/admin/brands,stitch_pc_builder_store_brandManage.zip,Admin/A08-brand-management,code.html; screen.png; DESIGN.md,,True,True,480416
+A09,Order Management,Admin,/admin/orders,stitch_pc_builder_store_orderManage.zip,Admin/A09-order-management,code.html; screen.png; DESIGN.md,ApexRigs V2 Enterprise - Quản lý đơn hàng toàn hệ thống,True,True,483982
+A10,Customer Lookup,Admin,/admin/customers,stitch_pc_builder_store_customerSearch.zip,Admin/A10-customer-lookup,code.html; screen.png; DESIGN.md,,True,True,450799
+A12,Staff and Roles,Admin,/admin/staff,stitch_pc_builder_store_staffManage.zip,Admin/A12-staff-and-roles,code.html; screen.png; DESIGN.md,ApexRigs Engine - Quản lý nhân viên & Phân quyền,True,True,580530

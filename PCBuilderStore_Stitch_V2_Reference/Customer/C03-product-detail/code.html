@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+
+<html lang="vi"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_standard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Space+Grotesk:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base { html, body { margin: 0; padding: 0; } body { overscroll-behavior: none; } main > :first-child { margin-top: 0 !important; } main > :last-child { margin-bottom: 0 !important; } } ::-webkit-scrollbar { display: none; }</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "surface-dim": "#dad6ff", "surface-bright": "#fcf8ff", "on-surface-variant": "#4a4455", "on-tertiary-container": "#e5e3ff", "surface-container": "#efebff", "surface-container-lowest": "#ffffff", "primary": "#630ed4", "inverse-primary": "#d2bbff", "secondary": "#904d00", "error": "#ba1a1a", "secondary-container": "#fe932c", "surface-tint": "#732ee4", "inverse-surface": "#2d2a5b", "on-primary-fixed": "#25005a", "on-secondary-fixed": "#2f1500", "outline": "#7b7487", "surface-variant": "#e3dfff", "secondary-fixed": "#ffdcc3", "on-primary": "#ffffff", "on-tertiary": "#ffffff", "on-tertiary-fixed-variant": "#2f2ebe", "tertiary-fixed": "#e1e0ff", "primary-fixed-dim": "#d2bbff", "surface": "#fcf8ff", "background": "#fcf8ff", "on-surface": "#181445", "secondary-fixed-dim": "#ffb77d", "on-tertiary-fixed": "#07006c", "on-primary-container": "#ede0ff", "surface-container-highest": "#e3dfff", "on-background": "#181445", "primary-fixed": "#eaddff", "on-primary-fixed-variant": "#5a00c6", "on-error": "#ffffff", "on-error-container": "#93000a", "tertiary-fixed-dim": "#c0c1ff", "error-container": "#ffdad6", "inverse-on-surface": "#f3eeff", "surface-container-low": "#f6f2ff", "outline-variant": "#ccc3d8", "primary-container": "#7c3aed", "tertiary-container": "#5254df", "on-secondary-container": "#663500", "surface-container-high": "#e9e5ff", "on-secondary-fixed-variant": "#6e3900", "on-secondary": "#ffffff", "tertiary": "#3838c6" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "margin": "3rem", "gutter": "1.5rem", "space-2xl": "4rem", "space-lg": "1.5rem", "gutter-sm": "1rem", "space-md": "1rem", "space-sm": "0.5rem", "margin-tablet": "2rem", "space-xl": "2.5rem", "margin-mobile": "1.25rem", "space-xs": "0.25rem" }, "fontFamily": { "headline-lg": ["Plus Jakarta Sans"], "label-ui": ["Plus Jakarta Sans"], "headline-md": ["Plus Jakarta Sans"], "headline-sm": ["Plus Jakarta Sans"], "display-hero-mobile": ["Plus Jakarta Sans"], "label-tech-sm": ["Space Grotesk"], "label-tech-lg": ["Space Grotesk"], "body-lg": ["Plus Jakarta Sans"], "headline-xl-mobile": ["Plus Jakarta Sans"], "headline-xl": ["Plus Jakarta Sans"], "display-hero": ["Plus Jakarta Sans"], "headline-lg-mobile": ["Plus Jakarta Sans"], "body-md": ["Plus Jakarta Sans"], "body-sm": ["Plus Jakarta Sans"] }, "fontSize": { "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }], "label-ui": ["13px", { "lineHeight": "18px", "letterSpacing": "0.01em", "fontWeight": "600" }], "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.015em", "fontWeight": "600" }], "headline-sm": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600" }], "display-hero-mobile": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.025em", "fontWeight": "800" }], "label-tech-sm": ["11px", { "lineHeight": "16px", "letterSpacing": "0.06em", "fontWeight": "700" }], "label-tech-lg": ["14px", { "lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "600" }], "body-lg": ["18px", { "lineHeight": "28px", "letterSpacing": "-0.005em", "fontWeight": "400" }], "headline-xl-mobile": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "700" }], "headline-xl": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.025em", "fontWeight": "700" }], "display-hero": ["56px", { "lineHeight": "64px", "letterSpacing": "-0.03em", "fontWeight": "800" }], "headline-lg-mobile": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.015em", "fontWeight": "700" }], "body-md": ["15px", { "lineHeight": "24px", "letterSpacing": "0em", "fontWeight": "400" }], "body-sm": ["13px", { "lineHeight": "20px", "letterSpacing": "0.005em", "fontWeight": "400" }] } } } };</script></head><body class="bg-surface font-body-md text-on-surface antialiased selection:bg-primary-fixed selection:text-on-primary-fixed"><header class="fixed top-0 left-0 right-0 z-50 bg-surface-container-lowest/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(99,14,212,0.06)]"><div class="h-20 max-w-[1440px] mx-auto px-margin-mobile md:px-margin-tablet lg:px-margin flex items-center justify-between gap-space-lg"><div class="flex items-center gap-space-xl"><a class="flex items-center gap-space-sm group" data-path="trang-chu" href="#"><div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-primary to-primary-container flex items-center justify-center shadow-[0_4px_14px_rgba(124,58,237,0.35)] transition-transform group-hover:scale-105"><span class="material-symbols-outlined text-on-primary text-[22px]">memory</span></div><div class="flex flex-col"><div class="flex items-center gap-1.5"><span class="font-headline-sm text-headline-sm font-extrabold tracking-tight text-on-surface">APEXRIGS</span><span class="font-label-tech-sm text-label-tech-sm px-1.5 py-0.5 rounded bg-secondary-fixed text-on-secondary-fixed">V2</span></div><span class="font-label-tech-sm text-[10px] tracking-widest uppercase text-outline">Boutique Hardware</span></div></a><nav class="hidden xl:flex items-center gap-space-lg" data-active-classes="text-primary font-bold"><a class="font-label-ui text-label-ui text-on-surface-variant hover:text-on-surface transition-colors" data-path="trang-chu" href="#">Trang chủ</a><a class="font-label-ui text-label-ui text-on-surface-variant hover:text-on-surface transition-colors" data-path="linh-kien" href="#">Linh kiện</a><a class="font-label-ui text-label-ui text-on-surface-variant hover:text-on-surface transition-colors" data-path="pc-lap-san" href="#">PC lắp sẵn</a><a class="font-label-ui text-label-ui text-on-surface-variant hover:text-on-surface transition-colors" data-path="so-sanh" href="#">So sánh</a><div class="flex items-center gap-1.5 opacity-60 cursor-not-allowed"><span class="font-label-ui text-label-ui text-on-surface-variant">Build-PC</span><span class="font-label-tech-sm text-label-tech-sm px-2 py-0.5 rounded-full bg-secondary-fixed text-secondary font-bold tracking-wide">Sắp ra mắt</span></div></nav></div><div class="hidden md:flex flex-1 max-w-md items-center"><div class="w-full flex items-center bg-surface-container-low rounded-xl px-space-md py-space-sm shadow-[0_2px_6px_-1px_rgba(30,27,75,0.02)] focus-within:bg-surface-container-lowest focus-within:shadow-[0_4px_20px_-2px_rgba(124,58,237,0.08)] transition-all"><span class="material-symbols-outlined text-outline text-[20px] mr-2">search</span><input class="w-full bg-transparent font-body-sm text-body-sm text-on-surface placeholder:text-outline focus:outline-none" placeholder="Tìm kiếm CPU, RTX 4090, RAM..." type="text"/><kbd class="hidden sm:inline-flex items-center gap-0.5 px-2 py-0.5 text-[11px] font-label-tech-sm text-on-surface-variant bg-surface-container-high rounded-md shadow-sm">⌘K</kbd></div></div><div class="flex items-center gap-space-md"><a class="relative p-2 rounded-xl text-on-surface-variant hover:text-primary hover:bg-surface-container-high transition-all flex items-center justify-center" data-path="so-sanh" href="#"><span class="material-symbols-outlined text-[24px]">balance</span><span class="absolute top-1 right-1 w-4 h-4 rounded-full bg-primary text-on-primary font-label-tech-sm text-[10px] flex items-center justify-center shadow-sm">3</span></a><a class="relative p-2 rounded-xl text-on-surface-variant hover:text-primary hover:bg-surface-container-high transition-all flex items-center justify-center" data-path="gio-hang" href="#"><span class="material-symbols-outlined text-[24px]">shopping_bag</span><span class="absolute top-1 right-1 w-4 h-4 rounded-full bg-primary text-on-primary font-label-tech-sm text-[10px] flex items-center justify-center shadow-sm">2</span></a><div class="h-6 w-[1px] bg-surface-container-highest mx-space-xs hidden sm:block"></div><a class="flex items-center gap-2 pl-1 pr-2 py-1 rounded-full hover:bg-surface-container-high transition-all" data-path="dang-nhap" href="#"><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div><span class="hidden lg:inline font-label-ui text-label-ui text-on-surface">Tài khoản</span></a></div></div></header><main class="w-full pt-20 bg-surface min-h-[calc(100vh-80px)]"><div class="flex flex-col w-full">
+<!-- Subtle Ambient Glow Orbs -->
+<div class="relative w-full max-w-[1440px] mx-auto px-margin-mobile md:px-margin-tablet lg:px-margin pt-space-md pb-space-2xl">
+<div class="absolute -top-12 left-1/4 w-96 h-96 bg-primary-fixed/20 rounded-full blur-3xl pointer-events-none -z-10"></div>
+<div class="absolute top-1/3 right-10 w-80 h-80 bg-secondary-fixed/30 rounded-full blur-3xl pointer-events-none -z-10"></div>
+<!-- 1. Breadcrumb -->
+<nav aria-label="Breadcrumb" class="mb-space-lg">
+<ol class="flex flex-wrap items-center gap-2 font-body-sm text-body-sm text-on-surface-variant">
+<li>
+<a class="hover:text-primary transition-colors flex items-center gap-1" data-path="trang-chu" href="#">
+<span class="material-symbols-outlined text-[16px]">home</span>
+            Trang chủ
+          </a>
+</li>
+<li class="flex items-center text-outline-variant">
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+</li>
+<li>
+<a class="hover:text-primary transition-colors" data-path="linh-kien" href="#">Linh kiện</a>
+</li>
+<li class="flex items-center text-outline-variant">
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+</li>
+<li>
+<a class="hover:text-primary transition-colors" data-path="linh-kien" href="#">Card màn hình (VGA)</a>
+</li>
+<li class="flex items-center text-outline-variant">
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+</li>
+<li class="font-label-ui text-label-ui text-on-surface truncate max-w-xs md:max-w-md">
+          ASUS TUF RTX 4070 Ti SUPER 16GB
+        </li>
+</ol>
+</nav>
+<!-- 2. Main Product Core Stage (2 Columns Layout) -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-space-xl items-start">
+<!-- Left Column: Visual Gallery & Certifications (5 cols desktop) -->
+<div class="lg:col-span-6 flex flex-col gap-space-lg">
+<!-- Hero Product Canvas -->
+<div class="relative bg-surface-container-lowest rounded-xl p-space-lg shadow-[0_4px_24px_rgba(99,14,212,0.06)] overflow-hidden group">
+<!-- Illustration Demo Badge -->
+<div class="absolute top-4 left-4 z-10 flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-container-high/90 backdrop-blur-md shadow-sm">
+<span class="w-2 h-2 rounded-full bg-secondary-container"></span>
+<span class="font-label-tech-sm text-label-tech-sm text-on-surface">Ảnh minh họa sản phẩm</span>
+</div>
+<!-- Quick Inspection Badge -->
+<div class="absolute top-4 right-4 z-10 flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-container text-on-surface-variant font-label-tech-sm text-label-tech-sm shadow-sm">
+<span class="material-symbols-outlined text-[14px] text-primary">verified</span>
+            100% Genuine Box
+          </div>
+<!-- Main Graphic Frame -->
+<div class="w-full aspect-[4/3] relative flex items-center justify-center p-4">
+<img class="w-full h-full object-contain filter drop-shadow-[0_16px_28px_rgba(24,20,69,0.12)] transition-all duration-300" data-alt="Studio photograph of ASUS TUF Gaming GeForce RTX 4070 Ti SUPER 16GB graphic card, matte aluminum shroud, triple axial fans, sleek geometric backplate, displayed on an ultra-clean lavender and pearl white boutique hardware pedestal, subtle violet lighting accents, photorealistic 8k render." id="main-product-img" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAty0CkyxHfD_OrLyftWUmpIGcees9t86x_vRq_eq-6S2B89FA7NOsbGhlW9EGGeMLjct4z6Zgwi5yeZ-_gRngy59JlZ669bLMzUxFbZ-kY3EPL1mstdjZDcpiG7E5Z2ovssWfOwRa7-FHcSjV7RzdYuJQzLxoZvS2x5_F-aSxMiVLJcVXUZKqloZeOZPaBXxa02-7uV88YKH1lDB14hhCVLBakh58gs4b-_-pt9eaU"/>
+</div>
+<!-- Subtle bottom glow reflector -->
+<div class="absolute bottom-0 inset-x-8 h-12 bg-gradient-to-t from-surface-container via-transparent to-transparent opacity-40 pointer-events-none"></div>
+</div>
+<!-- 4 Sub-Angles Thumbnails -->
+<div class="grid grid-cols-4 gap-space-sm" id="thumbnail-gallery">
+<button class="thumb-btn active relative bg-surface-container-lowest rounded-lg p-2 shadow-sm transition-all bg-surface-container-high" onclick="selectThumbnail(0, 'Studio photograph of ASUS TUF Gaming GeForce RTX 4070 Ti SUPER 16GB graphic card, front view of 3 axial-tech fans with aluminum exoskeleton, crisp white laboratory lighting.')" type="button">
+<div class="aspect-square w-full rounded flex items-center justify-center overflow-hidden bg-surface-container-low">
+<img class="w-full h-full object-contain p-1" data-alt="Close-up detail of front shroud and 3 axial tech cooling fans of ASUS TUF Gaming RTX 4070 Ti SUPER on clean light violet desk surface." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAcVmd_Q6TibPM50z2vwlwG0FJBJWpUOnSjjmHU49fMd_b7eX-ukrhL6iEEd3KMG-k-pjz4tpmtd40xAOvC7HJ31KNy2TbPatprqoOHKW12heejwxQwWuR2ProwzSAkJJnfXDJ8VOF5utYycEEJYz9fJmFNe9LpS4wJar5xBJxXpT3SQXM3O-5QWSdAF2cxxfA5AAdtsgbZLX1_Rd3B-wnSvVTShsaiJ98JgvO6Qgx8"/>
+</div>
+<span class="mt-1 block text-center font-label-tech-sm text-[10px] text-on-surface truncate">Mặt trước quạt</span>
+</button>
+<button class="thumb-btn relative bg-surface-container-lowest rounded-lg p-2 shadow-sm transition-all hover:bg-surface-container-high" onclick="selectThumbnail(1, 'Precision photo of vented aluminum backplate of ASUS TUF RTX 4070 Ti SUPER with TUF gaming geometric patterns, studio white reflection.')" type="button">
+<div class="aspect-square w-full rounded flex items-center justify-center overflow-hidden bg-surface-container-low">
+<img class="w-full h-full object-contain p-1" data-alt="Dorsal perspective of rigid vented metal backplate of ASUS TUF RTX 4070 Ti SUPER GPU against soft violet studio background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBT-OLXzuxnu4GL59qVagoakHEPhZBlA-MZbUk6A7oaloNJqVXg53ro1aT3Sj5phM9dG-pnaxjCEM527CRx4T8W1JJqo22ZEqBntPxBJ_0wG2l4TyjrnN8Pt-NwtNQ6EHFwBZS4cjNjLcgwOtOovqzROfxzDDg1z43B-1Y_Mmm8pgQBx1WJpeLe9FwpobiZ6yzQrBpfdog1h3od8TZMo4ctR1zi8WdG8Sn2bl5WDXQt"/>
+</div>
+<span class="mt-1 block text-center font-label-tech-sm text-[10px] text-on-surface-variant truncate">Backplate</span>
+</button>
+<button class="thumb-btn relative bg-surface-container-lowest rounded-lg p-2 shadow-sm transition-all hover:bg-surface-container-high" onclick="selectThumbnail(2, 'Detailed angled view of stainless steel 304 I/O bracket ports featuring 2x HDMI 2.1a and 3x DisplayPort 1.4a on ASUS TUF GPU.')" type="button">
+<div class="aspect-square w-full rounded flex items-center justify-center overflow-hidden bg-surface-container-low">
+<img class="w-full h-full object-contain p-1" data-alt="Close up shot of stainless steel display port and HDMI outputs on ASUS TUF RTX 4070 Ti SUPER graphic card." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB_lQFMqL8CRTTMJiThi2bEJEvzXoYSpN8bKESFChK5mr7qPgKn2m3e8xreZHyQatv78SdCpZc-lyNqGJInT0fGqoLTmRAYEOUczd5GS01MpKIc8ESa5iXuCD7b_LCX5PAAFhekTr-CdPXenEHyz7dyGCtwanrCCssdTOWalr1d4Z3R9-FDTFsrPTSpeWNYGhh6Hubu7x7vYIYR4lhdmvWzVPcuVLM_H_PtRX0P2ebp"/>
+</div>
+<span class="mt-1 block text-center font-label-tech-sm text-[10px] text-on-surface-variant truncate">Cổng kết nối I/O</span>
+</button>
+<button class="thumb-btn relative bg-surface-container-lowest rounded-lg p-2 shadow-sm transition-all hover:bg-surface-container-high" onclick="selectThumbnail(3, 'Retail packaging box for ASUS TUF Gaming GeForce RTX 4070 Ti SUPER 16GB OC Edition in pristine collector condition on white background.')" type="button">
+<div class="aspect-square w-full rounded flex items-center justify-center overflow-hidden bg-surface-container-low">
+<img class="w-full h-full object-contain p-1" data-alt="Official boutique retail packaging box of ASUS TUF GeForce RTX 4070 Ti SUPER OC 16GB pristine condition studio light." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDU6c381AXInfq8fxOFaubf-9WbXblYJr_4FXr5edKMFl2E6nKxmt6N-DpVHhZ3DcRb9ad7eYx5zvKvCCf49wzcOIx9TtM4mSDN2cITfVti0S-t2gYh8HKlrIYTy2oNsAdPTH5LrKW4QUxb-qAHoMJOmd-yVUekLBbPJXJa_sI3B3U8QhWL6IQsJd0Q8EEez8Yp2Lt3uKZB8eCPcyTtJEA42F67gC4xkjrE_i3mYNXx"/>
+</div>
+<span class="mt-1 block text-center font-label-tech-sm text-[10px] text-on-surface-variant truncate">Vỏ hộp bán lẻ</span>
+</button>
+</div>
+<!-- Trust & Security Badges -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-[0_2px_12px_rgba(99,14,212,0.03)] grid grid-cols-2 gap-space-md">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-primary-fixed flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-on-primary-fixed text-[22px]">verified_user</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-ui text-label-ui text-on-surface font-bold">Bảo hành 36 tháng</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Chính hãng ASUS VN (1 đổi 1 30 ngày)</span>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-secondary-fixed flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-on-secondary-fixed text-[22px]">security</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-ui text-label-ui text-on-surface font-bold">Tem chống giả Qr</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Kích hoạt điện tử Synnex FPT / Viết Sơn</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Column: Commercial & Engineering Configurator (6 cols desktop) -->
+<div class="lg:col-span-6 flex flex-col gap-space-lg">
+<!-- Header Info Card -->
+<div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-[0_4px_24px_rgba(99,14,212,0.04)] flex flex-col gap-space-md">
+<!-- Category & Brand Metadata -->
+<div class="flex flex-wrap items-center justify-between gap-2">
+<div class="flex items-center gap-2">
+<span class="font-label-tech-sm text-label-tech-sm uppercase px-2.5 py-0.5 rounded-full bg-primary-fixed text-on-primary-fixed font-bold tracking-wider">
+                Thương hiệu: ASUS
+              </span>
+<span class="font-label-tech-sm text-label-tech-sm text-outline">/</span>
+<span class="font-label-tech-sm text-label-tech-sm text-on-surface-variant">
+                Card đồ họa (GPU)
+              </span>
+</div>
+<div class="flex items-center gap-2">
+<span class="px-2 py-0.5 rounded font-label-tech-sm text-label-tech-sm bg-surface-container-high text-primary font-bold">
+                Mới (NEW)
+              </span>
+<span class="px-2.5 py-0.5 rounded font-label-tech-sm text-label-tech-sm bg-secondary-fixed text-on-secondary-fixed font-bold flex items-center gap-1 shadow-sm">
+<span class="material-symbols-outlined text-[13px] text-secondary">workspace_premium</span>
+                Phiên bản OC cao cấp
+              </span>
+</div>
+</div>
+<!-- Title -->
+<h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight leading-snug">
+            Card đồ họa ASUS TUF Gaming GeForce RTX 4070 Ti SUPER 16GB GDDR6X
+          </h1>
+<!-- Monospace Model Code -->
+<div class="flex items-center gap-2">
+<span class="font-label-tech-sm text-label-tech-sm text-outline uppercase tracking-wider">Mã Model:</span>
+<code class="font-label-tech-sm text-label-tech-sm px-2.5 py-1 rounded-md bg-surface-container-low text-primary select-all">
+              ASUS-TUF-RTX4070TIS-O16G-GAMING
+            </code>
+</div>
+<!-- Price Display Section -->
+<div class="p-space-md rounded-xl bg-surface-container-low flex flex-col gap-1 mt-1">
+<div class="flex items-baseline gap-3">
+<span class="font-label-tech-sm text-label-tech-sm text-outline uppercase tracking-wider">Giá niêm yết bán lẻ:</span>
+<span class="font-headline-xl text-headline-xl text-primary font-extrabold tracking-tight" id="product-price">
+                24.890.000 ₫
+              </span>
+</div>
+<div class="flex items-center gap-2 text-secondary font-label-tech-sm text-label-tech-sm">
+<span class="material-symbols-outlined text-[16px]">info</span>
+<span>Lưu ý: Giá và tồn kho minh họa (Demo data)</span>
+</div>
+</div>
+<!-- Warehouse / Stock Status -->
+<div class="flex items-center gap-2.5 px-3 py-2 rounded-lg bg-surface-container text-on-surface">
+<span class="relative flex h-3 w-3">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary-container opacity-75"></span>
+<span class="relative inline-flex rounded-full h-3 w-3 bg-secondary"></span>
+</span>
+<span class="font-label-ui text-label-ui">
+              Còn hàng <strong class="text-on-surface font-bold">(12 sản phẩm sẵn kho giao hỏa tốc 2H)</strong>
+</span>
+</div>
+<!-- Sellable Offer / Condition Selector -->
+<div class="flex flex-col gap-2 pt-2">
+<label class="font-label-tech-sm text-label-tech-sm text-outline uppercase tracking-wider">
+              Chọn điều kiện linh kiện (Sellable Offer):
+            </label>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-space-sm" id="condition-options">
+<!-- Option NEW -->
+<div class="cursor-pointer p-space-md rounded-xl bg-surface-container-lowest shadow-sm flex flex-col gap-1 transition-all bg-surface-container-high" id="opt-new" onclick="setCondition('NEW', 24890000)">
+<div class="flex items-center justify-between">
+<span class="font-label-ui text-label-ui text-on-surface font-bold flex items-center gap-1.5">
+<span class="w-3 h-3 rounded-full bg-primary flex items-center justify-center">
+<span class="w-1.5 h-1.5 rounded-full bg-on-primary"></span>
+</span>
+                    Tình trạng: NEW
+                  </span>
+<span class="font-label-tech-sm text-label-tech-sm px-2 py-0.5 rounded-full bg-primary text-on-primary">
+                    Bảo hành 36T
+                  </span>
+</div>
+<span class="font-label-tech-lg text-label-tech-lg text-primary font-bold">24.890.000 ₫</span>
+<span class="font-body-sm text-[12px] text-on-surface-variant">Nguyên seal nhà máy, đầy đủ phụ kiện chính hãng</span>
+</div>
+<!-- Option LIKE_NEW -->
+<div class="cursor-pointer p-space-md rounded-xl bg-surface-container-low shadow-sm flex flex-col gap-1 transition-all hover:bg-surface-container" id="opt-likenew" onclick="setCondition('LIKE_NEW', 22500000)">
+<div class="flex items-center justify-between">
+<span class="font-label-ui text-label-ui text-on-surface-variant font-bold flex items-center gap-1.5">
+<span class="w-3 h-3 rounded-full bg-outline-variant"></span>
+                    LIKE_NEW (99%)
+                  </span>
+<span class="font-label-tech-sm text-label-tech-sm px-2 py-0.5 rounded-full bg-surface-container-highest text-on-surface-variant">
+                    Bảo hành 24T
+                  </span>
+</div>
+<span class="font-label-tech-lg text-label-tech-lg text-on-surface font-bold">22.500.000 ₫</span>
+<span class="font-body-sm text-[12px] text-on-surface-variant">Hàng trưng bày Studio, bao test áp lực chuẩn</span>
+</div>
+</div>
+</div>
+<!-- Quantity Stepper & Subtotal calculation -->
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-space-md pt-2">
+<div class="flex items-center gap-3">
+<span class="font-label-tech-sm text-label-tech-sm text-outline uppercase tracking-wider">Số lượng:</span>
+<div class="flex items-center bg-surface-container-low rounded-lg p-1 shadow-inner">
+<button aria-label="Giảm số lượng" class="w-8 h-8 rounded bg-surface-container-lowest text-on-surface flex items-center justify-center hover:bg-surface-container-high transition-colors shadow-sm" onclick="changeQuantity(-1)" type="button">
+<span class="material-symbols-outlined text-[16px]">remove</span>
+</button>
+<span class="w-12 text-center font-label-tech-lg text-label-tech-lg text-on-surface font-bold" id="qty-display">1</span>
+<button aria-label="Tăng số lượng" class="w-8 h-8 rounded bg-surface-container-lowest text-on-surface flex items-center justify-center hover:bg-surface-container-high transition-colors shadow-sm" onclick="changeQuantity(1)" type="button">
+<span class="material-symbols-outlined text-[16px]">add</span>
+</button>
+</div>
+</div>
+<div class="flex items-baseline gap-2">
+<span class="font-body-sm text-body-sm text-on-surface-variant">Tổng tạm tính:</span>
+<span class="font-headline-sm text-headline-sm text-on-surface font-bold" id="subtotal-display">
+                24.890.000 ₫
+              </span>
+</div>
+</div>
+<!-- Primary Actions Cluster (Strictly NO Wishlist button) -->
+<div class="flex flex-col gap-space-sm pt-2">
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-space-sm">
+<!-- Add to Cart (Primary Purple #6728D9 style) -->
+<button class="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-primary to-primary-container text-on-primary font-label-ui text-label-ui font-bold shadow-[0_4px_16px_rgba(99,14,212,0.35)] hover:opacity-95 active:scale-[0.99] transition-all flex items-center justify-center gap-2" onclick="triggerAddToCart()" type="button">
+<span class="material-symbols-outlined text-[20px]">add_shopping_cart</span>
+<span>Thêm vào giỏ hàng</span>
+</button>
+<!-- Buy Now (Secondary light purple border aesthetic) -->
+<button class="w-full py-3.5 px-6 rounded-xl bg-surface-container-lowest text-primary font-label-ui text-label-ui font-bold shadow-sm hover:bg-surface-container transition-all flex items-center justify-center gap-2" type="button">
+<span class="material-symbols-outlined text-[20px]">flash_on</span>
+<span>Mua ngay</span>
+</button>
+</div>
+<!-- Compare hardware Action -->
+<button class="w-full py-2.5 px-4 rounded-xl bg-surface-container-low text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-all flex items-center justify-center gap-2 font-label-ui text-label-ui" onclick="triggerCompare()" type="button">
+<span class="material-symbols-outlined text-[18px] text-primary">balance</span>
+<span>So sánh linh kiện này với GPU khác</span>
+</button>
+</div>
+<!-- Notification Toast Box (Hidden by default) -->
+<div class="hidden transition-all duration-300 p-3 rounded-xl bg-surface-container text-on-surface flex items-center justify-between" id="cart-toast">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[18px]">check_circle</span>
+<span class="font-body-sm text-body-sm">Đã thêm ASUS TUF RTX 4070 Ti SUPER vào giỏ hàng!</span>
+</div>
+<a class="font-label-tech-sm text-label-tech-sm text-primary font-bold underline" data-path="gio-hang" href="#">Xem giỏ</a>
+</div>
+</div>
+</div>
+</div>
+<!-- 3. Specification & Deep Information Tabs Section -->
+<div class="mt-space-2xl bg-surface-container-lowest rounded-xl shadow-[0_4px_32px_rgba(99,14,212,0.04)] overflow-hidden">
+<!-- Tab Headers Navigation -->
+<div class="bg-surface-container-low px-space-md pt-space-sm flex items-center gap-2 overflow-x-auto">
+<button class="tab-nav active py-3.5 px-6 font-label-ui text-label-ui text-primary font-bold rounded-t-xl bg-surface-container-lowest shadow-sm flex items-center gap-2 transition-all shrink-0" id="tab-btn-1" onclick="switchTab(1)">
+<span class="material-symbols-outlined text-[18px]">overview</span>
+          1. Tổng quan sản phẩm
+        </button>
+<button class="tab-nav py-3.5 px-6 font-label-ui text-label-ui text-on-surface-variant hover:text-on-surface font-semibold rounded-t-xl transition-all shrink-0" id="tab-btn-2" onclick="switchTab(2)">
+<span class="material-symbols-outlined text-[18px]">tune</span>
+          2. Thông số kỹ thuật chi tiết
+        </button>
+<button class="tab-nav py-3.5 px-6 font-label-ui text-label-ui text-on-surface-variant hover:text-on-surface font-semibold rounded-t-xl transition-all shrink-0" id="tab-btn-3" onclick="switchTab(3)">
+<span class="material-symbols-outlined text-[18px]">assignment_turned_in</span>
+          3. Bán hàng &amp; Bảo hành
+        </button>
+</div>
+<!-- Tab Content 1: Overview -->
+<div class="p-space-lg md:p-space-xl flex flex-col gap-space-xl" id="tab-content-1">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-space-xl items-center">
+<div class="lg:col-span-7 flex flex-col gap-space-md">
+<div class="inline-flex items-center gap-2">
+<span class="font-label-tech-sm text-label-tech-sm uppercase px-2 py-0.5 rounded bg-primary-fixed text-on-primary-fixed font-bold">
+                Kiến trúc NVIDIA Ada Lovelace
+              </span>
+<span class="font-label-tech-sm text-label-tech-sm text-outline">Boutique Cooling Series</span>
+</div>
+<h2 class="font-headline-md text-headline-md text-on-surface font-bold">
+              Hiệu Năng Vượt Bậc Cùng Sự Bền Bỉ Chuẩn Quân Đội TUF Gaming
+            </h2>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+              ASUS TUF Gaming GeForce RTX 4070 Ti SUPER 16GB GDDR6X kết hợp độ tin cậy vô song của dòng TUF với sức mạnh tính toán thần tốc từ kiến trúc NVIDIA Ada Lovelace. Với bộ nhớ 16GB GDDR6X trên bus 256-bit thế hệ mới, linh kiện dễ dàng chinh phục các tựa game độ phân giải 4K khắt khe nhất cùng các tác vụ dựng hình 3D, Generative AI và xuất phim chuẩn studio.
+            </p>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-space-md pt-2">
+<div class="p-space-md rounded-xl bg-surface-container-low flex flex-col gap-1">
+<span class="font-label-tech-lg text-label-tech-lg text-primary font-bold flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[18px]">toys</span>
+                  Quạt Axial-tech thế hệ mới
+                </span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">
+                  3 quạt vòng bi kép quay nghịch chiều giúp giảm nhiễu loạn khí động học, tăng áp suất luồng gió xuyên qua cụm tản nhiệt tới 21%.
+                </span>
+</div>
+<div class="p-space-md rounded-xl bg-surface-container-low flex flex-col gap-1">
+<span class="font-label-tech-lg text-label-tech-lg text-primary font-bold flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[18px]">shield</span>
+                  Khung nhôm nguyên khối
+                </span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">
+                  Bộ khung gia cường kết hợp backplate nhôm phay xước ngăn chặn hiện tượng cong vênh mạch PCB và tản nhiệt phụ cho linh kiện mặt sau.
+                </span>
+</div>
+</div>
+</div>
+<div class="lg:col-span-5 flex flex-col gap-space-md">
+<div class="relative rounded-2xl bg-surface-container p-6 shadow-md overflow-hidden">
+<div class="flex items-center justify-between pb-4">
+<span class="font-label-tech-sm text-label-tech-sm text-outline uppercase tracking-wider">Hệ thống BIOS</span>
+<span class="font-label-tech-sm text-label-tech-sm px-2 py-0.5 rounded bg-surface-container-highest text-on-surface">Dual Physical Switch</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-2 font-bold">Chuyển đổi Dual BIOS tức thời</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-4">
+                Lựa chọn giữa chế độ <strong>Performance Mode</strong> tối đa xung nhịp tản mát cực độ hoặc <strong>Quiet Mode</strong> giữ quạt yên tĩnh tuyệt đối dưới ngưỡng 50°C.
+              </p>
+<div class="h-2 w-full bg-surface-container-highest rounded-full overflow-hidden flex">
+<div class="w-1/2 bg-primary h-full"></div>
+<div class="w-1/2 bg-secondary-container h-full"></div>
+</div>
+<div class="flex justify-between font-label-tech-sm text-[10px] text-outline pt-2">
+<span>QUIET MODE (0dB SILENT)</span>
+<span>OC PERFORMANCE (2640 MHz)</span>
+</div>
+</div>
+<!-- Precision Thermal Infographic -->
+<div class="p-space-md rounded-xl bg-surface-container-low flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-[28px]">thermostat</span>
+<div>
+<div class="font-label-ui text-label-ui text-on-surface">Nhiệt độ Full Load kiểm nghiệm</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant">Trung bình chỉ 62.4°C tại phòng test 25°C</div>
+</div>
+</div>
+<span class="font-label-tech-lg text-label-tech-lg text-primary font-bold">62°C MAX</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Tab Content 2: Technical Specifications (Typed Attributes Matrix) -->
+<div class="p-space-lg md:p-space-xl hidden" id="tab-content-2">
+<div class="flex flex-col gap-space-md">
+<div class="flex flex-wrap items-center justify-between gap-2 pb-2">
+<h2 class="font-headline-md text-headline-md text-on-surface font-bold">
+              Bảng ma trận thông số kỹ thuật (Hardware Attributes)
+            </h2>
+<span class="font-label-tech-sm text-label-tech-sm px-3 py-1 rounded bg-surface-container-high text-on-surface-variant">
+              Tiêu chuẩn kỹ thuật: PCIe 4.0 x16
+            </span>
+</div>
+<!-- Structured Specifications Matrix -->
+<div class="overflow-x-auto">
+<table class="w-full text-left font-body-sm text-body-sm">
+<thead>
+<tr class="bg-surface-container-high text-on-surface font-label-tech-sm text-label-tech-sm uppercase">
+<th class="py-3 px-4 rounded-l-lg">Hạng mục kỹ thuật</th>
+<th class="py-3 px-4">Thông số chi tiết của sản phẩm</th>
+<th class="py-3 px-4 rounded-r-lg">Ghi chú &amp; Khả năng tương thích</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container">
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-3.5 px-4 font-label-ui text-label-ui text-on-surface font-bold">Bộ xử lý đồ họa</td>
+<td class="py-3.5 px-4 text-on-surface font-medium">NVIDIA GeForce RTX 4070 Ti SUPER</td>
+<td class="py-3.5 px-4 text-on-surface-variant">Kiến trúc Ada Lovelace (TSMC 4N)</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-3.5 px-4 font-label-ui text-label-ui text-on-surface font-bold">Số nhân CUDA Cores</td>
+<td class="py-3.5 px-4 text-primary font-bold font-label-tech-lg text-label-tech-lg">8,448 Cores</td>
+<td class="py-3.5 px-4 text-on-surface-variant">Gia tăng 10% so với bản RTX 4070 Ti tiêu chuẩn</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-3.5 px-4 font-label-ui text-label-ui text-on-surface font-bold">Dung lượng &amp; Loại VRAM</td>
+<td class="py-3.5 px-4 text-on-surface font-medium">16GB GDDR6X</td>
+<td class="py-3.5 px-4 text-on-surface-variant">Tối ưu cho Texture 4K &amp; Huấn luyện mô hình AI LLM</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-3.5 px-4 font-label-ui text-label-ui text-on-surface font-bold">Giao diện Bus bộ nhớ</td>
+<td class="py-3.5 px-4 text-on-surface font-medium">256-bit (Băng thông 672 GB/s)</td>
+<td class="py-3.5 px-4 text-on-surface-variant">Nâng cấp từ bus 192-bit lên 256-bit</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-3.5 px-4 font-label-ui text-label-ui text-on-surface font-bold">Xung nhịp GPU (Engine Clock)</td>
+<td class="py-3.5 px-4 text-on-surface font-medium">OC Mode: 2640 MHz | Default Mode: 2610 MHz</td>
+<td class="py-3.5 px-4 text-on-surface-variant">Đã ép xung sẵn từ dây chuyền xuất xưởng</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-3.5 px-4 font-label-ui text-label-ui text-on-surface font-bold">Cổng kết nối xuất hình (I/O)</td>
+<td class="py-3.5 px-4 text-on-surface font-medium">2x HDMI 2.1a &amp; 3x DisplayPort 1.4a</td>
+<td class="py-3.5 px-4 text-on-surface-variant">Hỗ trợ cùng lúc tối đa 4 màn hình chuẩn HDCP 2.3</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-3.5 px-4 font-label-ui text-label-ui text-on-surface font-bold">Nguồn khuyến nghị (PSU)</td>
+<td class="py-3.5 px-4 text-secondary font-bold font-label-tech-lg text-label-tech-lg">750W trở lên</td>
+<td class="py-3.5 px-4 text-on-surface-variant">Cổng cấp nguồn: 1x 16-pin (12VHPWR Adapter đi kèm)</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-3.5 px-4 font-label-ui text-label-ui text-on-surface font-bold">Kích thước vật lý</td>
+<td class="py-3.5 px-4 text-on-surface font-medium font-label-tech-sm text-label-tech-sm">305 x 138 x 65 mm (3.25 Slot)</td>
+<td class="py-3.5 px-4 text-on-surface-variant">Yêu cầu case hỗ trợ chiều dài GPU tối thiểu 315mm</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-3.5 px-4 font-label-ui text-label-ui text-on-surface font-bold">Trọng lượng Card màn hình</td>
+<td class="py-3.5 px-4 text-on-surface font-medium">1,315 gram</td>
+<td class="py-3.5 px-4 text-on-surface-variant">Tặng kèm chân đỡ GPU TUF chuyên dụng trong hộp</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<!-- Tab Content 3: Warranty & Shipping Policies -->
+<div class="p-space-lg md:p-space-xl hidden flex flex-col gap-space-lg" id="tab-content-3">
+<h2 class="font-headline-md text-headline-md text-on-surface font-bold">
+          Chính sách Bán hàng &amp; Quy chuẩn Dịch vụ Bảo hành
+        </h2>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-space-lg">
+<!-- Policy 1 -->
+<div class="p-space-md rounded-xl bg-surface-container-low flex flex-col gap-space-sm">
+<div class="w-12 h-12 rounded-xl bg-primary-fixed flex items-center justify-center">
+<span class="material-symbols-outlined text-on-primary-fixed text-[24px]">verified</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface font-bold">Bảo hành 36 tháng</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+              Bảo hành chính hãng toàn diện tại Trung tâm ASUS Service Hub Việt Nam. Hỗ trợ tiếp nhận bảo hành tận nhà tại khu vực Hà Nội &amp; TP.HCM.
+            </p>
+</div>
+<!-- Policy 2 -->
+<div class="p-space-md rounded-xl bg-surface-container-low flex flex-col gap-space-sm">
+<div class="w-12 h-12 rounded-xl bg-secondary-fixed flex items-center justify-center">
+<span class="material-symbols-outlined text-on-secondary-fixed text-[24px]">sync_alt</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface font-bold">1 Đổi 1 Trong 30 Ngày</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+              Lỗi kỹ thuật từ nhà sản xuất được đổi ngay sản phẩm nguyên seal mới 100% trong 30 ngày đầu sử dụng, không cần chờ kiểm định phức tạp.
+            </p>
+</div>
+<!-- Policy 3 -->
+<div class="p-space-md rounded-xl bg-surface-container-low flex flex-col gap-space-sm">
+<div class="w-12 h-12 rounded-xl bg-surface-container-high flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-[24px]">inventory_2</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface font-bold">Đóng gói Instapak Foam</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+              Mỗi đơn hàng VGA cao cấp được bao bọc bằng mút xốp định hình áp suất cao Instapak Foam 3 lớp, chống va đập tuyệt đối trên mọi cung đường.
+            </p>
+</div>
+</div>
+<!-- RMA Notice Note -->
+<div class="p-space-md rounded-xl bg-surface-container flex items-start gap-3 mt-2">
+<span class="material-symbols-outlined text-primary text-[22px] mt-0.5">policy</span>
+<div class="flex flex-col gap-1">
+<span class="font-label-ui text-label-ui text-on-surface font-bold">Lưu ý kiểm tra số Serial (S/N) &amp; Phiếu xuất kho:</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">
+              Quý khách vui lòng lưu giữ hóa đơn VAT điện tử và số Serial trên vỏ hộp trùng khớp với tem trên mạch PCB để đảm bảo quyền lợi bảo hành RMA nhanh nhất.
+            </span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<script>
+  let currentUnitCost = 24890000;
+  let currentQuantity = 1;
+
+  function formatVNCurrency(num) {
+    return new Intl.NumberFormat('vi-VN').format(num) + ' ₫';
+  }
+
+  function setCondition(type, price) {
+    currentUnitCost = price;
+    const optNew = document.getElementById('opt-new');
+    const optLikeNew = document.getElementById('opt-likenew');
+    const priceDisplay = document.getElementById('product-price');
+
+    if (type === 'NEW') {
+      optNew.classList.remove('bg-surface-container-low');
+      optNew.classList.add('bg-surface-container-lowest', 'bg-surface-container-high');
+      optLikeNew.classList.remove('bg-surface-container-lowest', 'bg-surface-container-high');
+      optLikeNew.classList.add('bg-surface-container-low');
+    } else {
+      optLikeNew.classList.remove('bg-surface-container-low');
+      optLikeNew.classList.add('bg-surface-container-lowest', 'bg-surface-container-high');
+      optNew.classList.remove('bg-surface-container-lowest', 'bg-surface-container-high');
+      optNew.classList.add('bg-surface-container-low');
+    }
+
+    priceDisplay.textContent = formatVNCurrency(price);
+    updateSubtotal();
+  }
+
+  function changeQuantity(delta) {
+    const newQty = currentQuantity + delta;
+    if (newQty >= 1 && newQty <= 12) {
+      currentQuantity = newQty;
+      document.getElementById('qty-display').textContent = currentQuantity;
+      updateSubtotal();
+    }
+  }
+
+  function updateSubtotal() {
+    const total = currentUnitCost * currentQuantity;
+    document.getElementById('subtotal-display').textContent = formatVNCurrency(total);
+  }
+
+  function selectThumbnail(index, altPrompt) {
+    const mainImg = document.getElementById('main-product-img');
+    mainImg.setAttribute('data-alt', altPrompt);
+    
+    // UI active classes
+    const buttons = document.querySelectorAll('#thumbnail-gallery .thumb-btn');
+    buttons.forEach((btn, i) => {
+      if (i === index) {
+        btn.classList.add('bg-surface-container-high');
+      } else {
+        btn.classList.remove('bg-surface-container-high');
+      }
+    });
+  }
+
+  function switchTab(tabIndex) {
+    // Hide all contents
+    document.getElementById('tab-content-1').classList.add('hidden');
+    document.getElementById('tab-content-2').classList.add('hidden');
+    document.getElementById('tab-content-3').classList.add('hidden');
+
+    // Reset tab buttons
+    for (let i = 1; i <= 3; i++) {
+      const btn = document.getElementById(`tab-btn-${i}`);
+      btn.classList.remove('text-primary', 'font-bold', 'bg-surface-container-lowest', 'shadow-sm');
+      btn.classList.add('text-on-surface-variant', 'font-semibold');
+    }
+
+    // Show selected
+    document.getElementById(`tab-content-${tabIndex}`).classList.remove('hidden');
+    const activeBtn = document.getElementById(`tab-btn-${tabIndex}`);
+    activeBtn.classList.add('text-primary', 'font-bold', 'bg-surface-container-lowest', 'shadow-sm');
+    activeBtn.classList.remove('text-on-surface-variant', 'font-semibold');
+  }
+
+  function triggerAddToCart() {
+    const toast = document.getElementById('cart-toast');
+    toast.classList.remove('hidden');
+    setTimeout(() => {
+      toast.classList.add('hidden');
+    }, 4500);
+  }
+
+  function triggerCompare() {
+    window.location.href = '#so-sanh';
+  }
+</script></main><footer class="w-full bg-surface-container-low text-on-surface pt-space-2xl pb-space-xl shadow-[0_-1px_12px_rgba(99,14,212,0.03)]"><div class="max-w-[1440px] mx-auto px-margin-mobile md:px-margin-tablet lg:px-margin"><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-space-xl pb-space-2xl"><div class="lg:col-span-4 flex flex-col gap-space-md"><div class="flex items-center gap-space-sm"><div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-primary to-primary-container flex items-center justify-center shadow-[0_4px_14px_rgba(124,58,237,0.35)]"><span class="material-symbols-outlined text-on-primary text-[20px]">memory</span></div><div class="flex items-center gap-1.5"><span class="font-headline-sm text-headline-sm font-extrabold tracking-tight text-on-surface">APEXRIGS</span><span class="font-label-tech-sm text-label-tech-sm px-1.5 py-0.5 rounded bg-secondary-fixed text-on-secondary-fixed">V2</span></div></div><p class="font-body-md text-body-md text-on-surface-variant max-w-sm">Hệ sinh thái phân phối phần cứng máy tính cao cấp hàng đầu Việt Nam. Chuẩn mực chế tác kiến trúc Hyper-Rig, tinh tuyển từng linh kiện và tối ưu hiệu năng tản nhiệt chuyên sâu.</p><div class="flex items-center gap-2 pt-2"><span class="w-2 h-2 rounded-full bg-secondary"></span><span class="font-label-tech-sm text-label-tech-sm text-on-surface-variant uppercase tracking-wider">Boutique Hardware Laboratory</span></div></div><div class="lg:col-span-3 flex flex-col gap-space-md"><h4 class="font-label-tech-lg text-label-tech-lg text-on-surface uppercase tracking-wider">Khám phá phần cứng</h4><ul class="flex flex-col gap-2.5 font-body-sm text-body-sm text-on-surface-variant"><li><a class="hover:text-primary transition-colors" data-path="linh-kien" href="#">Vi xử lý (CPU)</a></li><li><a class="hover:text-primary transition-colors" data-path="linh-kien" href="#">Card đồ họa (GPU)</a></li><li><a class="hover:text-primary transition-colors" data-path="linh-kien" href="#">Bo mạch chủ (Mainboard)</a></li><li><a class="hover:text-primary transition-colors" data-path="linh-kien" href="#">Bộ nhớ trong (RAM)</a></li><li><a class="hover:text-primary transition-colors" data-path="linh-kien" href="#">Ổ cứng lưu trữ (SSD)</a></li><li><a class="hover:text-primary transition-colors" data-path="linh-kien" href="#">Nguồn máy tính (PSU)</a></li><li><a class="hover:text-primary transition-colors" data-path="linh-kien" href="#">Vỏ máy tính (Case)</a></li><li><a class="hover:text-primary transition-colors" data-path="linh-kien" href="#">Tản nhiệt nước &amp; Khí</a></li></ul></div><div class="lg:col-span-3 flex flex-col gap-space-md"><h4 class="font-label-tech-lg text-label-tech-lg text-on-surface uppercase tracking-wider">Dịch vụ &amp; Hỗ trợ</h4><ul class="flex flex-col gap-2.5 font-body-sm text-body-sm text-on-surface-variant"><li><a class="hover:text-primary transition-colors" data-path="chinh-sach-doi-moi" href="#">Chính sách đổi mới linh kiện</a></li><li><a class="hover:text-primary transition-colors" data-path="quy-trinh-dong-goi" href="#">Quy trình đóng gói chống sốc</a></li><li><a class="hover:text-primary transition-colors" data-path="huong-dan-mua-hang" href="#">Hướng dẫn mua hàng &amp; Thanh toán</a></li><li><a class="hover:text-primary transition-colors" data-path="tra-cuu-don-hang" href="#">Tra cứu tiến độ đơn hàng</a></li></ul></div><div class="lg:col-span-2 flex flex-col gap-space-md"><h4 class="font-label-tech-lg text-label-tech-lg text-on-surface uppercase tracking-wider">Thông tin &amp; Pháp lý</h4><ul class="flex flex-col gap-2.5 font-body-sm text-body-sm text-on-surface-variant"><li><a class="hover:text-primary transition-colors" data-path="dieu-khoan-dich-vu" href="#">Điều khoản dịch vụ</a></li><li><a class="hover:text-primary transition-colors" data-path="bao-mat-thong-tin" href="#">Bảo mật thông tin khách hàng</a></li><li><a class="hover:text-primary transition-colors" data-path="chinh-sach-bao-hanh-rma" href="#">Chính sách bảo hành RMA</a></li><li><a class="hover:text-primary transition-colors" data-path="lien-he-ho-tro" href="#">Liên hệ trung tâm hỗ trợ</a></li></ul></div></div><div class="pt-space-lg flex flex-col sm:flex-row items-center justify-between gap-4 font-body-sm text-body-sm text-on-surface-variant"><p>© 2025 APEXRIGS V2. Toàn bộ bản quyền được bảo lưu.</p><div class="flex items-center gap-space-md font-label-tech-sm text-label-tech-sm text-outline"><span>ISO 9001 TESTED</span><span>•</span><span>HIGH-PERFORMANCE PC BOUTIQUE</span></div></div></div></footer></body></html>

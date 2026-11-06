@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+
+<html lang="vi"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_standard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Space+Grotesk:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base { html, body { margin: 0; padding: 0; } body { overscroll-behavior: none; } main > :first-child { margin-top: 0 !important; } main > :last-child { margin-bottom: 0 !important; } } ::-webkit-scrollbar { display: none; }</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "surface-dim": "#dad6ff", "surface-bright": "#fcf8ff", "on-surface-variant": "#4a4455", "on-tertiary-container": "#e5e3ff", "surface-container": "#efebff", "surface-container-lowest": "#ffffff", "primary": "#630ed4", "inverse-primary": "#d2bbff", "secondary": "#904d00", "error": "#ba1a1a", "secondary-container": "#fe932c", "surface-tint": "#732ee4", "inverse-surface": "#2d2a5b", "on-primary-fixed": "#25005a", "on-secondary-fixed": "#2f1500", "outline": "#7b7487", "surface-variant": "#e3dfff", "secondary-fixed": "#ffdcc3", "on-primary": "#ffffff", "on-tertiary": "#ffffff", "on-tertiary-fixed-variant": "#2f2ebe", "tertiary-fixed": "#e1e0ff", "primary-fixed-dim": "#d2bbff", "surface": "#fcf8ff", "background": "#fcf8ff", "on-surface": "#181445", "secondary-fixed-dim": "#ffb77d", "on-tertiary-fixed": "#07006c", "on-primary-container": "#ede0ff", "surface-container-highest": "#e3dfff", "on-background": "#181445", "primary-fixed": "#eaddff", "on-primary-fixed-variant": "#5a00c6", "on-error": "#ffffff", "on-error-container": "#93000a", "tertiary-fixed-dim": "#c0c1ff", "error-container": "#ffdad6", "inverse-on-surface": "#f3eeff", "surface-container-low": "#f6f2ff", "outline-variant": "#ccc3d8", "primary-container": "#7c3aed", "tertiary-container": "#5254df", "on-secondary-container": "#663500", "surface-container-high": "#e9e5ff", "on-secondary-fixed-variant": "#6e3900", "on-secondary": "#ffffff", "tertiary": "#3838c6" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "margin": "3rem", "gutter": "1.5rem", "space-2xl": "4rem", "space-lg": "1.5rem", "gutter-sm": "1rem", "space-md": "1rem", "space-sm": "0.5rem", "margin-tablet": "2rem", "space-xl": "2.5rem", "margin-mobile": "1.25rem", "space-xs": "0.25rem" }, "fontFamily": { "headline-lg": ["Plus Jakarta Sans"], "label-ui": ["Plus Jakarta Sans"], "headline-md": ["Plus Jakarta Sans"], "headline-sm": ["Plus Jakarta Sans"], "display-hero-mobile": ["Plus Jakarta Sans"], "label-tech-sm": ["Space Grotesk"], "label-tech-lg": ["Space Grotesk"], "body-lg": ["Plus Jakarta Sans"], "headline-xl-mobile": ["Plus Jakarta Sans"], "headline-xl": ["Plus Jakarta Sans"], "display-hero": ["Plus Jakarta Sans"], "headline-lg-mobile": ["Plus Jakarta Sans"], "body-md": ["Plus Jakarta Sans"], "body-sm": ["Plus Jakarta Sans"] }, "fontSize": { "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }], "label-ui": ["13px", { "lineHeight": "18px", "letterSpacing": "0.01em", "fontWeight": "600" }], "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.015em", "fontWeight": "600" }], "headline-sm": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600" }], "display-hero-mobile": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.025em", "fontWeight": "800" }], "label-tech-sm": ["11px", { "lineHeight": "16px", "letterSpacing": "0.06em", "fontWeight": "700" }], "label-tech-lg": ["14px", { "lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "600" }], "body-lg": ["18px", { "lineHeight": "28px", "letterSpacing": "-0.005em", "fontWeight": "400" }], "headline-xl-mobile": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "700" }], "headline-xl": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.025em", "fontWeight": "700" }], "display-hero": ["56px", { "lineHeight": "64px", "letterSpacing": "-0.03em", "fontWeight": "800" }], "headline-lg-mobile": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.015em", "fontWeight": "700" }], "body-md": ["15px", { "lineHeight": "24px", "letterSpacing": "0em", "fontWeight": "400" }], "body-sm": ["13px", { "lineHeight": "20px", "letterSpacing": "0.005em", "fontWeight": "400" }] } } } };</script></head><body class="bg-surface font-body-md text-on-surface antialiased selection:bg-primary-fixed selection:text-on-primary-fixed"><header class="fixed top-0 left-0 right-0 z-50 bg-surface-container-lowest/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(99,14,212,0.06)]"><div class="h-20 max-w-[1440px] mx-auto px-margin-mobile md:px-margin-tablet lg:px-margin flex items-center justify-between gap-space-lg"><div class="flex items-center gap-space-xl"><a class="flex items-center gap-space-sm group" data-path="trang-chu" href="#"><div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-primary to-primary-container flex items-center justify-center shadow-[0_4px_14px_rgba(124,58,237,0.35)] transition-transform group-hover:scale-105"><span class="material-symbols-outlined text-on-primary text-[22px]">memory</span></div><div class="flex flex-col"><div class="flex items-center gap-1.5"><span class="font-headline-sm text-headline-sm font-extrabold tracking-tight text-on-surface">APEXRIGS</span><span class="font-label-tech-sm text-label-tech-sm px-1.5 py-0.5 rounded bg-secondary-fixed text-on-secondary-fixed">V2</span></div><span class="font-label-tech-sm text-[10px] tracking-widest uppercase text-outline">Boutique Hardware</span></div></a><nav class="hidden xl:flex items-center gap-space-lg" data-active-classes="text-primary font-bold"><a class="font-label-ui text-label-ui text-on-surface-variant hover:text-on-surface transition-colors" data-path="trang-chu" href="#">Trang chủ</a><a class="font-label-ui text-label-ui text-on-surface-variant hover:text-on-surface transition-colors" data-path="linh-kien" href="#">Linh kiện</a><a class="font-label-ui text-label-ui text-on-surface-variant hover:text-on-surface transition-colors" data-path="pc-lap-san" href="#">PC lắp sẵn</a><a class="font-label-ui text-label-ui text-on-surface-variant hover:text-on-surface transition-colors" data-path="so-sanh" href="#">So sánh</a><div class="flex items-center gap-1.5 opacity-60 cursor-not-allowed"><span class="font-label-ui text-label-ui text-on-surface-variant">Build-PC</span><span class="font-label-tech-sm text-label-tech-sm px-2 py-0.5 rounded-full bg-secondary-fixed text-secondary font-bold tracking-wide">Sắp ra mắt</span></div></nav></div><div class="hidden md:flex flex-1 max-w-md items-center"><div class="w-full flex items-center bg-surface-container-low rounded-xl px-space-md py-space-sm shadow-[0_2px_6px_-1px_rgba(30,27,75,0.02)] focus-within:bg-surface-container-lowest focus-within:shadow-[0_4px_20px_-2px_rgba(124,58,237,0.08)] transition-all"><span class="material-symbols-outlined text-outline text-[20px] mr-2">search</span><input class="w-full bg-transparent font-body-sm text-body-sm text-on-surface placeholder:text-outline focus:outline-none" placeholder="Tìm kiếm CPU, RTX 4090, RAM..." type="text"/><kbd class="hidden sm:inline-flex items-center gap-0.5 px-2 py-0.5 text-[11px] font-label-tech-sm text-on-surface-variant bg-surface-container-high rounded-md shadow-sm">⌘K</kbd></div></div><div class="flex items-center gap-space-md"><a class="relative p-2 rounded-xl text-on-surface-variant hover:text-primary hover:bg-surface-container-high transition-all flex items-center justify-center" data-path="so-sanh" href="#"><span class="material-symbols-outlined text-[24px]">balance</span><span class="absolute top-1 right-1 w-4 h-4 rounded-full bg-primary text-on-primary font-label-tech-sm text-[10px] flex items-center justify-center shadow-sm">3</span></a><a class="relative p-2 rounded-xl text-on-surface-variant hover:text-primary hover:bg-surface-container-high transition-all flex items-center justify-center" data-path="gio-hang" href="#"><span class="material-symbols-outlined text-[24px]">shopping_bag</span><span class="absolute top-1 right-1 w-4 h-4 rounded-full bg-primary text-on-primary font-label-tech-sm text-[10px] flex items-center justify-center shadow-sm">2</span></a><div class="h-6 w-[1px] bg-surface-container-highest mx-space-xs hidden sm:block"></div><a class="flex items-center gap-2 pl-1 pr-2 py-1 rounded-full hover:bg-surface-container-high transition-all" data-path="dang-nhap" href="#"><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div><span class="hidden lg:inline font-label-ui text-label-ui text-on-surface">Tài khoản</span></a></div></div></header><main class="w-full pt-20 bg-surface min-h-[calc(100vh-80px)]"><div class="flex flex-col w-full">
+<div class="max-w-[1440px] w-full mx-auto px-margin-mobile md:px-margin-tablet lg:px-margin py-space-xl">
+<!-- Breadcrumb & Top Utility Info -->
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-space-sm pb-space-lg">
+<nav class="flex items-center gap-2 font-label-ui text-label-ui text-on-surface-variant">
+<a class="hover:text-primary transition-colors flex items-center gap-1" href="#">
+<span class="material-symbols-outlined text-[18px]">home</span>
+          Trang chủ
+        </a>
+<span class="text-outline-variant font-label-tech-sm">/</span>
+<a class="hover:text-primary transition-colors" href="#">Tài khoản của tôi</a>
+<span class="text-outline-variant font-label-tech-sm">/</span>
+<span class="text-on-surface font-semibold text-primary">Đơn mua của tôi</span>
+</nav>
+<!-- Sandbox Indicator Badge -->
+<div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-container-high text-on-surface-variant shadow-sm w-fit">
+<span class="w-2 h-2 rounded-full bg-secondary-container animate-pulse"></span>
+<span class="font-label-tech-sm text-label-tech-sm tracking-wide">SANDBOX MODE • Dữ liệu đơn hàng mô phỏng giao diện</span>
+</div>
+</div>
+<!-- Header Section with Luxury Architectural Tone -->
+<div class="flex flex-col lg:flex-row lg:items-end justify-between gap-space-lg pb-space-xl">
+<div>
+<div class="flex items-center gap-2 mb-2">
+<span class="font-label-tech-sm text-label-tech-sm px-2.5 py-0.5 rounded bg-primary-fixed text-on-primary-fixed tracking-wider uppercase font-bold">Lịch sử giao dịch</span>
+<span class="font-label-tech-sm text-label-tech-sm text-outline">APEX-CLIENT-PORTAL</span>
+</div>
+<h1 class="font-headline-xl text-headline-xl text-on-surface font-extrabold tracking-tight">Đơn mua của tôi</h1>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-2xl mt-1">
+          Theo dõi tình trạng xử lý kỹ thuật và toàn bộ lịch sử cung ứng linh kiện high-end tại PC Builder Store.
+        </p>
+</div>
+<!-- UI State Simulation Switcher (Quick Toggle for Dev/Auditing) -->
+<div class="bg-surface-container-lowest p-1.5 rounded-xl shadow-sm flex items-center gap-1 self-start lg:self-auto">
+<span class="font-label-tech-sm text-label-tech-sm px-2 text-outline uppercase hidden sm:inline">Chế độ xem:</span>
+<button class="px-3 py-1.5 rounded-lg font-label-ui text-label-ui bg-primary text-on-primary font-bold shadow-sm transition-all flex items-center gap-1.5" id="btn-state-data" onclick="switchViewState('data')">
+<span class="material-symbols-outlined text-[16px]">receipt_long</span>
+          Có dữ liệu (3)
+        </button>
+<button class="px-3 py-1.5 rounded-lg font-label-ui text-label-ui text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-all flex items-center gap-1.5" id="btn-state-empty" onclick="switchViewState('empty')">
+<span class="material-symbols-outlined text-[16px]">inbox</span>
+          Rỗng (Empty)
+        </button>
+<button class="px-3 py-1.5 rounded-lg font-label-ui text-label-ui text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-all flex items-center gap-1.5" id="btn-state-loading" onclick="switchViewState('loading')">
+<span class="material-symbols-outlined text-[16px]">hourglass_top</span>
+          Đang tải
+        </button>
+</div>
+</div>
+<!-- Quick Overview Metric Panels -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-space-md mb-space-xl">
+<div class="bg-surface-container-lowest p-space-lg rounded-xl shadow-sm flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-surface-container-high flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[26px]">precision_manufacturing</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-tech-sm text-label-tech-sm uppercase text-outline">Tổng giá trị đơn hàng</span>
+<span class="font-headline-sm text-headline-sm text-on-surface font-bold">50.540.000 ₫</span>
+<span class="font-label-tech-sm text-label-tech-sm text-on-surface-variant">3 lượt đặt hàng sandbox</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-space-lg rounded-xl shadow-sm flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-secondary-fixed flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[26px]">local_shipping</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-tech-sm text-label-tech-sm uppercase text-outline">Đơn đang xử lý &amp; giao</span>
+<span class="font-headline-sm text-headline-sm text-on-surface font-bold">02 đơn</span>
+<span class="font-label-tech-sm text-label-tech-sm text-secondary font-semibold">1 chờ duyệt • 1 đang luân chuyển</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-space-lg rounded-xl shadow-sm flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-primary-fixed flex items-center justify-center text-on-primary-fixed">
+<span class="material-symbols-outlined text-[26px]">verified</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-tech-sm text-label-tech-sm uppercase text-outline">Kiểm chuẩn linh kiện RMA</span>
+<span class="font-headline-sm text-headline-sm text-on-surface font-bold">100% Nguyên Seal</span>
+<span class="font-label-tech-sm text-label-tech-sm text-on-surface-variant">Bảo hành vật lý &amp; số hiệu SN</span>
+</div>
+</div>
+</div>
+<!-- Filter & Search Command Ribbon -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm mb-space-lg">
+<div class="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-space-md">
+<!-- Filter Tabs -->
+<div class="flex items-center overflow-x-auto pb-1 lg:pb-0 gap-1.5 scrollbar-none" id="order-tabs">
+<button class="filter-tab px-4 py-2 rounded-lg font-label-ui text-label-ui bg-primary-fixed text-on-primary-fixed font-bold whitespace-nowrap transition-all shadow-sm" data-status="all" onclick="filterStatus('all')">
+            Tất cả <span class="ml-1 font-label-tech-sm opacity-80">(3)</span>
+</button>
+<button class="filter-tab px-4 py-2 rounded-lg font-label-ui text-label-ui text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low whitespace-nowrap transition-all" data-status="processing" onclick="filterStatus('processing')">
+            Đang xử lý <span class="ml-1 font-label-tech-sm opacity-80">(1)</span>
+</button>
+<button class="filter-tab px-4 py-2 rounded-lg font-label-ui text-label-ui text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low whitespace-nowrap transition-all" data-status="shipping" onclick="filterStatus('shipping')">
+            Đang giao hàng <span class="ml-1 font-label-tech-sm opacity-80">(1)</span>
+</button>
+<button class="filter-tab px-4 py-2 rounded-lg font-label-ui text-label-ui text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low whitespace-nowrap transition-all" data-status="completed" onclick="filterStatus('completed')">
+            Hoàn thành <span class="ml-1 font-label-tech-sm opacity-80">(1)</span>
+</button>
+<button class="filter-tab px-4 py-2 rounded-lg font-label-ui text-label-ui text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low whitespace-nowrap transition-all" data-status="cancelled" onclick="filterStatus('cancelled')">
+            Đã hủy <span class="ml-1 font-label-tech-sm opacity-80">(0)</span>
+</button>
+</div>
+<!-- Search Bar with Live Filter Input -->
+<div class="flex items-center bg-surface-container-low rounded-lg px-space-md py-2 w-full lg:max-w-md shadow-inner">
+<span class="material-symbols-outlined text-outline text-[20px] mr-2">search</span>
+<input class="w-full bg-transparent font-body-sm text-body-sm text-on-surface placeholder:text-outline focus:outline-none" id="order-search-input" oninput="handleSearch(this.value)" placeholder="Tìm theo mã đơn (#APX-...) hoặc tên linh kiện..." type="text"/>
+<button class="hidden text-outline hover:text-on-surface ml-1" id="clear-search-btn" onclick="clearSearch()">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+</div>
+</div>
+</div>
+<!-- MAIN VIEW CONTAINER: Orders List View -->
+<div class="flex flex-col gap-space-lg" id="view-data">
+<!-- Order Card #1: #APX-89210-VN -->
+<article class="order-item-card bg-surface-container-lowest rounded-xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden" data-keywords="intel core i5 14600k rtx 4070 ti super ram 32gb corsair dominator titan" data-order-code="APX-89210-VN" data-status-val="processing">
+<!-- Card Top Bar: Meta & Badge -->
+<div class="bg-surface-container-low px-space-lg py-3 flex flex-wrap items-center justify-between gap-space-sm">
+<div class="flex flex-wrap items-center gap-3">
+<div class="flex items-center gap-1.5 font-label-tech-lg text-label-tech-lg text-primary font-bold">
+<span class="material-symbols-outlined text-[18px]">tag</span>
+<span>#APX-89210-VN</span>
+</div>
+<span class="text-outline-variant font-label-tech-sm">•</span>
+<div class="flex items-center gap-1 text-on-surface-variant font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-[16px]">calendar_today</span>
+<span>Ngày đặt: <strong class="text-on-surface font-semibold">03/11/2024</strong></span>
+</div>
+<span class="text-outline-variant font-label-tech-sm hidden sm:inline">•</span>
+<span class="font-label-tech-sm text-label-tech-sm px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant">
+              3 linh kiện kiến trúc
+            </span>
+</div>
+<div class="flex items-center gap-2">
+<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-secondary-fixed text-on-secondary-fixed font-label-tech-sm text-label-tech-sm font-bold shadow-sm">
+<span class="w-2 h-2 rounded-full bg-secondary animate-ping"></span>
+              Chờ xác nhận (Demo)
+            </span>
+</div>
+</div>
+<!-- Card Body: Products & Pricing Details -->
+<div class="p-space-lg flex flex-col lg:flex-row items-start lg:items-center justify-between gap-space-xl">
+<!-- Items List Stack -->
+<div class="flex-1 flex flex-col gap-space-md w-full">
+<!-- Item 1 -->
+<div class="flex items-center gap-space-md">
+<div class="w-16 h-16 rounded-xl bg-surface-container-high flex items-center justify-center p-2 shrink-0">
+<img class="w-full h-full object-contain" data-alt="Intel Core i5-14600K high performance CPU chip on a clean white satin lab surface with gentle violet chromatic rim reflections" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCGKqBwFVR1PBE-0FmTjyMxPUAujnEQvtwSVUqqqnbya2iyD7dZCIOmTofQx6dt8ZYQ9cY7wvT4TbSQmJ5AiiO-ymyTlqKZqny0_hN0fuLY-zrh5zfY8yFJup3Fx07fzq5PpkeAfuVxr1rmDSmEE2iVEr62E-qUfppGfFFxCsnWmHngL_1MgiHsbw5q3JmQZG3RVFdWG_tbQxUT5xd5H_QRzvZauwxPRY6aj1jK9m0F"/>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center gap-2">
+<span class="font-label-tech-sm text-label-tech-sm px-2 py-0.5 rounded bg-surface-container text-primary font-bold">CPU</span>
+<h4 class="font-headline-sm text-[16px] text-on-surface font-bold truncate">Intel Core i5-14600K Raptor Lake Refresh</h4>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">14 Cores / 20 Threads • Up to 5.3GHz • Socket LGA1700</p>
+</div>
+<div class="text-right shrink-0">
+<span class="font-label-tech-sm text-label-tech-sm text-outline">x1</span>
+<p class="font-label-tech-lg text-label-tech-lg text-on-surface font-semibold">8.290.000 ₫</p>
+</div>
+</div>
+<!-- Item 2 -->
+<div class="flex items-center gap-space-md">
+<div class="w-16 h-16 rounded-xl bg-surface-container-high flex items-center justify-center p-2 shrink-0">
+<img class="w-full h-full object-contain" data-alt="Gigabyte GeForce RTX 4070 Ti SUPER Aero White edition premium gaming graphics card sitting on clean room surface with soft lilac diffuse glow" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA0k0-xhrn-frTsYOyoz8UvJkoHlwO7IKJXrhIJS8VNcHq7q39AhWESZ_zddDUaBV_oAN1CrI8viyWISTlWP-SBVdkCwkbzMbhnZUziyKdJdWsx5riPd_MzzhDUOayUF0-3SBAyoz4dcHniSgGzIcvNSwN2OxTZWByX_AWS-fSvz0ueBzIP1_Lv0X4AOi5SsSGOBokdy_Z4Iu-0a36bfaewZ9o9ZOiAP7PbS43nvI4U"/>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center gap-2">
+<span class="font-label-tech-sm text-label-tech-sm px-2 py-0.5 rounded bg-surface-container text-primary font-bold">GPU</span>
+<h4 class="font-headline-sm text-[16px] text-on-surface font-bold truncate">ASUS TUF Gaming GeForce RTX 4070 Ti SUPER White</h4>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">16GB GDDR6X 256-bit • DLSS 3.5 AI Architecture</p>
+</div>
+<div class="text-right shrink-0">
+<span class="font-label-tech-sm text-label-tech-sm text-outline">x1</span>
+<p class="font-label-tech-lg text-label-tech-lg text-on-surface font-semibold">24.190.000 ₫</p>
+</div>
+</div>
+<!-- Item 3 -->
+<div class="flex items-center gap-space-md">
+<div class="w-16 h-16 rounded-xl bg-surface-container-high flex items-center justify-center p-2 shrink-0">
+<img class="w-full h-full object-contain" data-alt="Corsair Dominator Titanium DDR5 RAM modules pure white heatspreader with crystalline RGB accents on light studio background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCiFWW6z5uPASPB7B3z9rObfB9b8Mhm7ef4SF1fxnU9RVTh3Ecjt-rSlBeaooU61V4szvLPwtE-raSoijuUbALFZlFRPo2qOlT8khvwf9f9JBpb2JBnoD2t6lx33jVGFFQ0a16A1qr7yFb3vSQ8Bp_v9-HZHT6ikh--MeODJ4ufYOdxnLLr8fU-tCeK5ye74vWqQDIYAih2ecK8TVjdTb7-njfZUbMKvT9eCtT6Wirc"/>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center gap-2">
+<span class="font-label-tech-sm text-label-tech-sm px-2 py-0.5 rounded bg-surface-container text-primary font-bold">RAM</span>
+<h4 class="font-headline-sm text-[16px] text-on-surface font-bold truncate">Corsair Dominator Titanium RGB 32GB (2x16GB) 6000MHz White</h4>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">CL30 Low Latency • Intel XMP 3.0 / AMD EXPO</p>
+</div>
+<div class="text-right shrink-0">
+<span class="font-label-tech-sm text-label-tech-sm text-outline">x1</span>
+<p class="font-label-tech-lg text-label-tech-lg text-on-surface font-semibold">3.890.000 ₫</p>
+</div>
+</div>
+</div>
+<!-- Delta Financial Summary & Primary Action -->
+<div class="w-full lg:w-72 bg-surface-container-low p-space-md rounded-xl flex flex-col justify-between self-stretch shrink-0">
+<div>
+<span class="font-label-tech-sm text-label-tech-sm uppercase text-outline">Thành tiền đơn hàng</span>
+<div class="font-headline-md text-headline-md text-primary font-extrabold tracking-tight mt-0.5">
+                36.370.000 ₫
+              </div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1 flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px] text-secondary">shield_with_heart</span>
+                Bảo hành hãng 36 tháng
+              </p>
+</div>
+<div class="pt-space-md mt-space-md flex flex-col gap-2">
+<a class="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-primary to-primary-container text-on-primary font-label-ui text-label-ui font-bold shadow-[0_4px_14px_rgba(124,58,237,0.35)] hover:opacity-95 text-center flex items-center justify-center gap-2 transition-all" data-path="chi-tiet-don-hang-c12" href="/customer/orders/APX-89210-VN">
+<span>Xem chi tiết</span>
+<span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</a>
+<button class="w-full py-2 rounded-xl bg-surface-container-lowest text-on-surface font-label-ui text-label-ui font-medium hover:bg-surface-container-high transition-colors text-center flex items-center justify-center gap-1.5" onclick="alert('Đã tải hóa đơn điện tử mô phỏng cho mã #APX-89210-VN')">
+<span class="material-symbols-outlined text-[16px]">receipt</span>
+<span>Tải e-Invoice VAT</span>
+</button>
+</div>
+</div>
+</div>
+</article>
+<!-- Order Card #2: #APX-74192-VN -->
+<article class="order-item-card bg-surface-container-lowest rounded-xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden" data-keywords="ssd samsung 990 pro 2tb nvme pcie gen 4" data-order-code="APX-74192-VN" data-status-val="shipping">
+<!-- Card Top Bar: Meta & Badge -->
+<div class="bg-surface-container-low px-space-lg py-3 flex flex-wrap items-center justify-between gap-space-sm">
+<div class="flex flex-wrap items-center gap-3">
+<div class="flex items-center gap-1.5 font-label-tech-lg text-label-tech-lg text-primary font-bold">
+<span class="material-symbols-outlined text-[18px]">tag</span>
+<span>#APX-74192-VN</span>
+</div>
+<span class="text-outline-variant font-label-tech-sm">•</span>
+<div class="flex items-center gap-1 text-on-surface-variant font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-[16px]">calendar_today</span>
+<span>Ngày đặt: <strong class="text-on-surface font-semibold">20/10/2024</strong></span>
+</div>
+<span class="text-outline-variant font-label-tech-sm hidden sm:inline">•</span>
+<span class="font-label-tech-sm text-label-tech-sm px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant">
+              1 linh kiện lưu trữ
+            </span>
+</div>
+<div class="flex items-center gap-2">
+<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-tertiary-fixed text-on-tertiary-fixed-variant font-label-tech-sm text-label-tech-sm font-bold shadow-sm">
+<span class="material-symbols-outlined text-[14px]">local_shipping</span>
+              Đang vận chuyển (Demo)
+            </span>
+</div>
+</div>
+<!-- Card Body -->
+<div class="p-space-lg flex flex-col lg:flex-row items-start lg:items-center justify-between gap-space-xl">
+<div class="flex-1 flex flex-col gap-space-md w-full">
+<div class="flex items-center gap-space-md">
+<div class="w-16 h-16 rounded-xl bg-surface-container-high flex items-center justify-center p-2 shrink-0">
+<img class="w-full h-full object-contain" data-alt="Samsung 990 PRO NVMe M.2 2TB SSD high-tech packaging with luxury laboratory lighting and subtle gold champagne accents" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAOQq3HFXyOsfZFLehfy6cJF8ZWhF0BGczP77M6oJvuA_cPgmED4KjMQBenDyFzV9hL4EZTmYPfTh-EIkGiNVJTzzMSCNnX6OMEzXBgMxNg5tUqTC1zMsHj0hvQhDdCVaLgtFSXjXuhoete4jMvvklJAgwu-esuEA5oeJz-nmftKK88pPjCKRSbk-1hpIHT4H2IzjK5U_W4rFQ_lbSTIVRREffHrfl3_vGK5gfAX6zE"/>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center gap-2">
+<span class="font-label-tech-sm text-label-tech-sm px-2 py-0.5 rounded bg-surface-container text-primary font-bold">SSD NVMe</span>
+<h4 class="font-headline-sm text-[16px] text-on-surface font-bold truncate">Samsung 990 PRO 2TB PCIe 4.0 NVMe M.2 SSD</h4>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Read 7450 MB/s • Write 6900 MB/s • Heatsink Ready Controller</p>
+</div>
+<div class="text-right shrink-0">
+<span class="font-label-tech-sm text-label-tech-sm text-outline">x1</span>
+<p class="font-label-tech-lg text-label-tech-lg text-on-surface font-semibold">4.690.000 ₫</p>
+</div>
+</div>
+</div>
+<div class="w-full lg:w-72 bg-surface-container-low p-space-md rounded-xl flex flex-col justify-between self-stretch shrink-0">
+<div>
+<span class="font-label-tech-sm text-label-tech-sm uppercase text-outline">Thành tiền đơn hàng</span>
+<div class="font-headline-md text-headline-md text-primary font-extrabold tracking-tight mt-0.5">
+                4.690.000 ₫
+              </div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1 flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px] text-secondary">verified_user</span>
+                Bảo hành chính hãng 60 tháng
+              </p>
+</div>
+<div class="pt-space-md mt-space-md flex flex-col gap-2">
+<a class="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-primary to-primary-container text-on-primary font-label-ui text-label-ui font-bold shadow-[0_4px_14px_rgba(124,58,237,0.35)] hover:opacity-95 text-center flex items-center justify-center gap-2 transition-all" data-path="chi-tiet-don-hang-c12" href="/customer/orders/APX-74192-VN">
+<span>Xem chi tiết</span>
+<span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</a>
+<button class="w-full py-2 rounded-xl bg-surface-container-lowest text-on-surface font-label-ui text-label-ui font-medium hover:bg-surface-container-high transition-colors text-center flex items-center justify-center gap-1.5" onclick="alert('Đã gửi thông báo yêu cầu đồng kiểm hàng hóa tới bộ phận kho vận.')">
+<span class="material-symbols-outlined text-[16px]">support_agent</span>
+<span>Hỗ trợ kiện hàng</span>
+</button>
+</div>
+</div>
+</div>
+</article>
+<!-- Order Card #3: #APX-65018-VN -->
+<article class="order-item-card bg-surface-container-lowest rounded-xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden" data-keywords="corsair rm1000e psu 1000w msi b760 gaming plus wifi mainboard bo mach chu" data-order-code="APX-65018-VN" data-status-val="completed">
+<!-- Card Top Bar: Meta & Badge -->
+<div class="bg-surface-container-low px-space-lg py-3 flex flex-wrap items-center justify-between gap-space-sm">
+<div class="flex flex-wrap items-center gap-3">
+<div class="flex items-center gap-1.5 font-label-tech-lg text-label-tech-lg text-primary font-bold">
+<span class="material-symbols-outlined text-[18px]">tag</span>
+<span>#APX-65018-VN</span>
+</div>
+<span class="text-outline-variant font-label-tech-sm">•</span>
+<div class="flex items-center gap-1 text-on-surface-variant font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-[16px]">calendar_today</span>
+<span>Ngày đặt: <strong class="text-on-surface font-semibold">12/09/2024</strong></span>
+</div>
+<span class="text-outline-variant font-label-tech-sm hidden sm:inline">•</span>
+<span class="font-label-tech-sm text-label-tech-sm px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant">
+              2 linh kiện nguồn &amp; bo mạch
+            </span>
+</div>
+<div class="flex items-center gap-2">
+<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-container-high text-on-surface font-label-tech-sm text-label-tech-sm font-bold shadow-sm">
+<span class="material-symbols-outlined text-[15px] text-primary">check_circle</span>
+              Đã giao thành công
+            </span>
+</div>
+</div>
+<!-- Card Body -->
+<div class="p-space-lg flex flex-col lg:flex-row items-start lg:items-center justify-between gap-space-xl">
+<div class="flex-1 flex flex-col gap-space-md w-full">
+<!-- Item 1 -->
+<div class="flex items-center gap-space-md">
+<div class="w-16 h-16 rounded-xl bg-surface-container-high flex items-center justify-center p-2 shrink-0">
+<img class="w-full h-full object-contain" data-alt="Corsair RM1000e Fully Modular Low Noise Power Supply with gold certification logo on bright clean studio platform" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAunTzBJ-1NoackY8yeKBttwRE2_Gi8FKleFS-6hArvOyMU-FwqLeZtKG9uQIMVKvNrgGjoMTIrgmftHXqfcV1jA_PiEw_-NwacF-NyIGRWcc0mJax1HwynOjTdTsXDmds2CmjO34O4RcwFiZr9TuICqvWF7iaa1llzX5_NIfpZ07Xw0qdYb_PCRxk86KUCV4QfSQRMZEO_jv05aveAMMtyqn9RR7Pa1AVP2IWXGbPd"/>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center gap-2">
+<span class="font-label-tech-sm text-label-tech-sm px-2 py-0.5 rounded bg-surface-container text-primary font-bold">PSU</span>
+<h4 class="font-headline-sm text-[16px] text-on-surface font-bold truncate">Corsair RM1000e 1000W 80 PLUS Gold Fully Modular</h4>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">ATX 3.0 &amp; PCIe 5.0 Ready • 105°C Japanese Capacitors</p>
+</div>
+<div class="text-right shrink-0">
+<span class="font-label-tech-sm text-label-tech-sm text-outline">x1</span>
+<p class="font-label-tech-lg text-label-tech-lg text-on-surface font-semibold">4.890.000 ₫</p>
+</div>
+</div>
+<!-- Item 2 -->
+<div class="flex items-center gap-space-md">
+<div class="w-16 h-16 rounded-xl bg-surface-container-high flex items-center justify-center p-2 shrink-0">
+<img class="w-full h-full object-contain" data-alt="MSI B760 Gaming Plus WiFi Motherboard pristine white and silver PCB accents illuminated in futuristic laboratory setup" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBmksjfWQcBKw-pJcSx1Un0rd4yDMTO-5I6xBGIcITRagxdEJ_TPnZKeAkVURJQOzdLX6O94m8I_XcGOuT4UlNQcYXQ69BCYYhkdIMlXNm4vXlm9EYlNZKpOPS-D-6PfA9VJ69BI1Nk1uS2jngPMTvoTYT2H73pcuqvyAMk9mU9I6Ue6xa9zpzrxuo4PxoD6yH9JLTfmZKpTkuiSc59Pbh-MbvFaT589vU01RUVASvx"/>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center gap-2">
+<span class="font-label-tech-sm text-label-tech-sm px-2 py-0.5 rounded bg-surface-container text-primary font-bold">MAINBOARD</span>
+<h4 class="font-headline-sm text-[16px] text-on-surface font-bold truncate">MSI B760 GAMING PLUS WIFI DDR5</h4>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">LGA 1700 • DDR5 Memory Boost • Lightning Gen 4 M.2</p>
+</div>
+<div class="text-right shrink-0">
+<span class="font-label-tech-sm text-label-tech-sm text-outline">x1</span>
+<p class="font-label-tech-lg text-label-tech-lg text-on-surface font-semibold">4.590.000 ₫</p>
+</div>
+</div>
+</div>
+<div class="w-full lg:w-72 bg-surface-container-low p-space-md rounded-xl flex flex-col justify-between self-stretch shrink-0">
+<div>
+<span class="font-label-tech-sm text-label-tech-sm uppercase text-outline">Thành tiền đơn hàng</span>
+<div class="font-headline-md text-headline-md text-primary font-extrabold tracking-tight mt-0.5">
+                9.480.000 ₫
+              </div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1 flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px] text-primary">done_all</span>
+                Đã quyết toán hoàn tất
+              </p>
+</div>
+<div class="pt-space-md mt-space-md flex flex-col gap-2">
+<a class="w-full py-2.5 px-4 rounded-xl bg-surface-container-highest text-on-surface font-label-ui text-label-ui font-bold hover:bg-primary hover:text-on-primary transition-all text-center flex items-center justify-center gap-2" data-path="chi-tiet-don-hang-c12" href="/customer/orders/APX-65018-VN">
+<span>Xem chi tiết</span>
+<span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</a>
+<button class="w-full py-2 rounded-xl bg-surface-container-lowest text-on-surface font-label-ui text-label-ui font-medium hover:bg-surface-container-high transition-colors text-center flex items-center justify-center gap-1.5" onclick="alert('Linh kiện trong đơn này đã được thêm vào giỏ hàng tái đặt cấu hình.')">
+<span class="material-symbols-outlined text-[16px]">sync</span>
+<span>Đặt lại đơn này</span>
+</button>
+</div>
+</div>
+</div>
+</article>
+</div>
+<!-- MAIN VIEW CONTAINER: Empty State View (Toggled via Switcher or Filter) -->
+<div class="hidden flex-col items-center justify-center py-space-2xl px-space-lg bg-surface-container-lowest rounded-xl shadow-sm text-center" id="view-empty">
+<div class="w-24 h-24 rounded-full bg-surface-container-low flex items-center justify-center text-outline mb-space-md shadow-inner">
+<span class="material-symbols-outlined text-[48px] text-primary/60">inventory_2</span>
+</div>
+<span class="font-label-tech-sm text-label-tech-sm uppercase tracking-widest text-outline">Lưu trữ trống</span>
+<h3 class="font-headline-md text-headline-md text-on-surface font-bold mt-1">Chưa có đơn hàng nào trong mục này</h3>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-md mt-2">
+        Bạn chưa phát sinh giao dịch cho trạng thái bộ lọc này hoặc chưa từng tạo đơn hàng phần cứng trên tài khoản này.
+      </p>
+<div class="mt-space-lg flex flex-wrap items-center justify-center gap-space-md">
+<a class="px-6 py-3 rounded-xl bg-gradient-to-r from-primary to-primary-container text-on-primary font-label-ui text-label-ui font-bold shadow-[0_4px_14px_rgba(124,58,237,0.35)] hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-2" data-path="linh-kien" href="#">
+<span class="material-symbols-outlined text-[20px]">memory</span>
+<span>Khám phá linh kiện ngay</span>
+</a>
+<button class="px-5 py-3 rounded-xl bg-surface-container-high text-on-surface font-label-ui text-label-ui font-semibold hover:bg-surface-container-highest transition-colors" onclick="filterStatus('all')">
+          Xem tất cả đơn hàng
+        </button>
+</div>
+</div>
+<!-- MAIN VIEW CONTAINER: Loading State Skeleton View -->
+<div class="hidden flex-col gap-space-lg" id="view-loading">
+<div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm animate-pulse flex flex-col gap-space-md">
+<div class="h-6 bg-surface-container-high rounded-md w-1/3"></div>
+<div class="flex gap-4">
+<div class="w-16 h-16 bg-surface-container-high rounded-xl"></div>
+<div class="flex-1 flex flex-col gap-2">
+<div class="h-4 bg-surface-container-high rounded w-2/3"></div>
+<div class="h-3 bg-surface-container-high rounded w-1/2"></div>
+</div>
+<div class="w-32 h-10 bg-surface-container-high rounded-xl"></div>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm animate-pulse flex flex-col gap-space-md">
+<div class="h-6 bg-surface-container-high rounded-md w-1/4"></div>
+<div class="flex gap-4">
+<div class="w-16 h-16 bg-surface-container-high rounded-xl"></div>
+<div class="flex-1 flex flex-col gap-2">
+<div class="h-4 bg-surface-container-high rounded w-3/4"></div>
+<div class="h-3 bg-surface-container-high rounded w-1/3"></div>
+</div>
+<div class="w-32 h-10 bg-surface-container-high rounded-xl"></div>
+</div>
+</div>
+</div>
+<!-- Bottom Architecture Assurance Note -->
+<div class="mt-space-xl p-space-lg rounded-xl bg-surface-container-low flex flex-col sm:flex-row items-start sm:items-center justify-between gap-space-md">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-surface-container-highest flex items-center justify-center text-primary shrink-0">
+<span class="material-symbols-outlined text-[22px]">policy</span>
+</div>
+<div>
+<h5 class="font-label-tech-lg text-label-tech-lg font-bold text-on-surface">Tiêu chuẩn bàn giao phần cứng APEXRIGS</h5>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Tất cả đơn hàng xuất kho đều trải qua quy trình kiểm định điện áp &amp; đóng gói xốp chống sốc đa tầng.</p>
+</div>
+</div>
+<a class="font-label-ui text-label-ui text-primary font-bold hover:underline whitespace-nowrap flex items-center gap-1 self-end sm:self-auto" data-path="chinh-sach-bao-hanh-rma" href="#">
+<span>Quy chuẩn RMA</span>
+<span class="material-symbols-outlined text-[16px]">launch</span>
+</a>
+</div>
+</div>
+</div>
+<script>
+  // UI State Switcher (Data, Empty, Loading)
+  function switchViewState(mode) {
+    const viewData = document.getElementById('view-data');
+    const viewEmpty = document.getElementById('view-empty');
+    const viewLoading = document.getElementById('view-loading');
+    
+    const btnData = document.getElementById('btn-state-data');
+    const btnEmpty = document.getElementById('btn-state-empty');
+    const btnLoading = document.getElementById('btn-state-loading');
+
+    // Reset buttons
+    [btnData, btnEmpty, btnLoading].forEach(b => {
+      b.className = 'px-3 py-1.5 rounded-lg font-label-ui text-label-ui text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-all flex items-center gap-1.5';
+    });
+
+    viewData.classList.add('hidden');
+    viewEmpty.classList.add('hidden');
+    viewLoading.classList.add('hidden');
+
+    if (mode === 'data') {
+      viewData.classList.remove('hidden');
+      btnData.className = 'px-3 py-1.5 rounded-lg font-label-ui text-label-ui bg-primary text-on-primary font-bold shadow-sm transition-all flex items-center gap-1.5';
+    } else if (mode === 'empty') {
+      viewEmpty.classList.remove('hidden');
+      btnEmpty.className = 'px-3 py-1.5 rounded-lg font-label-ui text-label-ui bg-primary text-on-primary font-bold shadow-sm transition-all flex items-center gap-1.5';
+    } else if (mode === 'loading') {
+      viewLoading.classList.remove('hidden');
+      btnLoading.className = 'px-3 py-1.5 rounded-lg font-label-ui text-label-ui bg-primary text-on-primary font-bold shadow-sm transition-all flex items-center gap-1.5';
+    }
+  }
+
+  // Filter Tabs Handler
+  let currentFilter = 'all';
+  function filterStatus(status) {
+    currentFilter = status;
+    
+    // Update active tab style
+    const tabs = document.querySelectorAll('.filter-tab');
+    tabs.forEach(tab => {
+      if (tab.getAttribute('data-status') === status) {
+        tab.className = 'filter-tab px-4 py-2 rounded-lg font-label-ui text-label-ui bg-primary-fixed text-on-primary-fixed font-bold whitespace-nowrap transition-all shadow-sm';
+      } else {
+        tab.className = 'filter-tab px-4 py-2 rounded-lg font-label-ui text-label-ui text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low whitespace-nowrap transition-all';
+      }
+    });
+
+    // Special case: Cancelled orders are currently 0 -> render Empty State
+    if (status === 'cancelled') {
+      switchViewState('empty');
+      return;
+    }
+
+    // Switch to data view and apply filter to card elements
+    switchViewState('data');
+    const cards = document.querySelectorAll('.order-item-card');
+    let visibleCount = 0;
+
+    cards.forEach(card => {
+      const cardStatus = card.getAttribute('data-status-val');
+      if (status === 'all' || cardStatus === status) {
+        card.style.display = 'block';
+        visibleCount++;
+      } else {
+        card.style.display = 'none';
+      }
+    });
+
+    if (visibleCount === 0) {
+      switchViewState('empty');
+    }
+  }
+
+  // Live Search Filter Handler
+  function handleSearch(query) {
+    const clearBtn = document.getElementById('clear-search-btn');
+    const trimmed = query.trim().toLowerCase();
+    
+    if (trimmed.length > 0) {
+      clearBtn.classList.remove('hidden');
+    } else {
+      clearBtn.classList.add('hidden');
+    }
+
+    switchViewState('data');
+    const cards = document.querySelectorAll('.order-item-card');
+    let visibleCount = 0;
+
+    cards.forEach(card => {
+      const code = card.getAttribute('data-order-code').toLowerCase();
+      const keywords = card.getAttribute('data-keywords').toLowerCase();
+      const cardStatus = card.getAttribute('data-status-val');
+
+      const matchesSearch = code.includes(trimmed) || keywords.includes(trimmed);
+      const matchesFilter = (currentFilter === 'all' || currentFilter === cardStatus);
+
+      if (matchesSearch && matchesFilter) {
+        card.style.display = 'block';
+        visibleCount++;
+      } else {
+        card.style.display = 'none';
+      }
+    });
+
+    if (visibleCount === 0) {
+      switchViewState('empty');
+    }
+  }
+
+  function clearSearch() {
+    const input = document.getElementById('order-search-input');
+    input.value = '';
+    handleSearch('');
+  }
+</script></main><footer class="w-full bg-surface-container-low text-on-surface pt-space-2xl pb-space-xl shadow-[0_-1px_12px_rgba(99,14,212,0.03)]"><div class="max-w-[1440px] mx-auto px-margin-mobile md:px-margin-tablet lg:px-margin"><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-space-xl pb-space-2xl"><div class="lg:col-span-4 flex flex-col gap-space-md"><div class="flex items-center gap-space-sm"><div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-primary to-primary-container flex items-center justify-center shadow-[0_4px_14px_rgba(124,58,237,0.35)]"><span class="material-symbols-outlined text-on-primary text-[20px]">memory</span></div><div class="flex items-center gap-1.5"><span class="font-headline-sm text-headline-sm font-extrabold tracking-tight text-on-surface">APEXRIGS</span><span class="font-label-tech-sm text-label-tech-sm px-1.5 py-0.5 rounded bg-secondary-fixed text-on-secondary-fixed">V2</span></div></div><p class="font-body-md text-body-md text-on-surface-variant max-w-sm">Hệ sinh thái phân phối phần cứng máy tính cao cấp hàng đầu Việt Nam. Chuẩn mực chế tác kiến trúc Hyper-Rig, tinh tuyển từng linh kiện và tối ưu hiệu năng tản nhiệt chuyên sâu.</p><div class="flex items-center gap-2 pt-2"><span class="w-2 h-2 rounded-full bg-secondary"></span><span class="font-label-tech-sm text-label-tech-sm text-on-surface-variant uppercase tracking-wider">Boutique Hardware Laboratory</span></div></div><div class="lg:col-span-3 flex flex-col gap-space-md"><h4 class="font-label-tech-lg text-label-tech-lg text-on-surface uppercase tracking-wider">Khám phá phần cứng</h4><ul class="flex flex-col gap-2.5 font-body-sm text-body-sm text-on-surface-variant"><li><a class="hover:text-primary transition-colors" data-path="linh-kien" href="#">Vi xử lý (CPU)</a></li><li><a class="hover:text-primary transition-colors" data-path="linh-kien" href="#">Card đồ họa (GPU)</a></li><li><a class="hover:text-primary transition-colors" data-path="linh-kien" href="#">Bo mạch chủ (Mainboard)</a></li><li><a class="hover:text-primary transition-colors" data-path="linh-kien" href="#">Bộ nhớ trong (RAM)</a></li><li><a class="hover:text-primary transition-colors" data-path="linh-kien" href="#">Ổ cứng lưu trữ (SSD)</a></li><li><a class="hover:text-primary transition-colors" data-path="linh-kien" href="#">Nguồn máy tính (PSU)</a></li><li><a class="hover:text-primary transition-colors" data-path="linh-kien" href="#">Vỏ máy tính (Case)</a></li><li><a class="hover:text-primary transition-colors" data-path="linh-kien" href="#">Tản nhiệt nước &amp; Khí</a></li></ul></div><div class="lg:col-span-3 flex flex-col gap-space-md"><h4 class="font-label-tech-lg text-label-tech-lg text-on-surface uppercase tracking-wider">Dịch vụ &amp; Hỗ trợ</h4><ul class="flex flex-col gap-2.5 font-body-sm text-body-sm text-on-surface-variant"><li><a class="hover:text-primary transition-colors" data-path="chinh-sach-doi-moi" href="#">Chính sách đổi mới linh kiện</a></li><li><a class="hover:text-primary transition-colors" data-path="quy-trinh-dong-goi" href="#">Quy trình đóng gói chống sốc</a></li><li><a class="hover:text-primary transition-colors" data-path="huong-dan-mua-hang" href="#">Hướng dẫn mua hàng &amp; Thanh toán</a></li><li><a class="hover:text-primary transition-colors" data-path="tra-cuu-don-hang" href="#">Tra cứu tiến độ đơn hàng</a></li></ul></div><div class="lg:col-span-2 flex flex-col gap-space-md"><h4 class="font-label-tech-lg text-label-tech-lg text-on-surface uppercase tracking-wider">Thông tin &amp; Pháp lý</h4><ul class="flex flex-col gap-2.5 font-body-sm text-body-sm text-on-surface-variant"><li><a class="hover:text-primary transition-colors" data-path="dieu-khoan-dich-vu" href="#">Điều khoản dịch vụ</a></li><li><a class="hover:text-primary transition-colors" data-path="bao-mat-thong-tin" href="#">Bảo mật thông tin khách hàng</a></li><li><a class="hover:text-primary transition-colors" data-path="chinh-sach-bao-hanh-rma" href="#">Chính sách bảo hành RMA</a></li><li><a class="hover:text-primary transition-colors" data-path="lien-he-ho-tro" href="#">Liên hệ trung tâm hỗ trợ</a></li></ul></div></div><div class="pt-space-lg flex flex-col sm:flex-row items-center justify-between gap-4 font-body-sm text-body-sm text-on-surface-variant"><p>© 2025 APEXRIGS V2. Toàn bộ bản quyền được bảo lưu.</p><div class="flex items-center gap-space-md font-label-tech-sm text-label-tech-sm text-outline"><span>ISO 9001 TESTED</span><span>•</span><span>HIGH-PERFORMANCE PC BOUTIQUE</span></div></div></div></footer></body></html>

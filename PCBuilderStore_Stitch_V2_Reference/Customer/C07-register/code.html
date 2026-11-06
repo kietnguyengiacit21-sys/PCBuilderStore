@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+
+<html lang="vi"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_standard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Space+Grotesk:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base { html, body { margin: 0; padding: 0; } body { overscroll-behavior: none; } main > :first-child { margin-top: 0 !important; } main > :last-child { margin-bottom: 0 !important; } } ::-webkit-scrollbar { display: none; }</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "surface-dim": "#dad6ff", "surface-bright": "#fcf8ff", "on-surface-variant": "#4a4455", "on-tertiary-container": "#e5e3ff", "surface-container": "#efebff", "surface-container-lowest": "#ffffff", "primary": "#630ed4", "inverse-primary": "#d2bbff", "secondary": "#904d00", "error": "#ba1a1a", "secondary-container": "#fe932c", "surface-tint": "#732ee4", "inverse-surface": "#2d2a5b", "on-primary-fixed": "#25005a", "on-secondary-fixed": "#2f1500", "outline": "#7b7487", "surface-variant": "#e3dfff", "secondary-fixed": "#ffdcc3", "on-primary": "#ffffff", "on-tertiary": "#ffffff", "on-tertiary-fixed-variant": "#2f2ebe", "tertiary-fixed": "#e1e0ff", "primary-fixed-dim": "#d2bbff", "surface": "#fcf8ff", "background": "#fcf8ff", "on-surface": "#181445", "secondary-fixed-dim": "#ffb77d", "on-tertiary-fixed": "#07006c", "on-primary-container": "#ede0ff", "surface-container-highest": "#e3dfff", "on-background": "#181445", "primary-fixed": "#eaddff", "on-primary-fixed-variant": "#5a00c6", "on-error": "#ffffff", "on-error-container": "#93000a", "tertiary-fixed-dim": "#c0c1ff", "error-container": "#ffdad6", "inverse-on-surface": "#f3eeff", "surface-container-low": "#f6f2ff", "outline-variant": "#ccc3d8", "primary-container": "#7c3aed", "tertiary-container": "#5254df", "on-secondary-container": "#663500", "surface-container-high": "#e9e5ff", "on-secondary-fixed-variant": "#6e3900", "on-secondary": "#ffffff", "tertiary": "#3838c6" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "margin": "3rem", "gutter": "1.5rem", "space-2xl": "4rem", "space-lg": "1.5rem", "gutter-sm": "1rem", "space-md": "1rem", "space-sm": "0.5rem", "margin-tablet": "2rem", "space-xl": "2.5rem", "margin-mobile": "1.25rem", "space-xs": "0.25rem" }, "fontFamily": { "headline-lg": ["Plus Jakarta Sans"], "label-ui": ["Plus Jakarta Sans"], "headline-md": ["Plus Jakarta Sans"], "headline-sm": ["Plus Jakarta Sans"], "display-hero-mobile": ["Plus Jakarta Sans"], "label-tech-sm": ["Space Grotesk"], "label-tech-lg": ["Space Grotesk"], "body-lg": ["Plus Jakarta Sans"], "headline-xl-mobile": ["Plus Jakarta Sans"], "headline-xl": ["Plus Jakarta Sans"], "display-hero": ["Plus Jakarta Sans"], "headline-lg-mobile": ["Plus Jakarta Sans"], "body-md": ["Plus Jakarta Sans"], "body-sm": ["Plus Jakarta Sans"] }, "fontSize": { "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }], "label-ui": ["13px", { "lineHeight": "18px", "letterSpacing": "0.01em", "fontWeight": "600" }], "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.015em", "fontWeight": "600" }], "headline-sm": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600" }], "display-hero-mobile": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.025em", "fontWeight": "800" }], "label-tech-sm": ["11px", { "lineHeight": "16px", "letterSpacing": "0.06em", "fontWeight": "700" }], "label-tech-lg": ["14px", { "lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "600" }], "body-lg": ["18px", { "lineHeight": "28px", "letterSpacing": "-0.005em", "fontWeight": "400" }], "headline-xl-mobile": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "700" }], "headline-xl": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.025em", "fontWeight": "700" }], "display-hero": ["56px", { "lineHeight": "64px", "letterSpacing": "-0.03em", "fontWeight": "800" }], "headline-lg-mobile": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.015em", "fontWeight": "700" }], "body-md": ["15px", { "lineHeight": "24px", "letterSpacing": "0em", "fontWeight": "400" }], "body-sm": ["13px", { "lineHeight": "20px", "letterSpacing": "0.005em", "fontWeight": "400" }] } } } };</script></head><body class="bg-surface font-body-md text-on-surface antialiased selection:bg-primary-fixed selection:text-on-primary-fixed"><header class="fixed top-0 left-0 right-0 z-50 bg-surface-container-lowest/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(99,14,212,0.06)]"><div class="h-20 max-w-[1440px] mx-auto px-margin-mobile md:px-margin-tablet lg:px-margin flex items-center justify-between gap-space-lg"><div class="flex items-center gap-space-xl"><a class="flex items-center gap-space-sm group" data-path="trang-chu" href="#"><div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-primary to-primary-container flex items-center justify-center shadow-[0_4px_14px_rgba(124,58,237,0.35)] transition-transform group-hover:scale-105"><span class="material-symbols-outlined text-on-primary text-[22px]">memory</span></div><div class="flex flex-col"><div class="flex items-center gap-1.5"><span class="font-headline-sm text-headline-sm font-extrabold tracking-tight text-on-surface">APEXRIGS</span><span class="font-label-tech-sm text-label-tech-sm px-1.5 py-0.5 rounded bg-secondary-fixed text-on-secondary-fixed">V2</span></div><span class="font-label-tech-sm text-[10px] tracking-widest uppercase text-outline">Boutique Hardware</span></div></a><nav class="hidden xl:flex items-center gap-space-lg" data-active-classes="text-primary font-bold"><a class="font-label-ui text-label-ui text-on-surface-variant hover:text-on-surface transition-colors" data-path="trang-chu" href="#">Trang chủ</a><a class="font-label-ui text-label-ui text-on-surface-variant hover:text-on-surface transition-colors" data-path="linh-kien" href="#">Linh kiện</a><a class="font-label-ui text-label-ui text-on-surface-variant hover:text-on-surface transition-colors" data-path="pc-lap-san" href="#">PC lắp sẵn</a><a class="font-label-ui text-label-ui text-on-surface-variant hover:text-on-surface transition-colors" data-path="so-sanh" href="#">So sánh</a><div class="flex items-center gap-1.5 opacity-60 cursor-not-allowed"><span class="font-label-ui text-label-ui text-on-surface-variant">Build-PC</span><span class="font-label-tech-sm text-label-tech-sm px-2 py-0.5 rounded-full bg-secondary-fixed text-secondary font-bold tracking-wide">Sắp ra mắt</span></div></nav></div><div class="hidden md:flex flex-1 max-w-md items-center"><div class="w-full flex items-center bg-surface-container-low rounded-xl px-space-md py-space-sm shadow-[0_2px_6px_-1px_rgba(30,27,75,0.02)] focus-within:bg-surface-container-lowest focus-within:shadow-[0_4px_20px_-2px_rgba(124,58,237,0.08)] transition-all"><span class="material-symbols-outlined text-outline text-[20px] mr-2">search</span><input class="w-full bg-transparent font-body-sm text-body-sm text-on-surface placeholder:text-outline focus:outline-none" placeholder="Tìm kiếm CPU, RTX 4090, RAM..." type="text"/><kbd class="hidden sm:inline-flex items-center gap-0.5 px-2 py-0.5 text-[11px] font-label-tech-sm text-on-surface-variant bg-surface-container-high rounded-md shadow-sm">⌘K</kbd></div></div><div class="flex items-center gap-space-md"><a class="relative p-2 rounded-xl text-on-surface-variant hover:text-primary hover:bg-surface-container-high transition-all flex items-center justify-center" data-path="so-sanh" href="#"><span class="material-symbols-outlined text-[24px]">balance</span><span class="absolute top-1 right-1 w-4 h-4 rounded-full bg-primary text-on-primary font-label-tech-sm text-[10px] flex items-center justify-center shadow-sm">3</span></a><a class="relative p-2 rounded-xl text-on-surface-variant hover:text-primary hover:bg-surface-container-high transition-all flex items-center justify-center" data-path="gio-hang" href="#"><span class="material-symbols-outlined text-[24px]">shopping_bag</span><span class="absolute top-1 right-1 w-4 h-4 rounded-full bg-primary text-on-primary font-label-tech-sm text-[10px] flex items-center justify-center shadow-sm">2</span></a><div class="h-6 w-[1px] bg-surface-container-highest mx-space-xs hidden sm:block"></div><a class="flex items-center gap-2 pl-1 pr-2 py-1 rounded-full hover:bg-surface-container-high transition-all" data-path="dang-nhap" href="#"><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div><span class="hidden lg:inline font-label-ui text-label-ui text-on-surface">Tài khoản</span></a></div></div></header><main class="w-full pt-20 bg-surface min-h-[calc(100vh-80px)]"><div class="flex flex-col w-full">
+<!-- Subtle Ambient Glow Orbs -->
+<div class="relative w-full overflow-hidden pb-space-2xl">
+<div class="absolute -top-32 left-1/2 -translate-x-1/2 w-[720px] h-[360px] bg-gradient-to-b from-primary-fixed/40 via-surface-dim/20 to-transparent blur-3xl pointer-events-none -z-10"></div>
+<div class="absolute top-48 right-10 w-72 h-72 bg-secondary-fixed/30 rounded-full blur-3xl pointer-events-none -z-10"></div>
+<div class="absolute top-96 left-12 w-80 h-80 bg-primary-fixed-dim/25 rounded-full blur-3xl pointer-events-none -z-10"></div>
+<div class="max-w-[1440px] mx-auto px-margin-mobile md:px-margin-tablet lg:px-margin">
+<!-- Breadcrumb Bar -->
+<nav aria-label="Breadcrumb" class="pt-6 pb-4 flex items-center gap-2 font-label-ui text-label-ui text-on-surface-variant">
+<a class="hover:text-primary transition-colors flex items-center gap-1" data-path="trang-chu" href="#">
+<span class="material-symbols-outlined text-[16px]">home</span>
+<span>Trang chủ</span>
+</a>
+<span class="text-outline-variant select-none">/</span>
+<span class="text-on-surface-variant">Tài khoản</span>
+<span class="text-outline-variant select-none">/</span>
+<span class="text-primary font-semibold">Đăng ký tài khoản</span>
+</nav>
+<!-- Main Layout: Asymmetric Split Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter lg:gap-space-xl items-start pt-2 pb-space-xl">
+<!-- Left Column: Editorial & Brand Visual Narrative (5 Cols) -->
+<div class="lg:col-span-5 flex flex-col gap-space-lg lg:sticky lg:top-28">
+<!-- Category Chip & VIP Champagne Badge -->
+<div class="flex items-center gap-2.5">
+<span class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-surface-container-high text-primary font-label-tech-sm text-label-tech-sm tracking-wider uppercase">
+<span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+              Gia nhập ApexRigs Club
+            </span>
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-secondary-fixed text-on-secondary-fixed font-label-tech-sm text-label-tech-sm">
+<span class="material-symbols-outlined text-[14px]">stars</span>
+              Boutique Member
+            </span>
+</div>
+<!-- Section Headings -->
+<div class="flex flex-col gap-2">
+<h1 class="font-headline-xl text-headline-xl text-on-surface tracking-tight">
+              Tạo tài khoản <span class="bg-gradient-to-r from-primary to-primary-container bg-clip-text text-transparent">ApexRigs</span>
+</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant leading-relaxed">
+              Trải nghiệm mua sắm linh kiện phần cứng công nghệ cao cấp và quản lý cấu hình cá nhân hóa với chuẩn mực phòng lab.
+            </p>
+</div>
+<!-- Hardware Visual Card -->
+<div class="relative w-full rounded-xl overflow-hidden bg-surface-container shadow-sm group">
+<img class="w-full h-56 object-cover object-center transition-transform duration-700 group-hover:scale-105" data-alt="Close up photograph of pristine white satin liquid cooling tubes, glowing delicate purple and gold LEDs inside a boutique computer chassis, laboratory cleanroom ambient light, soft lavender undertones, ultra sharp detail." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAGziXpluPr07x3j1vQLmlt23j8gyazjqXyw3tbcN9g-6KkzkA0AXJBrJZ4llVg10m6YnBfbU0stkcdUADLLTQFwnT6FlIdd2I4ysxIsbUsdA-5W_b5SSi_msNXsmo22orFkdj5XfGwo2XN9VlC7ZGu8JlwZQbvZKAzbHDQu82nB64_11J4Qz3mBgHde0fuySivu0puwIIv54dMBw0yXn_U3dyJd_sJqah14vQsUoou"/>
+<div class="absolute inset-0 bg-gradient-to-t from-inverse-surface/85 via-inverse-surface/30 to-transparent flex flex-col justify-end p-5 text-on-primary">
+<div class="flex items-center justify-between">
+<span class="font-label-tech-sm text-label-tech-sm text-secondary-fixed tracking-widest uppercase">Spec Registry 2025</span>
+<span class="font-label-tech-sm text-[10px] px-2 py-0.5 rounded bg-surface-container-lowest/20 backdrop-blur-md">CUSTOMER ONLY</span>
+</div>
+<p class="font-headline-sm text-headline-sm text-surface font-semibold mt-1">Cá nhân hóa cấu hình Rig của riêng bạn</p>
+</div>
+</div>
+<!-- Feature Bullets Bento Row -->
+<div class="grid grid-cols-2 gap-3 pt-1">
+<div class="p-4 rounded-xl bg-surface-container-low flex flex-col gap-1.5 shadow-sm">
+<div class="w-8 h-8 rounded-lg bg-surface-container-highest text-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">tune</span>
+</div>
+<span class="font-headline-sm text-[15px] font-bold text-on-surface">Lưu trữ Rigs không giới hạn</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Lưu tiến trình ráp máy, đối chiếu chỉ số TDP &amp; PCI lane tức thì.</p>
+</div>
+<div class="p-4 rounded-xl bg-surface-container-low flex flex-col gap-1.5 shadow-sm">
+<div class="w-8 h-8 rounded-lg bg-secondary-fixed text-on-secondary-fixed flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">verified</span>
+</div>
+<span class="font-headline-sm text-[15px] font-bold text-on-surface">Ưu tiên linh kiện hiếm</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Nhận thông báo đặt trước batch GPU &amp; CPU tản nước phiên bản giới hạn.</p>
+</div>
+</div>
+<!-- Trust Badges Bar -->
+<div class="p-3.5 rounded-xl bg-surface-container-lowest shadow-sm flex items-center justify-around text-center">
+<div>
+<span class="font-label-tech-lg text-label-tech-lg text-primary block">100%</span>
+<span class="font-label-tech-sm text-[10px] text-outline uppercase tracking-wider">Chính Hãng</span>
+</div>
+<div class="w-px h-7 bg-surface-container-high"></div>
+<div>
+<span class="font-label-tech-lg text-label-tech-lg text-primary block">36T</span>
+<span class="font-label-tech-sm text-[10px] text-outline uppercase tracking-wider">Bảo Hành 1-Đổi-1</span>
+</div>
+<div class="w-px h-7 bg-surface-container-high"></div>
+<div>
+<span class="font-label-tech-lg text-label-tech-lg text-primary block">0-BOTTLENECK</span>
+<span class="font-label-tech-sm text-[10px] text-outline uppercase tracking-wider">Lab Kiểm Định</span>
+</div>
+</div>
+</div>
+<!-- Right Column: Registration Card (7 Cols) -->
+<div class="lg:col-span-7">
+<div class="bg-surface-container-lowest rounded-xl p-6 sm:p-8 lg:p-10 shadow-[0_12px_36px_-6px_rgba(99,14,212,0.07),0_2px_8px_rgba(24,20,69,0.03)] flex flex-col gap-space-lg">
+<!-- Card Sub-header -->
+<div class="flex items-center justify-between pb-2">
+<div class="flex flex-col">
+<span class="font-headline-md text-headline-md text-on-surface font-bold">Thông tin tài khoản</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Dành cho Khách hàng cá nhân &amp; Chuyên gia Build PC</span>
+</div>
+<div class="w-10 h-10 rounded-xl bg-surface-container-high text-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-[24px]">person_add</span>
+</div>
+</div>
+<!-- Registration Form -->
+<form class="flex flex-col gap-5" id="customerRegisterForm" novalidate="" onsubmit="return false;">
+<!-- Full Name Field -->
+<div class="flex flex-col gap-1.5">
+<label class="font-label-ui text-label-ui text-on-surface flex items-center justify-between" for="fullName">
+<span>Họ và tên người dùng <span class="text-error">*</span></span>
+<span class="font-label-tech-sm text-[11px] text-outline hidden" id="nameStatus">Hợp lệ</span>
+</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-outline text-[20px] pointer-events-none">badge</span>
+<input class="w-full bg-surface-container-low focus:bg-surface-container-lowest rounded-lg pl-11 pr-4 py-3 font-body-md text-body-md text-on-surface placeholder:text-outline shadow-sm transition-all focus:outline-none focus:shadow-[0_0_0_3px_rgba(99,14,212,0.18)]" id="fullName" name="fullName" placeholder="Nguyễn Văn An" required="" type="text"/>
+</div>
+</div>
+<!-- Email & Phone Dual Column -->
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+<!-- Email Field -->
+<div class="flex flex-col gap-1.5">
+<label class="font-label-ui text-label-ui text-on-surface flex items-center justify-between" for="email">
+<span>Địa chỉ Email <span class="text-error">*</span></span>
+</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-outline text-[20px] pointer-events-none">mail</span>
+<input class="w-full bg-surface-container-low focus:bg-surface-container-lowest rounded-lg pl-11 pr-4 py-3 font-body-md text-body-md text-on-surface placeholder:text-outline shadow-sm transition-all focus:outline-none focus:shadow-[0_0_0_3px_rgba(99,14,212,0.18)]" id="email" name="email" placeholder="an.nguyen@example.com" required="" type="email"/>
+</div>
+<span class="font-body-sm text-[12px] text-error hidden" id="emailMsg">Vui lòng nhập định dạng email hợp lệ.</span>
+</div>
+<!-- Phone Field -->
+<div class="flex flex-col gap-1.5">
+<label class="font-label-ui text-label-ui text-on-surface flex items-center justify-between" for="phoneNumber">
+<span>Số điện thoại <span class="text-error">*</span></span>
+</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-outline text-[20px] pointer-events-none">call</span>
+<input class="w-full bg-surface-container-low focus:bg-surface-container-lowest rounded-lg pl-11 pr-4 py-3 font-body-md text-body-md text-on-surface placeholder:text-outline shadow-sm transition-all focus:outline-none focus:shadow-[0_0_0_3px_rgba(99,14,212,0.18)]" id="phoneNumber" name="phoneNumber" placeholder="0912 345 678" required="" type="tel"/>
+</div>
+<span class="font-body-sm text-[12px] text-error hidden" id="phoneMsg">Số điện thoại gồm 10 chữ số.</span>
+</div>
+</div>
+<!-- Password Field -->
+<div class="flex flex-col gap-1.5">
+<div class="flex items-center justify-between">
+<label class="font-label-ui text-label-ui text-on-surface" for="password">
+                    Mật khẩu <span class="text-error">*</span>
+</label>
+<span class="font-label-tech-sm text-label-tech-sm text-outline" id="strengthLabel">Độ mạnh: Chưa nhập</span>
+</div>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-outline text-[20px] pointer-events-none">lock</span>
+<input class="w-full bg-surface-container-low focus:bg-surface-container-lowest rounded-lg pl-11 pr-12 py-3 font-body-md text-body-md text-on-surface placeholder:text-outline shadow-sm transition-all focus:outline-none focus:shadow-[0_0_0_3px_rgba(99,14,212,0.18)]" id="password" name="password" placeholder="Tối thiểu 8 ký tự kèm chữ số" required="" type="password"/>
+<button aria-label="Ẩn hiện mật khẩu" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-outline hover:text-primary transition-colors flex items-center justify-center p-1" id="togglePwd" type="button">
+<span class="material-symbols-outlined text-[20px]" id="pwdEyeIcon">visibility</span>
+</button>
+</div>
+<!-- Password Strength Segment Bar -->
+<div class="flex items-center gap-1.5 pt-1">
+<div class="h-1.5 flex-1 rounded-full bg-surface-container-high transition-colors" id="bar1"></div>
+<div class="h-1.5 flex-1 rounded-full bg-surface-container-high transition-colors" id="bar2"></div>
+<div class="h-1.5 flex-1 rounded-full bg-surface-container-high transition-colors" id="bar3"></div>
+<div class="h-1.5 flex-1 rounded-full bg-surface-container-high transition-colors" id="bar4"></div>
+</div>
+</div>
+<!-- Confirm Password Field -->
+<div class="flex flex-col gap-1.5">
+<div class="flex items-center justify-between">
+<label class="font-label-ui text-label-ui text-on-surface" for="confirmPassword">
+                    Xác nhận mật khẩu <span class="text-error">*</span>
+</label>
+<span class="font-label-tech-sm text-label-tech-sm text-outline hidden" id="matchFeedback">Chưa khớp</span>
+</div>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-outline text-[20px] pointer-events-none">lock_clock</span>
+<input class="w-full bg-surface-container-low focus:bg-surface-container-lowest rounded-lg pl-11 pr-12 py-3 font-body-md text-body-md text-on-surface placeholder:text-outline shadow-sm transition-all focus:outline-none focus:shadow-[0_0_0_3px_rgba(99,14,212,0.18)]" id="confirmPassword" name="confirmPassword" placeholder="Nhập lại mật khẩu vừa tạo" required="" type="password"/>
+<button aria-label="Ẩn hiện xác nhận mật khẩu" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-outline hover:text-primary transition-colors flex items-center justify-center p-1" id="toggleConfirmPwd" type="button">
+<span class="material-symbols-outlined text-[20px]" id="confirmEyeIcon">visibility</span>
+</button>
+</div>
+</div>
+<!-- CUSTOMER SEGMENT SELECTION (CORE SPEC) -->
+<div class="pt-2 flex flex-col gap-3">
+<div class="flex items-center justify-between">
+<span class="font-label-ui text-label-ui text-on-surface font-bold uppercase tracking-wider flex items-center gap-1.5">
+<span class="material-symbols-outlined text-primary text-[18px]">hub</span>
+                    Phân đoạn khách hàng (Customer Segment)
+                  </span>
+<span class="font-label-tech-sm text-[11px] px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant">Bắt buộc chọn 1</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant -mt-1">
+                  Chọn đúng nhóm trải nghiệm giúp ApexRigs tùy biến giao diện tra cứu phần cứng theo đúng chuyên môn của bạn:
+                </p>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-3.5 pt-1">
+<!-- Segment 1: IT Specialist -->
+<label class="segment-card relative flex flex-col p-4 rounded-xl cursor-pointer bg-surface-container-low hover:bg-surface-container transition-all shadow-sm">
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-lg bg-surface-container-highest text-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-[22px]">developer_board</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-[15px] font-bold text-on-surface">Đam mê Công nghệ &amp; IT</span>
+<span class="font-label-tech-sm text-[10px] text-primary uppercase font-bold tracking-wider">IT Segment</span>
+</div>
+</div>
+<input checked="" class="mt-1 w-4 h-4 accent-primary cursor-pointer" name="customerSegment" type="radio" value="IT"/>
+</div>
+<div class="mt-3 pt-3 bg-surface-container-lowest/60 rounded-lg p-2.5">
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-snug">
+                        Tối ưu hiển thị thông số kỹ thuật chuyên sâu, bus RAM, chipset, chuẩn PCIe và socket vi xử lý.
+                      </p>
+<div class="flex flex-wrap gap-1.5 mt-2">
+<span class="font-label-tech-sm text-[10px] px-2 py-0.5 rounded bg-surface-container-high text-on-surface">PCIe 5.0</span>
+<span class="font-label-tech-sm text-[10px] px-2 py-0.5 rounded bg-surface-container-high text-on-surface">CL Latency</span>
+<span class="font-label-tech-sm text-[10px] px-2 py-0.5 rounded bg-surface-container-high text-on-surface">VRM Phase</span>
+</div>
+</div>
+</label>
+<!-- Segment 2: NON-IT General User -->
+<label class="segment-card relative flex flex-col p-4 rounded-xl cursor-pointer bg-surface-container-low hover:bg-surface-container transition-all shadow-sm">
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-lg bg-surface-container-highest text-secondary flex items-center justify-center">
+<span class="material-symbols-outlined text-[22px]">sports_esports</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-[15px] font-bold text-on-surface">Văn phòng &amp; Game cơ bản</span>
+<span class="font-label-tech-sm text-[10px] text-secondary uppercase font-bold tracking-wider">NON_IT Segment</span>
+</div>
+</div>
+<input class="mt-1 w-4 h-4 accent-primary cursor-pointer" name="customerSegment" type="radio" value="NON_IT"/>
+</div>
+<div class="mt-3 pt-3 bg-surface-container-lowest/60 rounded-lg p-2.5">
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-snug">
+                        Ưu tiên mô tả trực quan, gợi ý dàn PC lắp sẵn theo tầm giá và hiệu năng thực tế theo tựa game.
+                      </p>
+<div class="flex flex-wrap gap-1.5 mt-2">
+<span class="font-label-tech-sm text-[10px] px-2 py-0.5 rounded bg-surface-container-high text-on-surface">Mượt mà 2K</span>
+<span class="font-label-tech-sm text-[10px] px-2 py-0.5 rounded bg-surface-container-high text-on-surface">Plug &amp; Play</span>
+<span class="font-label-tech-sm text-[10px] px-2 py-0.5 rounded bg-surface-container-high text-on-surface">Tiết kiệm điện</span>
+</div>
+</div>
+</label>
+</div>
+</div>
+<!-- Terms & Privacy Agreement Checkbox -->
+<div class="pt-2 flex items-start gap-3">
+<input class="mt-1 w-4 h-4 rounded text-primary accent-primary cursor-pointer" id="agreeTerms" name="agreeTerms" required="" type="checkbox"/>
+<label class="font-body-sm text-body-sm text-on-surface-variant cursor-pointer select-none" for="agreeTerms">
+                  Tôi đồng ý với <a class="text-primary hover:underline font-semibold" data-path="dieu-khoan-dich-vu" href="#">Điều khoản dịch vụ</a> và <a class="text-primary hover:underline font-semibold" data-path="bao-mat-thong-tin" href="#">Chính sách quyền riêng tư</a> của ApexRigs Store.
+                </label>
+</div>
+<!-- Main Submit Action Button -->
+<div class="pt-2 flex flex-col gap-3">
+<button class="w-full py-3.5 px-6 rounded-xl font-label-ui text-[15px] font-bold text-on-primary bg-primary hover:bg-primary-container active:scale-[0.99] transition-all shadow-[0_6px_20px_rgba(99,14,212,0.32)] flex items-center justify-center gap-2 group cursor-pointer" id="submitBtn" type="submit">
+<span id="btnText">Đăng ký tài khoản</span>
+<span class="material-symbols-outlined text-[20px] transition-transform group-hover:translate-x-1">arrow_forward</span>
+</button>
+<!-- Feedback Notification Alert Area -->
+<div class="hidden p-3.5 rounded-lg font-body-sm text-body-sm flex items-center gap-2" id="formAlert"></div>
+</div>
+<!-- Switch to Login Navigation (C08 Route) -->
+<div class="pt-2 text-center flex items-center justify-center gap-1.5 font-body-md text-body-md text-on-surface-variant">
+<span>Đã có tài khoản ApexRigs?</span>
+<a class="text-primary hover:text-primary-container font-bold hover:underline transition-colors flex items-center gap-0.5" data-path="dang-nhap" href="#">
+<span>Đăng nhập ngay</span>
+<span class="material-symbols-outlined text-[16px]">open_in_new</span>
+</a>
+</div>
+</form>
+</div>
+<!-- Bottom Micro Assurance Note -->
+<div class="mt-4 px-4 flex items-center justify-between text-outline font-label-tech-sm text-label-tech-sm">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">shield</span>
+              Mã hóa dữ liệu chuẩn AES-256
+            </span>
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">bolt</span>
+              Kích hoạt ngay không chờ duyệt
+            </span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<script>
+  (function initRegistration() {
+    const pwdInput = document.getElementById('password');
+    const confirmInput = document.getElementById('confirmPassword');
+    const togglePwd = document.getElementById('togglePwd');
+    const toggleConfirmPwd = document.getElementById('toggleConfirmPwd');
+    const pwdEyeIcon = document.getElementById('pwdEyeIcon');
+    const confirmEyeIcon = document.getElementById('confirmEyeIcon');
+    const strengthLabel = document.getElementById('strengthLabel');
+    const matchFeedback = document.getElementById('matchFeedback');
+    const bar1 = document.getElementById('bar1');
+    const bar2 = document.getElementById('bar2');
+    const bar3 = document.getElementById('bar3');
+    const bar4 = document.getElementById('bar4');
+    const regForm = document.getElementById('customerRegisterForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const btnText = document.getElementById('btnText');
+    const formAlert = document.getElementById('formAlert');
+
+    // Toggle Password Visibility
+    if (togglePwd && pwdInput) {
+      togglePwd.addEventListener('click', () => {
+        const isPwd = pwdInput.type === 'password';
+        pwdInput.type = isPwd ? 'text' : 'password';
+        pwdEyeIcon.textContent = isPwd ? 'visibility_off' : 'visibility';
+      });
+    }
+
+    if (toggleConfirmPwd && confirmInput) {
+      toggleConfirmPwd.addEventListener('click', () => {
+        const isPwd = confirmInput.type === 'password';
+        confirmInput.type = isPwd ? 'text' : 'password';
+        confirmEyeIcon.textContent = isPwd ? 'visibility_off' : 'visibility';
+      });
+    }
+
+    // Password Strength Evaluator
+    function evaluateStrength(val) {
+      if (!val) return 0;
+      let score = 0;
+      if (val.length >= 8) score++;
+      if (/[A-Z]/.test(val) && /[a-z]/.test(val)) score++;
+      if (/\d/.test(val)) score++;
+      if (/[^A-Za-z0-9]/.test(val)) score++;
+      return score;
+    }
+
+    function updateBars(score) {
+      const resetClass = 'bg-surface-container-high';
+      [bar1, bar2, bar3, bar4].forEach(b => {
+        b.className = 'h-1.5 flex-1 rounded-full transition-colors ' + resetClass;
+      });
+
+      if (score === 0) {
+        strengthLabel.textContent = 'Độ mạnh: Chưa nhập';
+        strengthLabel.className = 'font-label-tech-sm text-label-tech-sm text-outline';
+      } else if (score === 1) {
+        bar1.classList.remove(resetClass);
+        bar1.classList.add('bg-error');
+        strengthLabel.textContent = 'Độ mạnh: Yếu';
+        strengthLabel.className = 'font-label-tech-sm text-label-tech-sm text-error';
+      } else if (score === 2) {
+        bar1.classList.remove(resetClass);
+        bar2.classList.remove(resetClass);
+        bar1.classList.add('bg-secondary-container');
+        bar2.classList.add('bg-secondary-container');
+        strengthLabel.textContent = 'Độ mạnh: Trung bình';
+        strengthLabel.className = 'font-label-tech-sm text-label-tech-sm text-secondary';
+      } else if (score === 3) {
+        [bar1, bar2, bar3].forEach(b => {
+          b.classList.remove(resetClass);
+          b.classList.add('bg-primary-container');
+        });
+        strengthLabel.textContent = 'Độ mạnh: Khá an toàn';
+        strengthLabel.className = 'font-label-tech-sm text-label-tech-sm text-primary';
+      } else {
+        [bar1, bar2, bar3, bar4].forEach(b => {
+          b.classList.remove(resetClass);
+          b.classList.add('bg-primary');
+        });
+        strengthLabel.textContent = 'Độ mạnh: Tối ưu chuẩn';
+        strengthLabel.className = 'font-label-tech-sm text-label-tech-sm text-primary font-bold';
+      }
+    }
+
+    if (pwdInput) {
+      pwdInput.addEventListener('input', (e) => {
+        const score = evaluateStrength(e.target.value);
+        updateBars(score);
+        checkMatch();
+      });
+    }
+
+    function checkMatch() {
+      if (!confirmInput.value) {
+        matchFeedback.classList.add('hidden');
+        return;
+      }
+      matchFeedback.classList.remove('hidden');
+      if (confirmInput.value === pwdInput.value) {
+        matchFeedback.textContent = 'Mật khẩu trùng khớp ✓';
+        matchFeedback.className = 'font-label-tech-sm text-label-tech-sm text-primary font-bold';
+      } else {
+        matchFeedback.textContent = 'Mật khẩu chưa khớp ✕';
+        matchFeedback.className = 'font-label-tech-sm text-label-tech-sm text-error';
+      }
+    }
+
+    if (confirmInput) {
+      confirmInput.addEventListener('input', checkMatch);
+    }
+
+    // Form Submission Simulation
+    if (regForm) {
+      regForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const fullName = document.getElementById('fullName').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const phone = document.getElementById('phoneNumber').value.trim();
+        const pwd = pwdInput.value;
+        const confirmPwd = confirmInput.value;
+        const agreeTerms = document.getElementById('agreeTerms').checked;
+        const segmentRadio = document.querySelector('input[name="customerSegment"]:checked');
+
+        formAlert.classList.add('hidden');
+        formAlert.classList.remove('bg-error-container', 'text-on-error-container', 'bg-surface-container-high', 'text-primary');
+
+        if (!fullName || !email || !phone || !pwd || !confirmPwd) {
+          formAlert.textContent = 'Vui lòng điền đầy đủ tất cả các trường bắt buộc.';
+          formAlert.classList.add('bg-error-container', 'text-on-error-container');
+          formAlert.classList.remove('hidden');
+          return;
+        }
+
+        if (pwd !== confirmPwd) {
+          formAlert.textContent = 'Mật khẩu xác nhận không khớp. Vui lòng kiểm tra lại.';
+          formAlert.classList.add('bg-error-container', 'text-on-error-container');
+          formAlert.classList.remove('hidden');
+          return;
+        }
+
+        if (!agreeTerms) {
+          formAlert.textContent = 'Vui lòng đồng ý với Điều khoản dịch vụ và Chính sách quyền riêng tư.';
+          formAlert.classList.add('bg-error-container', 'text-on-error-container');
+          formAlert.classList.remove('hidden');
+          return;
+        }
+
+        // Simulating immediate client creation without complex OTP
+        btnText.textContent = 'Đang khởi tạo tài khoản...';
+        submitBtn.disabled = true;
+        submitBtn.classList.add('opacity-80');
+
+        setTimeout(() => {
+          btnText.textContent = 'Đăng ký thành công!';
+          submitBtn.classList.remove('bg-primary');
+          submitBtn.classList.add('bg-primary-container');
+          
+          formAlert.innerHTML = `
+            <span class="material-symbols-outlined text-[20px] text-primary">check_circle</span>
+            <span>Chào mừng <strong>${fullName}</strong>! Tài khoản của bạn đã sẵn sàng với phân đoạn <strong>${segmentRadio ? segmentRadio.value : 'IT'}</strong>. Chuyển hướng tới trang Đăng nhập...</span>
+          `;
+          formAlert.classList.add('bg-surface-container', 'text-on-surface');
+          formAlert.classList.remove('hidden');
+        }, 800);
+      });
+    }
+  })();
+</script></main><footer class="w-full bg-surface-container-low text-on-surface pt-space-2xl pb-space-xl shadow-[0_-1px_12px_rgba(99,14,212,0.03)]"><div class="max-w-[1440px] mx-auto px-margin-mobile md:px-margin-tablet lg:px-margin"><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-space-xl pb-space-2xl"><div class="lg:col-span-4 flex flex-col gap-space-md"><div class="flex items-center gap-space-sm"><div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-primary to-primary-container flex items-center justify-center shadow-[0_4px_14px_rgba(124,58,237,0.35)]"><span class="material-symbols-outlined text-on-primary text-[20px]">memory</span></div><div class="flex items-center gap-1.5"><span class="font-headline-sm text-headline-sm font-extrabold tracking-tight text-on-surface">APEXRIGS</span><span class="font-label-tech-sm text-label-tech-sm px-1.5 py-0.5 rounded bg-secondary-fixed text-on-secondary-fixed">V2</span></div></div><p class="font-body-md text-body-md text-on-surface-variant max-w-sm">Hệ sinh thái phân phối phần cứng máy tính cao cấp hàng đầu Việt Nam. Chuẩn mực chế tác kiến trúc Hyper-Rig, tinh tuyển từng linh kiện và tối ưu hiệu năng tản nhiệt chuyên sâu.</p><div class="flex items-center gap-2 pt-2"><span class="w-2 h-2 rounded-full bg-secondary"></span><span class="font-label-tech-sm text-label-tech-sm text-on-surface-variant uppercase tracking-wider">Boutique Hardware Laboratory</span></div></div><div class="lg:col-span-3 flex flex-col gap-space-md"><h4 class="font-label-tech-lg text-label-tech-lg text-on-surface uppercase tracking-wider">Khám phá phần cứng</h4><ul class="flex flex-col gap-2.5 font-body-sm text-body-sm text-on-surface-variant"><li><a class="hover:text-primary transition-colors" data-path="linh-kien" href="#">Vi xử lý (CPU)</a></li><li><a class="hover:text-primary transition-colors" data-path="linh-kien" href="#">Card đồ họa (GPU)</a></li><li><a class="hover:text-primary transition-colors" data-path="linh-kien" href="#">Bo mạch chủ (Mainboard)</a></li><li><a class="hover:text-primary transition-colors" data-path="linh-kien" href="#">Bộ nhớ trong (RAM)</a></li><li><a class="hover:text-primary transition-colors" data-path="linh-kien" href="#">Ổ cứng lưu trữ (SSD)</a></li><li><a class="hover:text-primary transition-colors" data-path="linh-kien" href="#">Nguồn máy tính (PSU)</a></li><li><a class="hover:text-primary transition-colors" data-path="linh-kien" href="#">Vỏ máy tính (Case)</a></li><li><a class="hover:text-primary transition-colors" data-path="linh-kien" href="#">Tản nhiệt nước &amp; Khí</a></li></ul></div><div class="lg:col-span-3 flex flex-col gap-space-md"><h4 class="font-label-tech-lg text-label-tech-lg text-on-surface uppercase tracking-wider">Dịch vụ &amp; Hỗ trợ</h4><ul class="flex flex-col gap-2.5 font-body-sm text-body-sm text-on-surface-variant"><li><a class="hover:text-primary transition-colors" data-path="chinh-sach-doi-moi" href="#">Chính sách đổi mới linh kiện</a></li><li><a class="hover:text-primary transition-colors" data-path="quy-trinh-dong-goi" href="#">Quy trình đóng gói chống sốc</a></li><li><a class="hover:text-primary transition-colors" data-path="huong-dan-mua-hang" href="#">Hướng dẫn mua hàng &amp; Thanh toán</a></li><li><a class="hover:text-primary transition-colors" data-path="tra-cuu-don-hang" href="#">Tra cứu tiến độ đơn hàng</a></li></ul></div><div class="lg:col-span-2 flex flex-col gap-space-md"><h4 class="font-label-tech-lg text-label-tech-lg text-on-surface uppercase tracking-wider">Thông tin &amp; Pháp lý</h4><ul class="flex flex-col gap-2.5 font-body-sm text-body-sm text-on-surface-variant"><li><a class="hover:text-primary transition-colors" data-path="dieu-khoan-dich-vu" href="#">Điều khoản dịch vụ</a></li><li><a class="hover:text-primary transition-colors" data-path="bao-mat-thong-tin" href="#">Bảo mật thông tin khách hàng</a></li><li><a class="hover:text-primary transition-colors" data-path="chinh-sach-bao-hanh-rma" href="#">Chính sách bảo hành RMA</a></li><li><a class="hover:text-primary transition-colors" data-path="lien-he-ho-tro" href="#">Liên hệ trung tâm hỗ trợ</a></li></ul></div></div><div class="pt-space-lg flex flex-col sm:flex-row items-center justify-between gap-4 font-body-sm text-body-sm text-on-surface-variant"><p>© 2025 APEXRIGS V2. Toàn bộ bản quyền được bảo lưu.</p><div class="flex items-center gap-space-md font-label-tech-sm text-label-tech-sm text-outline"><span>ISO 9001 TESTED</span><span>•</span><span>HIGH-PERFORMANCE PC BOUTIQUE</span></div></div></div></footer></body></html>
