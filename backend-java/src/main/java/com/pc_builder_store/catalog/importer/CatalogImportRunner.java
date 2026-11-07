@@ -45,21 +45,30 @@ public class CatalogImportRunner implements ApplicationRunner {
                 (String) connectionIdentity.get("database_name"),
                 (String) connectionIdentity.get("server_address"));
         CatalogImportSchema.validate(jdbcTemplate);
+        importer.validateExistingAttributeDefinitionTypes();
 
         Path csvPath = Path.of(environment.getProperty(
-                "catalog.import.csv", "..\\seed\\catalog-150-products.csv"));
-        List<CatalogCsvRow> rows = importer.readAndValidate(csvPath);
+                "catalog.import.csv", "..\\catalog-import-150-products-enriched-v5.csv"));
+        Path evidencePath = Path.of(environment.getProperty(
+                "catalog.import.evidence-csv", "..\\seed\\catalog-attribute-evidence.csv"));
+        long defaultStock = environment.getProperty("catalog.import.default-stock", Long.class, 5L);
+        CatalogCsvImporter.validateDefaultOfferStock(defaultStock);
+        List<CatalogCsvRow> rows = importer.readAndValidate(csvPath, evidencePath);
         boolean apply = environment.getProperty("catalog.import.apply", Boolean.class, false);
         if (!apply) {
             LOGGER.info(
                     "Catalog import preview validated {} products, 10 types, 10 categories, 41 brands, "
-                            + "and {} typed attribute values. No database writes were made.",
+                            + "{} typed attribute values, and {} exact evidence matches. No database writes were made.",
                     rows.size(),
-                    rows.stream().mapToInt(row -> row.specifications().size()).sum());
+                    rows.stream().mapToInt(row -> row.specifications().size()).sum(),
+                    rows.stream()
+                            .flatMap(row -> row.verificationMetadata().values().stream())
+                            .filter(evidence -> evidence.verificationStatus().startsWith("VERIFIED_"))
+                            .count());
             return;
         }
 
-        CatalogCsvImporter.ImportSummary summary = importer.apply(rows);
+        CatalogCsvImporter.ImportSummary summary = importer.apply(rows, defaultStock);
         LOGGER.info("Development catalog import committed: {}", summary);
     }
 }

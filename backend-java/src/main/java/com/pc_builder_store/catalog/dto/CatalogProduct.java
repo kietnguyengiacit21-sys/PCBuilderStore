@@ -2,6 +2,7 @@ package com.pc_builder_store.catalog.dto;
 
 import java.util.List;
 import java.util.Map;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import tools.jackson.databind.JsonNode;
 
 public record CatalogProduct(
@@ -18,6 +19,7 @@ public record CatalogProduct(
         String brandName,
         List<CatalogOffer> offers,
         JsonNode specifications,
+        @JsonInclude(JsonInclude.Include.NON_NULL)
         Map<String, CatalogAttributeVerification> verificationMetadata,
         List<CatalogImage> images,
         boolean demoData) {

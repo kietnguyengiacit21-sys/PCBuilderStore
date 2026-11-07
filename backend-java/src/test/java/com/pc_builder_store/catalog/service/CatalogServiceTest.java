@@ -4,16 +4,23 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 
+import com.pc_builder_store.catalog.CatalogInternalLedger;
 import com.pc_builder_store.catalog.dto.CatalogQuery;
 import com.pc_builder_store.catalog.exception.InvalidCatalogQueryException;
 import com.pc_builder_store.catalog.repository.CatalogRepository;
 import java.math.BigDecimal;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
+import org.springframework.core.io.ClassPathResource;
+import tools.jackson.databind.json.JsonMapper;
 
 class CatalogServiceTest {
 
-    private final CatalogService service = new CatalogService(mock(CatalogRepository.class));
+    private final CatalogService service = new CatalogService(
+            mock(CatalogRepository.class),
+            new CatalogInternalLedger(new ClassPathResource(
+                    "catalog-internal/catalog-attribute-internal-ledger.csv")),
+            JsonMapper.builder().build());
 
     @Test
     void appliesPaginationDefaults() {

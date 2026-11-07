@@ -1,10 +1,12 @@
 package com.pc_builder_store.catalog.service;
 
+import com.pc_builder_store.catalog.CatalogInternalLedger;
 import com.pc_builder_store.catalog.CatalogSpecificationValidator;
 import com.pc_builder_store.catalog.dto.CatalogFacets;
 import com.pc_builder_store.catalog.dto.CatalogAttributeDefinition;
 import com.pc_builder_store.catalog.dto.CatalogProduct;
 import com.pc_builder_store.catalog.dto.CatalogProductPage;
+import com.pc_builder_store.catalog.dto.PublicCatalogAttributeDefinition;
 import com.pc_builder_store.catalog.dto.CatalogQuery;
 import com.pc_builder_store.catalog.dto.CatalogQuery.AttributeFilter;
 import com.pc_builder_store.catalog.dto.CatalogQuery.Direction;
@@ -22,6 +24,8 @@ import java.util.regex.Pattern;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ObjectNode;
 
 @Service
 public class CatalogService {
@@ -39,27 +43,50 @@ public class CatalogService {
             "Giá và tồn kho của các offer mã DEMO- là dữ liệu minh họa, không phải thông tin bán hàng trực tiếp.";
 
     private final CatalogRepository catalogRepository;
+    private final CatalogInternalLedger internalLedger;
+    private final ObjectMapper objectMapper;
 
-    public CatalogService(CatalogRepository catalogRepository) {
+    public CatalogService(
+            CatalogRepository catalogRepository,
+            CatalogInternalLedger internalLedger,
+            ObjectMapper objectMapper) {
         this.catalogRepository = catalogRepository;
+        this.internalLedger = internalLedger;
+        this.objectMapper = objectMapper;
     }
 
     public CatalogFacets getFacets() {
         return catalogRepository.getFacets();
     }
 
-    public List<CatalogAttributeDefinition> getAttributeDefinitions() {
+    public List<PublicCatalogAttributeDefinition> getAttributeDefinitions() {
+        return catalogRepository.getAttributeDefinitions().stream()
+                .filter(definition -> !internalLedger.publicModelCodes(
+                        definition.code(), definition.productType()).isEmpty())
+                .map(definition -> new PublicCatalogAttributeDefinition(
+                        definition.productType(),
+                        definition.code(),
+                        definition.label(),
+                        definition.dataType(),
+                        definition.unit()))
+                .toList();
+    }
+
+    public List<CatalogAttributeDefinition> getAdminAttributeDefinitions() {
         return catalogRepository.getAttributeDefinitions();
     }
 
     public CatalogProductPage getProducts(Map<String, String[]> parameters) {
         CatalogQuery query = parseQuery(parameters);
         CatalogRepository.ProductPage page = catalogRepository.findProducts(query);
+        List<CatalogProduct> publicProducts = page.products().stream()
+                .map(this::filterPublicProduct)
+                .toList();
         long totalPages = page.total() == 0
                 ? 0
                 : (page.total() + query.limit() - 1) / query.limit();
         return new CatalogProductPage(
-                page.products(),
+                publicProducts,
                 new com.pc_builder_store.catalog.dto.CatalogPagination(
                         query.page(), query.limit(), page.total(), totalPages),
                 DEMO_NOTICE);
@@ -71,6 +98,13 @@ public class CatalogService {
             throw invalid("Product model code is invalid.");
         }
         return catalogRepository.findActiveProduct(modelCode)
+                .map(this::filterPublicProduct)
+                .orElseThrow(CatalogProductNotFoundException::new);
+    }
+
+    public CatalogProduct getAdminProduct(String modelCode) {
+        validateModelCode(modelCode);
+        return catalogRepository.findAdminActiveProduct(modelCode)
                 .orElseThrow(CatalogProductNotFoundException::new);
     }
 
@@ -78,13 +112,47 @@ public class CatalogService {
     public CatalogProduct updateGpuSpecifications(
             String modelCode,
             Map<String, JsonNode> specifications) {
+        validateModelCode(modelCode);
+        CatalogSpecificationValidator.validateGpuValues(specifications);
+        catalogRepository.updateGpuSpecifications(modelCode, specifications);
+        return getAdminProduct(modelCode);
+    }
+
+    private CatalogProduct filterPublicProduct(CatalogProduct product) {
+        ObjectNode publicSpecifications = objectMapper.createObjectNode();
+        JsonNode specifications = product.specifications();
+        if (specifications != null && specifications.isObject()) {
+            specifications.properties().forEach(entry -> {
+                if (internalLedger.isPubliclyVisible(
+                        product.productType(), product.modelCode(), entry.getKey())) {
+                    publicSpecifications.set(entry.getKey(), entry.getValue().deepCopy());
+                }
+            });
+        }
+        return new CatalogProduct(
+                product.productId(),
+                product.modelCode(),
+                product.productName(),
+                product.shortDescription(),
+                product.description(),
+                product.status(),
+                product.productType(),
+                product.productTypeName(),
+                product.categoryCode(),
+                product.categoryName(),
+                product.brandName(),
+                product.offers(),
+                publicSpecifications,
+                null,
+                product.images(),
+                product.demoData());
+    }
+
+    private void validateModelCode(String modelCode) {
         if (modelCode == null || modelCode.isEmpty() || modelCode.length() > 100
                 || modelCode.chars().anyMatch(character -> character <= 0x1f || character == 0x7f)) {
             throw invalid("Product model code is invalid.");
         }
-        CatalogSpecificationValidator.validateGpuValues(specifications);
-        catalogRepository.updateGpuSpecifications(modelCode, specifications);
-        return getProduct(modelCode);
     }
 
     public String demoNotice() {

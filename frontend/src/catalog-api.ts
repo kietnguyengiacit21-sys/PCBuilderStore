@@ -61,18 +61,26 @@ export interface CatalogAttributeFacet {
   values: { label: string; value: string }[];
 }
 
-export interface CatalogAttributeDefinition {
+export interface PublicCatalogAttributeDefinition {
   productType: string;
   code: string;
   label: string;
   dataType: "TEXT" | "DECIMAL" | "INTEGER" | "BOOLEAN" | "JSON";
-  unit: string | null;
-  filterable: boolean;
+  unit?: string | null;
+}
+
+export interface CatalogAttributeDefinition extends PublicCatalogAttributeDefinition {
+  filterable?: boolean;
   englishLabel?: string;
   subtype?: string | null;
   inputMode?: "TEXT" | "TEXTAREA" | "NUMBER" | "BOOLEAN" | "JSON" | "JSON_ARRAY" | "SELECT" | null;
   options?: string[];
   specificationScope?: "GPU_SILICON" | "BOARD_VARIANT" | null;
+}
+
+export interface AdminCatalogAttributeDefinition extends CatalogAttributeDefinition {
+  unit: string | null;
+  filterable: boolean;
 }
 
 export interface CatalogFacets {
@@ -104,9 +112,14 @@ export interface CatalogProductPage {
 
 const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "/api").replace(/\/$/, "");
 
-async function fetchPayload<T>(path: string, signal?: AbortSignal): Promise<T> {
+async function fetchPayload<T>(
+  path: string,
+  signal?: AbortSignal,
+  credentials?: RequestCredentials,
+): Promise<T> {
   const response = await fetch(`${apiBaseUrl}/catalog${path}`, {
     headers: { Accept: "application/json" },
+    credentials,
     signal,
   });
   let payload: unknown;
@@ -168,14 +181,39 @@ export async function fetchCatalogProduct(
   return response;
 }
 
+export async function fetchAdminCatalogProduct(
+  modelCode: string,
+  signal?: AbortSignal,
+): Promise<{ data: CatalogProduct; notice: string }> {
+  const response = await fetchPayload<{ data: CatalogProduct; notice: string }>(
+    `/admin/products/${encodeURIComponent(modelCode)}`,
+    signal,
+    "include",
+  );
+  if (typeof response.data !== "object" || response.data === null) {
+    throw new Error("Catalog API returned an invalid product.");
+  }
+  return response;
+}
+
 export function fetchCatalogFacets(signal?: AbortSignal): Promise<{ data: CatalogFacets }> {
   return fetchPayload<{ data: CatalogFacets }>("/facets", signal);
 }
 
 export function fetchCatalogAttributeDefinitions(
   signal?: AbortSignal,
-): Promise<{ data: CatalogAttributeDefinition[] }> {
-  return fetchPayload<{ data: CatalogAttributeDefinition[] }>("/attribute-definitions", signal);
+): Promise<{ data: PublicCatalogAttributeDefinition[] }> {
+  return fetchPayload<{ data: PublicCatalogAttributeDefinition[] }>("/attribute-definitions", signal);
+}
+
+export function fetchAdminCatalogAttributeDefinitions(
+  signal?: AbortSignal,
+): Promise<{ data: AdminCatalogAttributeDefinition[] }> {
+  return fetchPayload<{ data: AdminCatalogAttributeDefinition[] }>(
+    "/admin/attribute-definitions",
+    signal,
+    "include",
+  );
 }
 
 export async function updateGpuCatalogSpecifications(

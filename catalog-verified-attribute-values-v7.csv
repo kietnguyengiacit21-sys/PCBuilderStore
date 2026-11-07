@@ -1,0 +1,537 @@
+﻿model_code,attribute_code,data_type,value_json,unit,source_url,source_locator,verification_status
+BX8071512100F,socket,TEXT,"""LGA1700""",,https://www.intel.com/content/www/us/en/products/sku/132223/intel-core-i312100f-processor-12m-cache-up-to-4-30-ghz/specifications.html,Sockets Supported,VERIFIED_EXACT_VARIANT
+BX8071512100F,architecture,TEXT,"""Alder Lake""",,https://www.intel.com/content/www/us/en/products/sku/132223/intel-core-i312100f-processor-12m-cache-up-to-4-30-ghz/specifications.html,Code Name,VERIFIED_EXACT_VARIANT
+BX8071512100F,core_count,INTEGER,4,cores,https://www.intel.com/content/www/us/en/products/sku/132223/intel-core-i312100f-processor-12m-cache-up-to-4-30-ghz/specifications.html,Total Cores,VERIFIED_EXACT_VARIANT
+BX8071512100F,thread_count,INTEGER,8,threads,https://www.intel.com/content/www/us/en/products/sku/132223/intel-core-i312100f-processor-12m-cache-up-to-4-30-ghz/specifications.html,Total Threads,VERIFIED_EXACT_VARIANT
+BX8071512100F,max_boost_clock_ghz,DECIMAL,4.3,GHz,https://www.intel.com/content/www/us/en/products/sku/132223/intel-core-i312100f-processor-12m-cache-up-to-4-30-ghz/specifications.html,Max Turbo Frequency,VERIFIED_EXACT_VARIANT
+BX8071512100F,cache_l2_mb,DECIMAL,5.0,MB,https://www.intel.com/content/www/us/en/products/sku/132223/intel-core-i312100f-processor-12m-cache-up-to-4-30-ghz/specifications.html,Total L2 Cache,VERIFIED_EXACT_VARIANT
+BX8071512100F,cache_l3_mb,DECIMAL,12.0,MB,https://www.intel.com/content/www/us/en/products/sku/132223/intel-core-i312100f-processor-12m-cache-up-to-4-30-ghz/specifications.html,Cache,VERIFIED_EXACT_VARIANT
+BX8071512100F,tdp_watt,INTEGER,58,W,https://www.intel.com/content/www/us/en/products/sku/132223/intel-core-i312100f-processor-12m-cache-up-to-4-30-ghz/specifications.html,Processor Base Power,VERIFIED_EXACT_VARIANT
+BX8071512100F,integrated_graphics,TEXT,"""Không tích hợp""",,https://www.intel.com/content/www/us/en/products/sku/132223/intel-core-i312100f-processor-12m-cache-up-to-4-30-ghz/specifications.html,Processor Graphics,VERIFIED_EXACT_VARIANT
+BX8071512100F,memory_types_supported,JSON,"[""DDR4"",""DDR5""]",,https://www.intel.com/content/www/us/en/products/sku/132223/intel-core-i312100f-processor-12m-cache-up-to-4-30-ghz/specifications.html,Memory Types,VERIFIED_EXACT_VARIANT
+BX8071512100F,max_memory_gb,INTEGER,128,GB,https://www.intel.com/content/www/us/en/products/sku/132223/intel-core-i312100f-processor-12m-cache-up-to-4-30-ghz/specifications.html,Max Memory Size,VERIFIED_EXACT_VARIANT
+BX8071512100F,memory_channels,INTEGER,2,channels,https://www.intel.com/content/www/us/en/products/sku/132223/intel-core-i312100f-processor-12m-cache-up-to-4-30-ghz/specifications.html,Max # of Memory Channels,VERIFIED_EXACT_VARIANT
+BX8071512100F,pcie_generation,TEXT,"""4.0 / 5.0""",,https://www.intel.com/content/www/us/en/products/sku/132223/intel-core-i312100f-processor-12m-cache-up-to-4-30-ghz/specifications.html,PCI Express Revision,VERIFIED_EXACT_VARIANT
+BX8071512100F,instruction_sets,JSON,"[""SSE4.1"",""SSE4.2"",""AVX2""]",,https://www.intel.com/content/www/us/en/products/sku/132223/intel-core-i312100f-processor-12m-cache-up-to-4-30-ghz/specifications.html,Instruction Set Extensions,VERIFIED_EXACT_VARIANT
+BX8071512100F,max_operating_temp_c,DECIMAL,100.0,°C,https://www.intel.com/content/www/us/en/products/sku/132223/intel-core-i312100f-processor-12m-cache-up-to-4-30-ghz/specifications.html,Tjunction,VERIFIED_EXACT_VARIANT
+BX8071512400F,socket,TEXT,"""LGA1700""",,https://www.intel.com/content/www/us/en/products/sku/134587/intel-core-i512400f-processor-18m-cache-up-to-4-40-ghz/specifications.html,Sockets Supported,VERIFIED_EXACT_VARIANT
+BX8071512400F,architecture,TEXT,"""Alder Lake""",,https://www.intel.com/content/www/us/en/products/sku/134587/intel-core-i512400f-processor-18m-cache-up-to-4-40-ghz/specifications.html,Code Name,VERIFIED_EXACT_VARIANT
+BX8071512400F,core_count,INTEGER,6,cores,https://www.intel.com/content/www/us/en/products/sku/134587/intel-core-i512400f-processor-18m-cache-up-to-4-40-ghz/specifications.html,Total Cores,VERIFIED_EXACT_VARIANT
+BX8071512400F,thread_count,INTEGER,12,threads,https://www.intel.com/content/www/us/en/products/sku/134587/intel-core-i512400f-processor-18m-cache-up-to-4-40-ghz/specifications.html,Total Threads,VERIFIED_EXACT_VARIANT
+BX8071512400F,max_boost_clock_ghz,DECIMAL,4.4,GHz,https://www.intel.com/content/www/us/en/products/sku/134587/intel-core-i512400f-processor-18m-cache-up-to-4-40-ghz/specifications.html,Max Turbo Frequency,VERIFIED_EXACT_VARIANT
+BX8071512400F,cache_l2_mb,DECIMAL,7.5,MB,https://www.intel.com/content/www/us/en/products/sku/134587/intel-core-i512400f-processor-18m-cache-up-to-4-40-ghz/specifications.html,Total L2 Cache,VERIFIED_EXACT_VARIANT
+BX8071512400F,cache_l3_mb,DECIMAL,18.0,MB,https://www.intel.com/content/www/us/en/products/sku/134587/intel-core-i512400f-processor-18m-cache-up-to-4-40-ghz/specifications.html,Cache,VERIFIED_EXACT_VARIANT
+BX8071512400F,tdp_watt,INTEGER,65,W,https://www.intel.com/content/www/us/en/products/sku/134587/intel-core-i512400f-processor-18m-cache-up-to-4-40-ghz/specifications.html,Processor Base Power,VERIFIED_EXACT_VARIANT
+BX8071512400F,integrated_graphics,TEXT,"""Không tích hợp""",,https://www.intel.com/content/www/us/en/products/sku/134587/intel-core-i512400f-processor-18m-cache-up-to-4-40-ghz/specifications.html,Processor Graphics,VERIFIED_EXACT_VARIANT
+BX8071512400F,memory_types_supported,JSON,"[""DDR4"",""DDR5""]",,https://www.intel.com/content/www/us/en/products/sku/134587/intel-core-i512400f-processor-18m-cache-up-to-4-40-ghz/specifications.html,Memory Types,VERIFIED_EXACT_VARIANT
+BX8071512400F,max_memory_gb,INTEGER,128,GB,https://www.intel.com/content/www/us/en/products/sku/134587/intel-core-i512400f-processor-18m-cache-up-to-4-40-ghz/specifications.html,Max Memory Size,VERIFIED_EXACT_VARIANT
+BX8071512400F,memory_channels,INTEGER,2,channels,https://www.intel.com/content/www/us/en/products/sku/134587/intel-core-i512400f-processor-18m-cache-up-to-4-40-ghz/specifications.html,Max # of Memory Channels,VERIFIED_EXACT_VARIANT
+BX8071512400F,pcie_generation,TEXT,"""4.0 / 5.0""",,https://www.intel.com/content/www/us/en/products/sku/134587/intel-core-i512400f-processor-18m-cache-up-to-4-40-ghz/specifications.html,PCI Express Revision,VERIFIED_EXACT_VARIANT
+BX8071512400F,instruction_sets,JSON,"[""SSE4.1"",""SSE4.2"",""AVX2""]",,https://www.intel.com/content/www/us/en/products/sku/134587/intel-core-i512400f-processor-18m-cache-up-to-4-40-ghz/specifications.html,Instruction Set Extensions,VERIFIED_EXACT_VARIANT
+BX8071512400F,max_operating_temp_c,DECIMAL,100.0,°C,https://www.intel.com/content/www/us/en/products/sku/134587/intel-core-i512400f-processor-18m-cache-up-to-4-40-ghz/specifications.html,Tjunction,VERIFIED_EXACT_VARIANT
+BX8071513400F,socket,TEXT,"""LGA1700""",,https://www.intel.com/content/www/us/en/products/sku/230501/intel-core-i513400f-processor-20m-cache-up-to-4-60-ghz/specifications.html,Sockets Supported,VERIFIED_EXACT_VARIANT
+BX8071513400F,architecture,TEXT,"""Raptor Lake""",,https://www.intel.com/content/www/us/en/products/sku/230501/intel-core-i513400f-processor-20m-cache-up-to-4-60-ghz/specifications.html,Code Name,VERIFIED_EXACT_VARIANT
+BX8071513400F,core_count,INTEGER,10,cores,https://www.intel.com/content/www/us/en/products/sku/230501/intel-core-i513400f-processor-20m-cache-up-to-4-60-ghz/specifications.html,Total Cores,VERIFIED_EXACT_VARIANT
+BX8071513400F,thread_count,INTEGER,16,threads,https://www.intel.com/content/www/us/en/products/sku/230501/intel-core-i513400f-processor-20m-cache-up-to-4-60-ghz/specifications.html,Total Threads,VERIFIED_EXACT_VARIANT
+BX8071513400F,max_boost_clock_ghz,DECIMAL,4.6,GHz,https://www.intel.com/content/www/us/en/products/sku/230501/intel-core-i513400f-processor-20m-cache-up-to-4-60-ghz/specifications.html,Max Turbo Frequency,VERIFIED_EXACT_VARIANT
+BX8071513400F,cache_l2_mb,DECIMAL,9.5,MB,https://www.intel.com/content/www/us/en/products/sku/230501/intel-core-i513400f-processor-20m-cache-up-to-4-60-ghz/specifications.html,Total L2 Cache,VERIFIED_EXACT_VARIANT
+BX8071513400F,cache_l3_mb,DECIMAL,20.0,MB,https://www.intel.com/content/www/us/en/products/sku/230501/intel-core-i513400f-processor-20m-cache-up-to-4-60-ghz/specifications.html,Cache,VERIFIED_EXACT_VARIANT
+BX8071513400F,tdp_watt,INTEGER,65,W,https://www.intel.com/content/www/us/en/products/sku/230501/intel-core-i513400f-processor-20m-cache-up-to-4-60-ghz/specifications.html,Processor Base Power,VERIFIED_EXACT_VARIANT
+BX8071513400F,integrated_graphics,TEXT,"""Không tích hợp""",,https://www.intel.com/content/www/us/en/products/sku/230501/intel-core-i513400f-processor-20m-cache-up-to-4-60-ghz/specifications.html,Processor Graphics,VERIFIED_EXACT_VARIANT
+BX8071513400F,memory_types_supported,JSON,"[""DDR4"",""DDR5""]",,https://www.intel.com/content/www/us/en/products/sku/230501/intel-core-i513400f-processor-20m-cache-up-to-4-60-ghz/specifications.html,Memory Types,VERIFIED_EXACT_VARIANT
+BX8071513400F,max_memory_gb,INTEGER,192,GB,https://www.intel.com/content/www/us/en/products/sku/230501/intel-core-i513400f-processor-20m-cache-up-to-4-60-ghz/specifications.html,Max Memory Size,VERIFIED_EXACT_VARIANT
+BX8071513400F,memory_channels,INTEGER,2,channels,https://www.intel.com/content/www/us/en/products/sku/230501/intel-core-i513400f-processor-20m-cache-up-to-4-60-ghz/specifications.html,Max # of Memory Channels,VERIFIED_EXACT_VARIANT
+BX8071513400F,pcie_generation,TEXT,"""4.0 / 5.0""",,https://www.intel.com/content/www/us/en/products/sku/230501/intel-core-i513400f-processor-20m-cache-up-to-4-60-ghz/specifications.html,PCI Express Revision,VERIFIED_EXACT_VARIANT
+BX8071513400F,instruction_sets,JSON,"[""SSE4.1"",""SSE4.2"",""AVX2""]",,https://www.intel.com/content/www/us/en/products/sku/230501/intel-core-i513400f-processor-20m-cache-up-to-4-60-ghz/specifications.html,Instruction Set Extensions,VERIFIED_EXACT_VARIANT
+BX8071513400F,max_operating_temp_c,DECIMAL,100.0,°C,https://www.intel.com/content/www/us/en/products/sku/230501/intel-core-i513400f-processor-20m-cache-up-to-4-60-ghz/specifications.html,Tjunction,VERIFIED_EXACT_VARIANT
+BX8071514400F,socket,TEXT,"""LGA1700""",,https://www.intel.com/content/www/us/en/products/sku/236777/intel-core-i5-processor-14400f-20m-cache-up-to-4-70-ghz/specifications.html,Sockets Supported,VERIFIED_EXACT_VARIANT
+BX8071514400F,architecture,TEXT,"""Raptor Lake""",,https://www.intel.com/content/www/us/en/products/sku/236777/intel-core-i5-processor-14400f-20m-cache-up-to-4-70-ghz/specifications.html,Code Name,VERIFIED_EXACT_VARIANT
+BX8071514400F,core_count,INTEGER,10,cores,https://www.intel.com/content/www/us/en/products/sku/236777/intel-core-i5-processor-14400f-20m-cache-up-to-4-70-ghz/specifications.html,Total Cores,VERIFIED_EXACT_VARIANT
+BX8071514400F,thread_count,INTEGER,16,threads,https://www.intel.com/content/www/us/en/products/sku/236777/intel-core-i5-processor-14400f-20m-cache-up-to-4-70-ghz/specifications.html,Total Threads,VERIFIED_EXACT_VARIANT
+BX8071514400F,max_boost_clock_ghz,DECIMAL,4.7,GHz,https://www.intel.com/content/www/us/en/products/sku/236777/intel-core-i5-processor-14400f-20m-cache-up-to-4-70-ghz/specifications.html,Max Turbo Frequency,VERIFIED_EXACT_VARIANT
+BX8071514400F,cache_l2_mb,DECIMAL,9.5,MB,https://www.intel.com/content/www/us/en/products/sku/236777/intel-core-i5-processor-14400f-20m-cache-up-to-4-70-ghz/specifications.html,Total L2 Cache,VERIFIED_EXACT_VARIANT
+BX8071514400F,cache_l3_mb,DECIMAL,20.0,MB,https://www.intel.com/content/www/us/en/products/sku/236777/intel-core-i5-processor-14400f-20m-cache-up-to-4-70-ghz/specifications.html,Cache,VERIFIED_EXACT_VARIANT
+BX8071514400F,tdp_watt,INTEGER,65,W,https://www.intel.com/content/www/us/en/products/sku/236777/intel-core-i5-processor-14400f-20m-cache-up-to-4-70-ghz/specifications.html,Processor Base Power,VERIFIED_EXACT_VARIANT
+BX8071514400F,integrated_graphics,TEXT,"""Không tích hợp""",,https://www.intel.com/content/www/us/en/products/sku/236777/intel-core-i5-processor-14400f-20m-cache-up-to-4-70-ghz/specifications.html,Processor Graphics,VERIFIED_EXACT_VARIANT
+BX8071514400F,memory_types_supported,JSON,"[""DDR4"",""DDR5""]",,https://www.intel.com/content/www/us/en/products/sku/236777/intel-core-i5-processor-14400f-20m-cache-up-to-4-70-ghz/specifications.html,Memory Types,VERIFIED_EXACT_VARIANT
+BX8071514400F,max_memory_gb,INTEGER,192,GB,https://www.intel.com/content/www/us/en/products/sku/236777/intel-core-i5-processor-14400f-20m-cache-up-to-4-70-ghz/specifications.html,Max Memory Size,VERIFIED_EXACT_VARIANT
+BX8071514400F,memory_channels,INTEGER,2,channels,https://www.intel.com/content/www/us/en/products/sku/236777/intel-core-i5-processor-14400f-20m-cache-up-to-4-70-ghz/specifications.html,Max # of Memory Channels,VERIFIED_EXACT_VARIANT
+BX8071514400F,pcie_generation,TEXT,"""4.0 / 5.0""",,https://www.intel.com/content/www/us/en/products/sku/236777/intel-core-i5-processor-14400f-20m-cache-up-to-4-70-ghz/specifications.html,PCI Express Revision,VERIFIED_EXACT_VARIANT
+BX8071514400F,instruction_sets,JSON,"[""SSE4.1"",""SSE4.2"",""AVX2""]",,https://www.intel.com/content/www/us/en/products/sku/236777/intel-core-i5-processor-14400f-20m-cache-up-to-4-70-ghz/specifications.html,Instruction Set Extensions,VERIFIED_EXACT_VARIANT
+BX8071514400F,max_operating_temp_c,DECIMAL,100.0,°C,https://www.intel.com/content/www/us/en/products/sku/236777/intel-core-i5-processor-14400f-20m-cache-up-to-4-70-ghz/specifications.html,Tjunction,VERIFIED_EXACT_VARIANT
+BX8071514500,socket,TEXT,"""LGA1700""",,https://www.intel.com/content/www/us/en/products/sku/236784/intel-core-i5-processor-14500-24m-cache-up-to-5-00-ghz/specifications.html,Sockets Supported,VERIFIED_EXACT_VARIANT
+BX8071514500,architecture,TEXT,"""Raptor Lake""",,https://www.intel.com/content/www/us/en/products/sku/236784/intel-core-i5-processor-14500-24m-cache-up-to-5-00-ghz/specifications.html,Code Name,VERIFIED_EXACT_VARIANT
+BX8071514500,core_count,INTEGER,14,cores,https://www.intel.com/content/www/us/en/products/sku/236784/intel-core-i5-processor-14500-24m-cache-up-to-5-00-ghz/specifications.html,Total Cores,VERIFIED_EXACT_VARIANT
+BX8071514500,thread_count,INTEGER,20,threads,https://www.intel.com/content/www/us/en/products/sku/236784/intel-core-i5-processor-14500-24m-cache-up-to-5-00-ghz/specifications.html,Total Threads,VERIFIED_EXACT_VARIANT
+BX8071514500,max_boost_clock_ghz,DECIMAL,5.0,GHz,https://www.intel.com/content/www/us/en/products/sku/236784/intel-core-i5-processor-14500-24m-cache-up-to-5-00-ghz/specifications.html,Max Turbo Frequency,VERIFIED_EXACT_VARIANT
+BX8071514500,cache_l2_mb,DECIMAL,11.5,MB,https://www.intel.com/content/www/us/en/products/sku/236784/intel-core-i5-processor-14500-24m-cache-up-to-5-00-ghz/specifications.html,Total L2 Cache,VERIFIED_EXACT_VARIANT
+BX8071514500,cache_l3_mb,DECIMAL,24.0,MB,https://www.intel.com/content/www/us/en/products/sku/236784/intel-core-i5-processor-14500-24m-cache-up-to-5-00-ghz/specifications.html,Cache,VERIFIED_EXACT_VARIANT
+BX8071514500,tdp_watt,INTEGER,65,W,https://www.intel.com/content/www/us/en/products/sku/236784/intel-core-i5-processor-14500-24m-cache-up-to-5-00-ghz/specifications.html,Processor Base Power,VERIFIED_EXACT_VARIANT
+BX8071514500,integrated_graphics,TEXT,"""Intel UHD Graphics 770""",,https://www.intel.com/content/www/us/en/products/sku/236784/intel-core-i5-processor-14500-24m-cache-up-to-5-00-ghz/specifications.html,Processor Graphics,VERIFIED_EXACT_VARIANT
+BX8071514500,memory_types_supported,JSON,"[""DDR4"",""DDR5""]",,https://www.intel.com/content/www/us/en/products/sku/236784/intel-core-i5-processor-14500-24m-cache-up-to-5-00-ghz/specifications.html,Memory Types,VERIFIED_EXACT_VARIANT
+BX8071514500,max_memory_gb,INTEGER,192,GB,https://www.intel.com/content/www/us/en/products/sku/236784/intel-core-i5-processor-14500-24m-cache-up-to-5-00-ghz/specifications.html,Max Memory Size,VERIFIED_EXACT_VARIANT
+BX8071514500,memory_channels,INTEGER,2,channels,https://www.intel.com/content/www/us/en/products/sku/236784/intel-core-i5-processor-14500-24m-cache-up-to-5-00-ghz/specifications.html,Max # of Memory Channels,VERIFIED_EXACT_VARIANT
+BX8071514500,pcie_generation,TEXT,"""4.0 / 5.0""",,https://www.intel.com/content/www/us/en/products/sku/236784/intel-core-i5-processor-14500-24m-cache-up-to-5-00-ghz/specifications.html,PCI Express Revision,VERIFIED_EXACT_VARIANT
+BX8071514500,instruction_sets,JSON,"[""SSE4.1"",""SSE4.2"",""AVX2""]",,https://www.intel.com/content/www/us/en/products/sku/236784/intel-core-i5-processor-14500-24m-cache-up-to-5-00-ghz/specifications.html,Instruction Set Extensions,VERIFIED_EXACT_VARIANT
+BX8071514500,max_operating_temp_c,DECIMAL,100.0,°C,https://www.intel.com/content/www/us/en/products/sku/236784/intel-core-i5-processor-14500-24m-cache-up-to-5-00-ghz/specifications.html,Tjunction,VERIFIED_EXACT_VARIANT
+BX8071514600K,socket,TEXT,"""LGA1700""",,https://www.intel.com/content/www/us/en/products/sku/236799/intel-core-i5-processor-14600k-24m-cache-up-to-5-30-ghz/specifications.html,Sockets Supported,VERIFIED_EXACT_VARIANT
+BX8071514600K,architecture,TEXT,"""Raptor Lake""",,https://www.intel.com/content/www/us/en/products/sku/236799/intel-core-i5-processor-14600k-24m-cache-up-to-5-30-ghz/specifications.html,Code Name,VERIFIED_EXACT_VARIANT
+BX8071514600K,core_count,INTEGER,14,cores,https://www.intel.com/content/www/us/en/products/sku/236799/intel-core-i5-processor-14600k-24m-cache-up-to-5-30-ghz/specifications.html,Total Cores,VERIFIED_EXACT_VARIANT
+BX8071514600K,thread_count,INTEGER,20,threads,https://www.intel.com/content/www/us/en/products/sku/236799/intel-core-i5-processor-14600k-24m-cache-up-to-5-30-ghz/specifications.html,Total Threads,VERIFIED_EXACT_VARIANT
+BX8071514600K,max_boost_clock_ghz,DECIMAL,5.3,GHz,https://www.intel.com/content/www/us/en/products/sku/236799/intel-core-i5-processor-14600k-24m-cache-up-to-5-30-ghz/specifications.html,Max Turbo Frequency,VERIFIED_EXACT_VARIANT
+BX8071514600K,cache_l2_mb,DECIMAL,20.0,MB,https://www.intel.com/content/www/us/en/products/sku/236799/intel-core-i5-processor-14600k-24m-cache-up-to-5-30-ghz/specifications.html,Total L2 Cache,VERIFIED_EXACT_VARIANT
+BX8071514600K,cache_l3_mb,DECIMAL,24.0,MB,https://www.intel.com/content/www/us/en/products/sku/236799/intel-core-i5-processor-14600k-24m-cache-up-to-5-30-ghz/specifications.html,Cache,VERIFIED_EXACT_VARIANT
+BX8071514600K,tdp_watt,INTEGER,125,W,https://www.intel.com/content/www/us/en/products/sku/236799/intel-core-i5-processor-14600k-24m-cache-up-to-5-30-ghz/specifications.html,Processor Base Power,VERIFIED_EXACT_VARIANT
+BX8071514600K,integrated_graphics,TEXT,"""Intel UHD Graphics 770""",,https://www.intel.com/content/www/us/en/products/sku/236799/intel-core-i5-processor-14600k-24m-cache-up-to-5-30-ghz/specifications.html,Processor Graphics,VERIFIED_EXACT_VARIANT
+BX8071514600K,memory_types_supported,JSON,"[""DDR4"",""DDR5""]",,https://www.intel.com/content/www/us/en/products/sku/236799/intel-core-i5-processor-14600k-24m-cache-up-to-5-30-ghz/specifications.html,Memory Types,VERIFIED_EXACT_VARIANT
+BX8071514600K,max_memory_gb,INTEGER,192,GB,https://www.intel.com/content/www/us/en/products/sku/236799/intel-core-i5-processor-14600k-24m-cache-up-to-5-30-ghz/specifications.html,Max Memory Size,VERIFIED_EXACT_VARIANT
+BX8071514600K,memory_channels,INTEGER,2,channels,https://www.intel.com/content/www/us/en/products/sku/236799/intel-core-i5-processor-14600k-24m-cache-up-to-5-30-ghz/specifications.html,Max # of Memory Channels,VERIFIED_EXACT_VARIANT
+BX8071514600K,pcie_generation,TEXT,"""4.0 / 5.0""",,https://www.intel.com/content/www/us/en/products/sku/236799/intel-core-i5-processor-14600k-24m-cache-up-to-5-30-ghz/specifications.html,PCI Express Revision,VERIFIED_EXACT_VARIANT
+BX8071514600K,instruction_sets,JSON,"[""SSE4.1"",""SSE4.2"",""AVX2""]",,https://www.intel.com/content/www/us/en/products/sku/236799/intel-core-i5-processor-14600k-24m-cache-up-to-5-30-ghz/specifications.html,Instruction Set Extensions,VERIFIED_EXACT_VARIANT
+BX8071514600K,max_operating_temp_c,DECIMAL,100.0,°C,https://www.intel.com/content/www/us/en/products/sku/236799/intel-core-i5-processor-14600k-24m-cache-up-to-5-30-ghz/specifications.html,Tjunction,VERIFIED_EXACT_VARIANT
+BX8071514600KF,socket,TEXT,"""LGA1700""",,https://www.intel.com/content/www/us/en/products/sku/236778/intel-core-i5-processor-14600kf-24m-cache-up-to-5-30-ghz/specifications.html,Sockets Supported,VERIFIED_EXACT_VARIANT
+BX8071514600KF,architecture,TEXT,"""Raptor Lake""",,https://www.intel.com/content/www/us/en/products/sku/236778/intel-core-i5-processor-14600kf-24m-cache-up-to-5-30-ghz/specifications.html,Code Name,VERIFIED_EXACT_VARIANT
+BX8071514600KF,core_count,INTEGER,14,cores,https://www.intel.com/content/www/us/en/products/sku/236778/intel-core-i5-processor-14600kf-24m-cache-up-to-5-30-ghz/specifications.html,Total Cores,VERIFIED_EXACT_VARIANT
+BX8071514600KF,thread_count,INTEGER,20,threads,https://www.intel.com/content/www/us/en/products/sku/236778/intel-core-i5-processor-14600kf-24m-cache-up-to-5-30-ghz/specifications.html,Total Threads,VERIFIED_EXACT_VARIANT
+BX8071514600KF,max_boost_clock_ghz,DECIMAL,5.3,GHz,https://www.intel.com/content/www/us/en/products/sku/236778/intel-core-i5-processor-14600kf-24m-cache-up-to-5-30-ghz/specifications.html,Max Turbo Frequency,VERIFIED_EXACT_VARIANT
+BX8071514600KF,cache_l2_mb,DECIMAL,20.0,MB,https://www.intel.com/content/www/us/en/products/sku/236778/intel-core-i5-processor-14600kf-24m-cache-up-to-5-30-ghz/specifications.html,Total L2 Cache,VERIFIED_EXACT_VARIANT
+BX8071514600KF,cache_l3_mb,DECIMAL,24.0,MB,https://www.intel.com/content/www/us/en/products/sku/236778/intel-core-i5-processor-14600kf-24m-cache-up-to-5-30-ghz/specifications.html,Cache,VERIFIED_EXACT_VARIANT
+BX8071514600KF,tdp_watt,INTEGER,125,W,https://www.intel.com/content/www/us/en/products/sku/236778/intel-core-i5-processor-14600kf-24m-cache-up-to-5-30-ghz/specifications.html,Processor Base Power,VERIFIED_EXACT_VARIANT
+BX8071514600KF,integrated_graphics,TEXT,"""Không tích hợp""",,https://www.intel.com/content/www/us/en/products/sku/236778/intel-core-i5-processor-14600kf-24m-cache-up-to-5-30-ghz/specifications.html,Processor Graphics,VERIFIED_EXACT_VARIANT
+BX8071514600KF,memory_types_supported,JSON,"[""DDR4"",""DDR5""]",,https://www.intel.com/content/www/us/en/products/sku/236778/intel-core-i5-processor-14600kf-24m-cache-up-to-5-30-ghz/specifications.html,Memory Types,VERIFIED_EXACT_VARIANT
+BX8071514600KF,max_memory_gb,INTEGER,192,GB,https://www.intel.com/content/www/us/en/products/sku/236778/intel-core-i5-processor-14600kf-24m-cache-up-to-5-30-ghz/specifications.html,Max Memory Size,VERIFIED_EXACT_VARIANT
+BX8071514600KF,memory_channels,INTEGER,2,channels,https://www.intel.com/content/www/us/en/products/sku/236778/intel-core-i5-processor-14600kf-24m-cache-up-to-5-30-ghz/specifications.html,Max # of Memory Channels,VERIFIED_EXACT_VARIANT
+BX8071514600KF,pcie_generation,TEXT,"""4.0 / 5.0""",,https://www.intel.com/content/www/us/en/products/sku/236778/intel-core-i5-processor-14600kf-24m-cache-up-to-5-30-ghz/specifications.html,PCI Express Revision,VERIFIED_EXACT_VARIANT
+BX8071514600KF,instruction_sets,JSON,"[""SSE4.1"",""SSE4.2"",""AVX2""]",,https://www.intel.com/content/www/us/en/products/sku/236778/intel-core-i5-processor-14600kf-24m-cache-up-to-5-30-ghz/specifications.html,Instruction Set Extensions,VERIFIED_EXACT_VARIANT
+BX8071514600KF,max_operating_temp_c,DECIMAL,100.0,°C,https://www.intel.com/content/www/us/en/products/sku/236778/intel-core-i5-processor-14600kf-24m-cache-up-to-5-30-ghz/specifications.html,Tjunction,VERIFIED_EXACT_VARIANT
+BX8071513700K,socket,TEXT,"""LGA1700""",,https://www.intel.com/content/www/us/en/products/sku/230500/intel-core-i713700k-processor-30m-cache-up-to-5-40-ghz/specifications.html,Sockets Supported,VERIFIED_EXACT_VARIANT
+BX8071513700K,architecture,TEXT,"""Raptor Lake""",,https://www.intel.com/content/www/us/en/products/sku/230500/intel-core-i713700k-processor-30m-cache-up-to-5-40-ghz/specifications.html,Code Name,VERIFIED_EXACT_VARIANT
+BX8071513700K,core_count,INTEGER,16,cores,https://www.intel.com/content/www/us/en/products/sku/230500/intel-core-i713700k-processor-30m-cache-up-to-5-40-ghz/specifications.html,Total Cores,VERIFIED_EXACT_VARIANT
+BX8071513700K,thread_count,INTEGER,24,threads,https://www.intel.com/content/www/us/en/products/sku/230500/intel-core-i713700k-processor-30m-cache-up-to-5-40-ghz/specifications.html,Total Threads,VERIFIED_EXACT_VARIANT
+BX8071513700K,max_boost_clock_ghz,DECIMAL,5.4,GHz,https://www.intel.com/content/www/us/en/products/sku/230500/intel-core-i713700k-processor-30m-cache-up-to-5-40-ghz/specifications.html,Max Turbo Frequency,VERIFIED_EXACT_VARIANT
+BX8071513700K,cache_l2_mb,DECIMAL,24.0,MB,https://www.intel.com/content/www/us/en/products/sku/230500/intel-core-i713700k-processor-30m-cache-up-to-5-40-ghz/specifications.html,Total L2 Cache,VERIFIED_EXACT_VARIANT
+BX8071513700K,cache_l3_mb,DECIMAL,30.0,MB,https://www.intel.com/content/www/us/en/products/sku/230500/intel-core-i713700k-processor-30m-cache-up-to-5-40-ghz/specifications.html,Cache,VERIFIED_EXACT_VARIANT
+BX8071513700K,tdp_watt,INTEGER,125,W,https://www.intel.com/content/www/us/en/products/sku/230500/intel-core-i713700k-processor-30m-cache-up-to-5-40-ghz/specifications.html,Processor Base Power,VERIFIED_EXACT_VARIANT
+BX8071513700K,integrated_graphics,TEXT,"""Intel UHD Graphics 770""",,https://www.intel.com/content/www/us/en/products/sku/230500/intel-core-i713700k-processor-30m-cache-up-to-5-40-ghz/specifications.html,Processor Graphics,VERIFIED_EXACT_VARIANT
+BX8071513700K,memory_types_supported,JSON,"[""DDR4"",""DDR5""]",,https://www.intel.com/content/www/us/en/products/sku/230500/intel-core-i713700k-processor-30m-cache-up-to-5-40-ghz/specifications.html,Memory Types,VERIFIED_EXACT_VARIANT
+BX8071513700K,max_memory_gb,INTEGER,192,GB,https://www.intel.com/content/www/us/en/products/sku/230500/intel-core-i713700k-processor-30m-cache-up-to-5-40-ghz/specifications.html,Max Memory Size,VERIFIED_EXACT_VARIANT
+BX8071513700K,memory_channels,INTEGER,2,channels,https://www.intel.com/content/www/us/en/products/sku/230500/intel-core-i713700k-processor-30m-cache-up-to-5-40-ghz/specifications.html,Max # of Memory Channels,VERIFIED_EXACT_VARIANT
+BX8071513700K,pcie_generation,TEXT,"""4.0 / 5.0""",,https://www.intel.com/content/www/us/en/products/sku/230500/intel-core-i713700k-processor-30m-cache-up-to-5-40-ghz/specifications.html,PCI Express Revision,VERIFIED_EXACT_VARIANT
+BX8071513700K,instruction_sets,JSON,"[""SSE4.1"",""SSE4.2"",""AVX2""]",,https://www.intel.com/content/www/us/en/products/sku/230500/intel-core-i713700k-processor-30m-cache-up-to-5-40-ghz/specifications.html,Instruction Set Extensions,VERIFIED_EXACT_VARIANT
+BX8071513700K,max_operating_temp_c,DECIMAL,100.0,°C,https://www.intel.com/content/www/us/en/products/sku/230500/intel-core-i713700k-processor-30m-cache-up-to-5-40-ghz/specifications.html,Tjunction,VERIFIED_EXACT_VARIANT
+BX8071514700K,socket,TEXT,"""LGA1700""",,https://www.intel.com/content/www/us/en/products/sku/236783/intel-core-i7-processor-14700k-33m-cache-up-to-5-60-ghz/specifications.html,Sockets Supported,VERIFIED_EXACT_VARIANT
+BX8071514700K,architecture,TEXT,"""Raptor Lake""",,https://www.intel.com/content/www/us/en/products/sku/236783/intel-core-i7-processor-14700k-33m-cache-up-to-5-60-ghz/specifications.html,Code Name,VERIFIED_EXACT_VARIANT
+BX8071514700K,core_count,INTEGER,20,cores,https://www.intel.com/content/www/us/en/products/sku/236783/intel-core-i7-processor-14700k-33m-cache-up-to-5-60-ghz/specifications.html,Total Cores,VERIFIED_EXACT_VARIANT
+BX8071514700K,thread_count,INTEGER,28,threads,https://www.intel.com/content/www/us/en/products/sku/236783/intel-core-i7-processor-14700k-33m-cache-up-to-5-60-ghz/specifications.html,Total Threads,VERIFIED_EXACT_VARIANT
+BX8071514700K,max_boost_clock_ghz,DECIMAL,5.6,GHz,https://www.intel.com/content/www/us/en/products/sku/236783/intel-core-i7-processor-14700k-33m-cache-up-to-5-60-ghz/specifications.html,Max Turbo Frequency,VERIFIED_EXACT_VARIANT
+BX8071514700K,cache_l2_mb,DECIMAL,28.0,MB,https://www.intel.com/content/www/us/en/products/sku/236783/intel-core-i7-processor-14700k-33m-cache-up-to-5-60-ghz/specifications.html,Total L2 Cache,VERIFIED_EXACT_VARIANT
+BX8071514700K,cache_l3_mb,DECIMAL,33.0,MB,https://www.intel.com/content/www/us/en/products/sku/236783/intel-core-i7-processor-14700k-33m-cache-up-to-5-60-ghz/specifications.html,Cache,VERIFIED_EXACT_VARIANT
+BX8071514700K,tdp_watt,INTEGER,125,W,https://www.intel.com/content/www/us/en/products/sku/236783/intel-core-i7-processor-14700k-33m-cache-up-to-5-60-ghz/specifications.html,Processor Base Power,VERIFIED_EXACT_VARIANT
+BX8071514700K,integrated_graphics,TEXT,"""Intel UHD Graphics 770""",,https://www.intel.com/content/www/us/en/products/sku/236783/intel-core-i7-processor-14700k-33m-cache-up-to-5-60-ghz/specifications.html,Processor Graphics,VERIFIED_EXACT_VARIANT
+BX8071514700K,memory_types_supported,JSON,"[""DDR4"",""DDR5""]",,https://www.intel.com/content/www/us/en/products/sku/236783/intel-core-i7-processor-14700k-33m-cache-up-to-5-60-ghz/specifications.html,Memory Types,VERIFIED_EXACT_VARIANT
+BX8071514700K,max_memory_gb,INTEGER,192,GB,https://www.intel.com/content/www/us/en/products/sku/236783/intel-core-i7-processor-14700k-33m-cache-up-to-5-60-ghz/specifications.html,Max Memory Size,VERIFIED_EXACT_VARIANT
+BX8071514700K,memory_channels,INTEGER,2,channels,https://www.intel.com/content/www/us/en/products/sku/236783/intel-core-i7-processor-14700k-33m-cache-up-to-5-60-ghz/specifications.html,Max # of Memory Channels,VERIFIED_EXACT_VARIANT
+BX8071514700K,pcie_generation,TEXT,"""4.0 / 5.0""",,https://www.intel.com/content/www/us/en/products/sku/236783/intel-core-i7-processor-14700k-33m-cache-up-to-5-60-ghz/specifications.html,PCI Express Revision,VERIFIED_EXACT_VARIANT
+BX8071514700K,instruction_sets,JSON,"[""SSE4.1"",""SSE4.2"",""AVX2""]",,https://www.intel.com/content/www/us/en/products/sku/236783/intel-core-i7-processor-14700k-33m-cache-up-to-5-60-ghz/specifications.html,Instruction Set Extensions,VERIFIED_EXACT_VARIANT
+BX8071514700K,max_operating_temp_c,DECIMAL,100.0,°C,https://www.intel.com/content/www/us/en/products/sku/236783/intel-core-i7-processor-14700k-33m-cache-up-to-5-60-ghz/specifications.html,Tjunction,VERIFIED_EXACT_VARIANT
+BX8071514900K,socket,TEXT,"""LGA1700""",,https://www.intel.com/content/www/us/en/products/sku/236773/intel-core-i9-processor-14900k-36m-cache-up-to-6-00-ghz/specifications.html,Sockets Supported,VERIFIED_EXACT_VARIANT
+BX8071514900K,architecture,TEXT,"""Raptor Lake""",,https://www.intel.com/content/www/us/en/products/sku/236773/intel-core-i9-processor-14900k-36m-cache-up-to-6-00-ghz/specifications.html,Code Name,VERIFIED_EXACT_VARIANT
+BX8071514900K,core_count,INTEGER,24,cores,https://www.intel.com/content/www/us/en/products/sku/236773/intel-core-i9-processor-14900k-36m-cache-up-to-6-00-ghz/specifications.html,Total Cores,VERIFIED_EXACT_VARIANT
+BX8071514900K,thread_count,INTEGER,32,threads,https://www.intel.com/content/www/us/en/products/sku/236773/intel-core-i9-processor-14900k-36m-cache-up-to-6-00-ghz/specifications.html,Total Threads,VERIFIED_EXACT_VARIANT
+BX8071514900K,max_boost_clock_ghz,DECIMAL,6.0,GHz,https://www.intel.com/content/www/us/en/products/sku/236773/intel-core-i9-processor-14900k-36m-cache-up-to-6-00-ghz/specifications.html,Max Turbo Frequency,VERIFIED_EXACT_VARIANT
+BX8071514900K,cache_l2_mb,DECIMAL,32.0,MB,https://www.intel.com/content/www/us/en/products/sku/236773/intel-core-i9-processor-14900k-36m-cache-up-to-6-00-ghz/specifications.html,Total L2 Cache,VERIFIED_EXACT_VARIANT
+BX8071514900K,cache_l3_mb,DECIMAL,36.0,MB,https://www.intel.com/content/www/us/en/products/sku/236773/intel-core-i9-processor-14900k-36m-cache-up-to-6-00-ghz/specifications.html,Cache,VERIFIED_EXACT_VARIANT
+BX8071514900K,tdp_watt,INTEGER,125,W,https://www.intel.com/content/www/us/en/products/sku/236773/intel-core-i9-processor-14900k-36m-cache-up-to-6-00-ghz/specifications.html,Processor Base Power,VERIFIED_EXACT_VARIANT
+BX8071514900K,integrated_graphics,TEXT,"""Intel UHD Graphics 770""",,https://www.intel.com/content/www/us/en/products/sku/236773/intel-core-i9-processor-14900k-36m-cache-up-to-6-00-ghz/specifications.html,Processor Graphics,VERIFIED_EXACT_VARIANT
+BX8071514900K,memory_types_supported,JSON,"[""DDR4"",""DDR5""]",,https://www.intel.com/content/www/us/en/products/sku/236773/intel-core-i9-processor-14900k-36m-cache-up-to-6-00-ghz/specifications.html,Memory Types,VERIFIED_EXACT_VARIANT
+BX8071514900K,max_memory_gb,INTEGER,192,GB,https://www.intel.com/content/www/us/en/products/sku/236773/intel-core-i9-processor-14900k-36m-cache-up-to-6-00-ghz/specifications.html,Max Memory Size,VERIFIED_EXACT_VARIANT
+BX8071514900K,memory_channels,INTEGER,2,channels,https://www.intel.com/content/www/us/en/products/sku/236773/intel-core-i9-processor-14900k-36m-cache-up-to-6-00-ghz/specifications.html,Max # of Memory Channels,VERIFIED_EXACT_VARIANT
+BX8071514900K,pcie_generation,TEXT,"""4.0 / 5.0""",,https://www.intel.com/content/www/us/en/products/sku/236773/intel-core-i9-processor-14900k-36m-cache-up-to-6-00-ghz/specifications.html,PCI Express Revision,VERIFIED_EXACT_VARIANT
+BX8071514900K,instruction_sets,JSON,"[""SSE4.1"",""SSE4.2"",""AVX2""]",,https://www.intel.com/content/www/us/en/products/sku/236773/intel-core-i9-processor-14900k-36m-cache-up-to-6-00-ghz/specifications.html,Instruction Set Extensions,VERIFIED_EXACT_VARIANT
+BX8071514900K,max_operating_temp_c,DECIMAL,100.0,°C,https://www.intel.com/content/www/us/en/products/sku/236773/intel-core-i9-processor-14900k-36m-cache-up-to-6-00-ghz/specifications.html,Tjunction,VERIFIED_EXACT_VARIANT
+100-100000927BOX,socket,TEXT,"""AM4""",,https://www.amd.com/en/support/downloads/drivers.html/processors/ryzen/ryzen-5000-series/amd-ryzen-5-5600.html,CPU Socket,VERIFIED_EXACT_VARIANT
+100-100000927BOX,architecture,TEXT,"""Zen 3""",,https://www.amd.com/en/support/downloads/drivers.html/processors/ryzen/ryzen-5000-series/amd-ryzen-5-5600.html,Processor Architecture,VERIFIED_EXACT_VARIANT
+100-100000927BOX,core_count,INTEGER,6,cores,https://www.amd.com/en/support/downloads/drivers.html/processors/ryzen/ryzen-5000-series/amd-ryzen-5-5600.html,# of CPU Cores,VERIFIED_EXACT_VARIANT
+100-100000927BOX,thread_count,INTEGER,12,threads,https://www.amd.com/en/support/downloads/drivers.html/processors/ryzen/ryzen-5000-series/amd-ryzen-5-5600.html,# of Threads,VERIFIED_EXACT_VARIANT
+100-100000927BOX,base_clock_ghz,DECIMAL,3.5,GHz,https://www.amd.com/en/support/downloads/drivers.html/processors/ryzen/ryzen-5000-series/amd-ryzen-5-5600.html,Base Clock,VERIFIED_EXACT_VARIANT
+100-100000927BOX,max_boost_clock_ghz,DECIMAL,4.4,GHz,https://www.amd.com/en/support/downloads/drivers.html/processors/ryzen/ryzen-5000-series/amd-ryzen-5-5600.html,Max. Boost Clock,VERIFIED_EXACT_VARIANT
+100-100000927BOX,cache_l2_mb,DECIMAL,3.0,MB,https://www.amd.com/en/support/downloads/drivers.html/processors/ryzen/ryzen-5000-series/amd-ryzen-5-5600.html,L2 Cache,VERIFIED_EXACT_VARIANT
+100-100000927BOX,cache_l3_mb,DECIMAL,32.0,MB,https://www.amd.com/en/support/downloads/drivers.html/processors/ryzen/ryzen-5000-series/amd-ryzen-5-5600.html,L3 Cache,VERIFIED_EXACT_VARIANT
+100-100000927BOX,tdp_watt,INTEGER,65,W,https://www.amd.com/en/support/downloads/drivers.html/processors/ryzen/ryzen-5000-series/amd-ryzen-5-5600.html,Default TDP,VERIFIED_EXACT_VARIANT
+100-100000927BOX,integrated_graphics,TEXT,"""Không tích hợp""",,https://www.amd.com/en/support/downloads/drivers.html/processors/ryzen/ryzen-5000-series/amd-ryzen-5-5600.html,Graphics Model,VERIFIED_EXACT_VARIANT
+100-100000927BOX,memory_types_supported,JSON,"[""DDR4""]",,https://www.amd.com/en/support/downloads/drivers.html/processors/ryzen/ryzen-5000-series/amd-ryzen-5-5600.html,System Memory Type,VERIFIED_EXACT_VARIANT
+100-100000927BOX,max_memory_gb,INTEGER,128,GB,https://www.amd.com/en/support/downloads/drivers.html/processors/ryzen/ryzen-5000-series/amd-ryzen-5-5600.html,Max. Memory,VERIFIED_EXACT_VARIANT
+100-100000927BOX,max_memory_data_rate_mt_s,INTEGER,3200,MT/s,https://www.amd.com/en/support/downloads/drivers.html/processors/ryzen/ryzen-5000-series/amd-ryzen-5-5600.html,Max Memory Speed (2x DIMM configuration),VERIFIED_EXACT_VARIANT
+100-100000927BOX,memory_channels,INTEGER,2,channels,https://www.amd.com/en/support/downloads/drivers.html/processors/ryzen/ryzen-5000-series/amd-ryzen-5-5600.html,Memory Channels,VERIFIED_EXACT_VARIANT
+100-100000927BOX,pcie_generation,TEXT,"""4.0""",,https://www.amd.com/en/support/downloads/drivers.html/processors/ryzen/ryzen-5000-series/amd-ryzen-5-5600.html,PCI Express® Version,VERIFIED_EXACT_VARIANT
+100-100000927BOX,instruction_sets,JSON,"[""AES"",""AMD-V"",""AVX"",""AVX2"",""FMA3"",""MMX-plus"",""SHA"",""SSE"",""SSE2"",""SSE3"",""SSE4.1"",""SSE4.2"",""SSE4A"",""SSSE3"",""x86-64""]",,https://www.amd.com/en/support/downloads/drivers.html/processors/ryzen/ryzen-5000-series/amd-ryzen-5-5600.html,Supported Extensions,VERIFIED_EXACT_VARIANT
+100-100000927BOX,max_operating_temp_c,DECIMAL,90.0,°C,https://www.amd.com/en/support/downloads/drivers.html/processors/ryzen/ryzen-5000-series/amd-ryzen-5-5600.html,Max. Operating Temperature (Tjmax),VERIFIED_EXACT_VARIANT
+100-100000065BOX,socket,TEXT,"""AM4""",,https://www.amd.com/en/products/processors/desktops/ryzen/5000-series/amd-ryzen-5-5600x.html,CPU Socket,VERIFIED_EXACT_VARIANT
+100-100000065BOX,architecture,TEXT,"""Zen 3""",,https://www.amd.com/en/products/processors/desktops/ryzen/5000-series/amd-ryzen-5-5600x.html,Supported Technologies / Zen 3 Core Architecture,VERIFIED_EXACT_VARIANT
+100-100000065BOX,core_count,INTEGER,6,cores,https://www.amd.com/en/products/processors/desktops/ryzen/5000-series/amd-ryzen-5-5600x.html,# of CPU Cores,VERIFIED_EXACT_VARIANT
+100-100000065BOX,thread_count,INTEGER,12,threads,https://www.amd.com/en/products/processors/desktops/ryzen/5000-series/amd-ryzen-5-5600x.html,# of Threads,VERIFIED_EXACT_VARIANT
+100-100000065BOX,base_clock_ghz,DECIMAL,3.7,GHz,https://www.amd.com/en/products/processors/desktops/ryzen/5000-series/amd-ryzen-5-5600x.html,Base Clock,VERIFIED_EXACT_VARIANT
+100-100000065BOX,max_boost_clock_ghz,DECIMAL,4.6,GHz,https://www.amd.com/en/products/processors/desktops/ryzen/5000-series/amd-ryzen-5-5600x.html,Max. Boost Clock,VERIFIED_EXACT_VARIANT
+100-100000065BOX,cache_l2_mb,DECIMAL,3.0,MB,https://www.amd.com/en/products/processors/desktops/ryzen/5000-series/amd-ryzen-5-5600x.html,L2 Cache,VERIFIED_EXACT_VARIANT
+100-100000065BOX,cache_l3_mb,DECIMAL,32.0,MB,https://www.amd.com/en/products/processors/desktops/ryzen/5000-series/amd-ryzen-5-5600x.html,L3 Cache,VERIFIED_EXACT_VARIANT
+100-100000065BOX,tdp_watt,INTEGER,65,W,https://www.amd.com/en/products/processors/desktops/ryzen/5000-series/amd-ryzen-5-5600x.html,Default TDP,VERIFIED_EXACT_VARIANT
+100-100000065BOX,integrated_graphics,TEXT,"""Không tích hợp""",,https://www.amd.com/en/products/processors/desktops/ryzen/5000-series/amd-ryzen-5-5600x.html,Graphics Model,VERIFIED_EXACT_VARIANT
+100-100000065BOX,memory_types_supported,JSON,"[""DDR4""]",,https://www.amd.com/en/products/processors/desktops/ryzen/5000-series/amd-ryzen-5-5600x.html,System Memory Type,VERIFIED_EXACT_VARIANT
+100-100000065BOX,max_memory_data_rate_mt_s,INTEGER,3200,MT/s,https://www.amd.com/en/products/processors/desktops/ryzen/5000-series/amd-ryzen-5-5600x.html,System Memory Specification,VERIFIED_EXACT_VARIANT
+100-100000065BOX,pcie_generation,TEXT,"""4.0""",,https://www.amd.com/en/products/processors/desktops/ryzen/5000-series/amd-ryzen-5-5600x.html,PCI Express® Version,VERIFIED_EXACT_VARIANT
+100-100000065BOX,max_operating_temp_c,DECIMAL,95.0,°C,https://www.amd.com/en/products/processors/desktops/ryzen/5000-series/amd-ryzen-5-5600x.html,Max. Operating Temperature (Tjmax),VERIFIED_EXACT_VARIANT
+100-100001015BOX,socket,TEXT,"""AM5""",,https://www.amd.com/en/support/downloads/drivers.html/processors/ryzen/ryzen-7000-series/amd-ryzen-5-7600.html,CPU Socket,VERIFIED_EXACT_VARIANT
+100-100001015BOX,architecture,TEXT,"""Zen 4""",,https://www.amd.com/en/support/downloads/drivers.html/processors/ryzen/ryzen-7000-series/amd-ryzen-5-7600.html,Processor Architecture,VERIFIED_EXACT_VARIANT
+100-100001015BOX,core_count,INTEGER,6,cores,https://www.amd.com/en/support/downloads/drivers.html/processors/ryzen/ryzen-7000-series/amd-ryzen-5-7600.html,# of CPU Cores,VERIFIED_EXACT_VARIANT
+100-100001015BOX,thread_count,INTEGER,12,threads,https://www.amd.com/en/support/downloads/drivers.html/processors/ryzen/ryzen-7000-series/amd-ryzen-5-7600.html,# of Threads,VERIFIED_EXACT_VARIANT
+100-100001015BOX,base_clock_ghz,DECIMAL,3.8,GHz,https://www.amd.com/en/support/downloads/drivers.html/processors/ryzen/ryzen-7000-series/amd-ryzen-5-7600.html,Base Clock,VERIFIED_EXACT_VARIANT
+100-100001015BOX,max_boost_clock_ghz,DECIMAL,5.1,GHz,https://www.amd.com/en/support/downloads/drivers.html/processors/ryzen/ryzen-7000-series/amd-ryzen-5-7600.html,Max. Boost Clock,VERIFIED_EXACT_VARIANT
+100-100001015BOX,cache_l2_mb,DECIMAL,6.0,MB,https://www.amd.com/en/support/downloads/drivers.html/processors/ryzen/ryzen-7000-series/amd-ryzen-5-7600.html,L2 Cache,VERIFIED_EXACT_VARIANT
+100-100001015BOX,cache_l3_mb,DECIMAL,32.0,MB,https://www.amd.com/en/support/downloads/drivers.html/processors/ryzen/ryzen-7000-series/amd-ryzen-5-7600.html,L3 Cache,VERIFIED_EXACT_VARIANT
+100-100001015BOX,tdp_watt,INTEGER,65,W,https://www.amd.com/en/support/downloads/drivers.html/processors/ryzen/ryzen-7000-series/amd-ryzen-5-7600.html,Default TDP,VERIFIED_EXACT_VARIANT
+100-100001015BOX,integrated_graphics,TEXT,"""AMD Radeon Graphics""",,https://www.amd.com/en/support/downloads/drivers.html/processors/ryzen/ryzen-7000-series/amd-ryzen-5-7600.html,Graphics Model,VERIFIED_EXACT_VARIANT
+100-100001015BOX,memory_types_supported,JSON,"[""DDR5""]",,https://www.amd.com/en/support/downloads/drivers.html/processors/ryzen/ryzen-7000-series/amd-ryzen-5-7600.html,System Memory Type,VERIFIED_EXACT_VARIANT
+100-100001015BOX,max_memory_gb,INTEGER,128,GB,https://www.amd.com/en/support/downloads/drivers.html/processors/ryzen/ryzen-7000-series/amd-ryzen-5-7600.html,Max. Memory,VERIFIED_EXACT_VARIANT
+100-100001015BOX,max_memory_data_rate_mt_s,INTEGER,5200,MT/s,https://www.amd.com/en/support/downloads/drivers.html/processors/ryzen/ryzen-7000-series/amd-ryzen-5-7600.html,Max Memory Speed (2-DIMM configuration),VERIFIED_EXACT_VARIANT
+100-100001015BOX,memory_channels,INTEGER,2,channels,https://www.amd.com/en/support/downloads/drivers.html/processors/ryzen/ryzen-7000-series/amd-ryzen-5-7600.html,Memory Channels,VERIFIED_EXACT_VARIANT
+100-100001015BOX,pcie_generation,TEXT,"""5.0""",,https://www.amd.com/en/support/downloads/drivers.html/processors/ryzen/ryzen-7000-series/amd-ryzen-5-7600.html,PCI Express® Version,VERIFIED_EXACT_VARIANT
+100-100001015BOX,instruction_sets,JSON,"[""AES"",""AMD-V"",""AVX"",""AVX2"",""AVX512"",""FMA3"",""MMX-plus"",""SHA"",""SSE"",""SSE2"",""SSE3"",""SSE4.1"",""SSE4.2"",""SSE4A"",""SSSE3"",""x86-64""]",,https://www.amd.com/en/support/downloads/drivers.html/processors/ryzen/ryzen-7000-series/amd-ryzen-5-7600.html,Supported Extensions,VERIFIED_EXACT_VARIANT
+100-100001015BOX,max_operating_temp_c,DECIMAL,95.0,°C,https://www.amd.com/en/support/downloads/drivers.html/processors/ryzen/ryzen-7000-series/amd-ryzen-5-7600.html,Max. Operating Temperature (Tjmax),VERIFIED_EXACT_VARIANT
+100-100000592BOX,socket,TEXT,"""AM5""",,https://www.amd.com/en/support/downloads/drivers.html/processors/ryzen/ryzen-7000-series/amd-ryzen-7-7700.html,CPU Socket,VERIFIED_EXACT_VARIANT
+100-100000592BOX,architecture,TEXT,"""Zen 4""",,https://www.amd.com/en/support/downloads/drivers.html/processors/ryzen/ryzen-7000-series/amd-ryzen-7-7700.html,Processor Architecture,VERIFIED_EXACT_VARIANT
+100-100000592BOX,core_count,INTEGER,8,cores,https://www.amd.com/en/support/downloads/drivers.html/processors/ryzen/ryzen-7000-series/amd-ryzen-7-7700.html,# of CPU Cores,VERIFIED_EXACT_VARIANT
+100-100000592BOX,thread_count,INTEGER,16,threads,https://www.amd.com/en/support/downloads/drivers.html/processors/ryzen/ryzen-7000-series/amd-ryzen-7-7700.html,# of Threads,VERIFIED_EXACT_VARIANT
+100-100000592BOX,base_clock_ghz,DECIMAL,3.8,GHz,https://www.amd.com/en/support/downloads/drivers.html/processors/ryzen/ryzen-7000-series/amd-ryzen-7-7700.html,Base Clock,VERIFIED_EXACT_VARIANT
+100-100000592BOX,max_boost_clock_ghz,DECIMAL,5.3,GHz,https://www.amd.com/en/support/downloads/drivers.html/processors/ryzen/ryzen-7000-series/amd-ryzen-7-7700.html,Max. Boost Clock,VERIFIED_EXACT_VARIANT
+100-100000592BOX,cache_l2_mb,DECIMAL,8.0,MB,https://www.amd.com/en/support/downloads/drivers.html/processors/ryzen/ryzen-7000-series/amd-ryzen-7-7700.html,L2 Cache,VERIFIED_EXACT_VARIANT
+100-100000592BOX,cache_l3_mb,DECIMAL,32.0,MB,https://www.amd.com/en/support/downloads/drivers.html/processors/ryzen/ryzen-7000-series/amd-ryzen-7-7700.html,L3 Cache,VERIFIED_EXACT_VARIANT
+100-100000592BOX,tdp_watt,INTEGER,65,W,https://www.amd.com/en/support/downloads/drivers.html/processors/ryzen/ryzen-7000-series/amd-ryzen-7-7700.html,Default TDP,VERIFIED_EXACT_VARIANT
+100-100000592BOX,integrated_graphics,TEXT,"""AMD Radeon Graphics""",,https://www.amd.com/en/support/downloads/drivers.html/processors/ryzen/ryzen-7000-series/amd-ryzen-7-7700.html,Graphics Model,VERIFIED_EXACT_VARIANT
+100-100000592BOX,memory_types_supported,JSON,"[""DDR5""]",,https://www.amd.com/en/support/downloads/drivers.html/processors/ryzen/ryzen-7000-series/amd-ryzen-7-7700.html,System Memory Type,VERIFIED_EXACT_VARIANT
+100-100000592BOX,max_memory_gb,INTEGER,128,GB,https://www.amd.com/en/support/downloads/drivers.html/processors/ryzen/ryzen-7000-series/amd-ryzen-7-7700.html,Max. Memory,VERIFIED_EXACT_VARIANT
+100-100000592BOX,max_memory_data_rate_mt_s,INTEGER,5200,MT/s,https://www.amd.com/en/support/downloads/drivers.html/processors/ryzen/ryzen-7000-series/amd-ryzen-7-7700.html,Max Memory Speed (2-DIMM configuration),VERIFIED_EXACT_VARIANT
+100-100000592BOX,memory_channels,INTEGER,2,channels,https://www.amd.com/en/support/downloads/drivers.html/processors/ryzen/ryzen-7000-series/amd-ryzen-7-7700.html,Memory Channels,VERIFIED_EXACT_VARIANT
+100-100000592BOX,pcie_generation,TEXT,"""5.0""",,https://www.amd.com/en/support/downloads/drivers.html/processors/ryzen/ryzen-7000-series/amd-ryzen-7-7700.html,PCI Express® Version,VERIFIED_EXACT_VARIANT
+100-100000592BOX,instruction_sets,JSON,"[""AES"",""AMD-V"",""AVX"",""AVX2"",""AVX512"",""FMA3"",""MMX-plus"",""SHA"",""SSE"",""SSE2"",""SSE3"",""SSE4.1"",""SSE4.2"",""SSE4A"",""SSSE3"",""x86-64""]",,https://www.amd.com/en/support/downloads/drivers.html/processors/ryzen/ryzen-7000-series/amd-ryzen-7-7700.html,Supported Extensions,VERIFIED_EXACT_VARIANT
+100-100000592BOX,max_operating_temp_c,DECIMAL,95.0,°C,https://www.amd.com/en/support/downloads/drivers.html/processors/ryzen/ryzen-7000-series/amd-ryzen-7-7700.html,Max. Operating Temperature (Tjmax),VERIFIED_EXACT_VARIANT
+100-100000910WOF,socket,TEXT,"""AM5""",,https://www.amd.com/en/products/processors/desktops/ryzen/7000-series/amd-ryzen-7-7800x3d.html,CPU Socket,VERIFIED_EXACT_VARIANT
+100-100000910WOF,architecture,TEXT,"""Zen 4 with 3D V-Cache""",,https://www.amd.com/en/products/processors/desktops/ryzen/7000-series/amd-ryzen-7-7800x3d.html,Processor Architecture,VERIFIED_EXACT_VARIANT
+100-100000910WOF,core_count,INTEGER,8,cores,https://www.amd.com/en/products/processors/desktops/ryzen/7000-series/amd-ryzen-7-7800x3d.html,# of CPU Cores,VERIFIED_EXACT_VARIANT
+100-100000910WOF,thread_count,INTEGER,16,threads,https://www.amd.com/en/products/processors/desktops/ryzen/7000-series/amd-ryzen-7-7800x3d.html,# of Threads,VERIFIED_EXACT_VARIANT
+100-100000910WOF,base_clock_ghz,DECIMAL,4.2,GHz,https://www.amd.com/en/products/processors/desktops/ryzen/7000-series/amd-ryzen-7-7800x3d.html,Base Clock,VERIFIED_EXACT_VARIANT
+100-100000910WOF,max_boost_clock_ghz,DECIMAL,5.0,GHz,https://www.amd.com/en/products/processors/desktops/ryzen/7000-series/amd-ryzen-7-7800x3d.html,Max. Boost Clock,VERIFIED_EXACT_VARIANT
+100-100000910WOF,cache_l2_mb,DECIMAL,8.0,MB,https://www.amd.com/en/products/processors/desktops/ryzen/7000-series/amd-ryzen-7-7800x3d.html,L2 Cache,VERIFIED_EXACT_VARIANT
+100-100000910WOF,cache_l3_mb,DECIMAL,96.0,MB,https://www.amd.com/en/products/processors/desktops/ryzen/7000-series/amd-ryzen-7-7800x3d.html,L3 Cache,VERIFIED_EXACT_VARIANT
+100-100000910WOF,tdp_watt,INTEGER,120,W,https://www.amd.com/en/products/processors/desktops/ryzen/7000-series/amd-ryzen-7-7800x3d.html,Default TDP,VERIFIED_EXACT_VARIANT
+100-100000910WOF,integrated_graphics,TEXT,"""AMD Radeon Graphics""",,https://www.amd.com/en/products/processors/desktops/ryzen/7000-series/amd-ryzen-7-7800x3d.html,Graphics Model,VERIFIED_EXACT_VARIANT
+100-100000910WOF,memory_types_supported,JSON,"[""DDR5""]",,https://www.amd.com/en/products/processors/desktops/ryzen/7000-series/amd-ryzen-7-7800x3d.html,System Memory Type,VERIFIED_EXACT_VARIANT
+100-100000910WOF,max_memory_gb,INTEGER,128,GB,https://www.amd.com/en/products/processors/desktops/ryzen/7000-series/amd-ryzen-7-7800x3d.html,Max. Memory,VERIFIED_EXACT_VARIANT
+100-100000910WOF,max_memory_data_rate_mt_s,INTEGER,5200,MT/s,https://www.amd.com/en/products/processors/desktops/ryzen/7000-series/amd-ryzen-7-7800x3d.html,Max Memory Speed (2-DIMM configuration),VERIFIED_EXACT_VARIANT
+100-100000910WOF,memory_channels,INTEGER,2,channels,https://www.amd.com/en/products/processors/desktops/ryzen/7000-series/amd-ryzen-7-7800x3d.html,Memory Channels,VERIFIED_EXACT_VARIANT
+100-100000910WOF,pcie_generation,TEXT,"""5.0""",,https://www.amd.com/en/products/processors/desktops/ryzen/7000-series/amd-ryzen-7-7800x3d.html,PCI Express® Version,VERIFIED_EXACT_VARIANT
+100-100000910WOF,instruction_sets,JSON,"[""AES"",""AMD-V"",""AVX"",""AVX2"",""AVX512"",""FMA3"",""MMX-plus"",""SHA"",""SSE"",""SSE2"",""SSE3"",""SSE4.1"",""SSE4.2"",""SSE4A"",""SSSE3"",""x86-64""]",,https://www.amd.com/en/products/processors/desktops/ryzen/7000-series/amd-ryzen-7-7800x3d.html,Supported Extensions,VERIFIED_EXACT_VARIANT
+100-100000910WOF,max_operating_temp_c,DECIMAL,89.0,°C,https://www.amd.com/en/products/processors/desktops/ryzen/7000-series/amd-ryzen-7-7800x3d.html,Max. Operating Temperature (Tjmax),VERIFIED_EXACT_VARIANT
+DUAL-RTX4060-O8G,gpu_chip,TEXT,"""NVIDIA GeForce RTX 4060""",,https://www.asus.com/vn/motherboards-components/graphics-cards/dual/dual-rtx4060-o8g/techspec/,Graphic Engine,VERIFIED_EXACT_VARIANT
+DUAL-RTX4060-O8G,processor_unit_label,TEXT,"""CUDA cores""",,https://www.asus.com/vn/motherboards-components/graphics-cards/dual/dual-rtx4060-o8g/techspec/,CUDA Core,VERIFIED_EXACT_VARIANT
+DUAL-RTX4060-O8G,processor_unit_count,INTEGER,3072,units,https://www.asus.com/vn/motherboards-components/graphics-cards/dual/dual-rtx4060-o8g/techspec/,CUDA Core,VERIFIED_EXACT_VARIANT
+DUAL-RTX4060-O8G,boost_clock_mhz,DECIMAL,2505.0,MHz,https://www.asus.com/vn/motherboards-components/graphics-cards/dual/dual-rtx4060-o8g/techspec/,Engine Clock (Default mode / Boost),VERIFIED_EXACT_VARIANT
+DUAL-RTX4060-O8G,vram_gb,INTEGER,8,GB,https://www.asus.com/vn/motherboards-components/graphics-cards/dual/dual-rtx4060-o8g/techspec/,Video Memory,VERIFIED_EXACT_VARIANT
+DUAL-RTX4060-O8G,memory_type,TEXT,"""GDDR6""",,https://www.asus.com/vn/motherboards-components/graphics-cards/dual/dual-rtx4060-o8g/techspec/,Video Memory,VERIFIED_EXACT_VARIANT
+DUAL-RTX4060-O8G,memory_bus_width_bit,INTEGER,128,bit,https://www.asus.com/vn/motherboards-components/graphics-cards/dual/dual-rtx4060-o8g/techspec/,Memory Interface,VERIFIED_EXACT_VARIANT
+DUAL-RTX4060-O8G,memory_data_rate_gbps,DECIMAL,17.0,Gbps,https://www.asus.com/vn/motherboards-components/graphics-cards/dual/dual-rtx4060-o8g/techspec/,Memory Speed,VERIFIED_EXACT_VARIANT
+DUAL-RTX4060-O8G,pcie_generation,TEXT,"""4.0""",,https://www.asus.com/vn/motherboards-components/graphics-cards/dual/dual-rtx4060-o8g/techspec/,Bus Standard,VERIFIED_EXACT_VARIANT
+DUAL-RTX4060-O8G,display_outputs,JSON,"[""3 x DisplayPort 1.4a"",""1 x HDMI 2.1a""]",,https://www.asus.com/vn/motherboards-components/graphics-cards/dual/dual-rtx4060-o8g/techspec/,Interface,VERIFIED_EXACT_VARIANT
+DUAL-RTX4060-O8G,recommended_psu_watt,INTEGER,550,W,https://www.asus.com/vn/motherboards-components/graphics-cards/dual/dual-rtx4060-o8g/techspec/,Recommended PSU,VERIFIED_EXACT_VARIANT
+DUAL-RTX4060-O8G,power_connectors,JSON,"[""1 x 8-pin""]",,https://www.asus.com/vn/motherboards-components/graphics-cards/dual/dual-rtx4060-o8g/techspec/,Power Connectors,VERIFIED_EXACT_VARIANT
+DUAL-RTX4060-O8G,board_length_mm,DECIMAL,227.2,mm,https://www.asus.com/vn/motherboards-components/graphics-cards/dual/dual-rtx4060-o8g/techspec/,Dimensions,VERIFIED_EXACT_VARIANT
+DUAL-RTX4060-O8G,slot_thickness,DECIMAL,2.5,slots,https://www.asus.com/vn/motherboards-components/graphics-cards/dual/dual-rtx4060-o8g/techspec/,Slot,VERIFIED_EXACT_VARIANT
+RTX4060VENTUS2XBLACK8GOC,gpu_chip,TEXT,"""NVIDIA GeForce RTX 4060""",,https://vn.msi.com/Graphics-Card/GeForce-RTX-4060-VENTUS-2X-BLACK-8G-OC/Specification,GPU,VERIFIED_EXACT_VARIANT
+RTX4060VENTUS2XBLACK8GOC,processor_unit_label,TEXT,"""CUDA cores""",,https://vn.msi.com/Graphics-Card/GeForce-RTX-4060-VENTUS-2X-BLACK-8G-OC/Specification,CUDA Cores,VERIFIED_EXACT_VARIANT
+RTX4060VENTUS2XBLACK8GOC,processor_unit_count,INTEGER,3072,units,https://vn.msi.com/Graphics-Card/GeForce-RTX-4060-VENTUS-2X-BLACK-8G-OC/Specification,CUDA Cores,VERIFIED_EXACT_VARIANT
+RTX4060VENTUS2XBLACK8GOC,boost_clock_mhz,DECIMAL,2490.0,MHz,https://vn.msi.com/Graphics-Card/GeForce-RTX-4060-VENTUS-2X-BLACK-8G-OC/Specification,Boost,VERIFIED_EXACT_VARIANT
+RTX4060VENTUS2XBLACK8GOC,vram_gb,INTEGER,8,GB,https://vn.msi.com/Graphics-Card/GeForce-RTX-4060-VENTUS-2X-BLACK-8G-OC/Specification,Memory,VERIFIED_EXACT_VARIANT
+RTX4060VENTUS2XBLACK8GOC,memory_type,TEXT,"""GDDR6""",,https://vn.msi.com/Graphics-Card/GeForce-RTX-4060-VENTUS-2X-BLACK-8G-OC/Specification,Memory,VERIFIED_EXACT_VARIANT
+RTX4060VENTUS2XBLACK8GOC,memory_bus_width_bit,INTEGER,128,bit,https://vn.msi.com/Graphics-Card/GeForce-RTX-4060-VENTUS-2X-BLACK-8G-OC/Specification,Memory Bus,VERIFIED_EXACT_VARIANT
+RTX4060VENTUS2XBLACK8GOC,memory_data_rate_gbps,DECIMAL,17.0,Gbps,https://vn.msi.com/Graphics-Card/GeForce-RTX-4060-VENTUS-2X-BLACK-8G-OC/Specification,Memory Clock,VERIFIED_EXACT_VARIANT
+RTX4060VENTUS2XBLACK8GOC,pcie_generation,TEXT,"""4.0""",,https://vn.msi.com/Graphics-Card/GeForce-RTX-4060-VENTUS-2X-BLACK-8G-OC/Specification,Interface,VERIFIED_EXACT_VARIANT
+RTX4060VENTUS2XBLACK8GOC,pcie_link_width,TEXT,"""x8""",,https://vn.msi.com/Graphics-Card/GeForce-RTX-4060-VENTUS-2X-BLACK-8G-OC/Specification,Interface,VERIFIED_EXACT_VARIANT
+RTX4060VENTUS2XBLACK8GOC,display_outputs,JSON,"[""3 x DisplayPort 1.4a"",""1 x HDMI 2.1a""]",,https://vn.msi.com/Graphics-Card/GeForce-RTX-4060-VENTUS-2X-BLACK-8G-OC/Specification,Output,VERIFIED_EXACT_VARIANT
+RTX4060VENTUS2XBLACK8GOC,recommended_psu_watt,INTEGER,550,W,https://vn.msi.com/Graphics-Card/GeForce-RTX-4060-VENTUS-2X-BLACK-8G-OC/Specification,Recommended PSU,VERIFIED_EXACT_VARIANT
+RTX4060VENTUS2XBLACK8GOC,power_connectors,JSON,"[""1 x 8-pin""]",,https://vn.msi.com/Graphics-Card/GeForce-RTX-4060-VENTUS-2X-BLACK-8G-OC/Specification,Power connectors,VERIFIED_EXACT_VARIANT
+RTX4060VENTUS2XBLACK8GOC,board_length_mm,DECIMAL,199.0,mm,https://vn.msi.com/Graphics-Card/GeForce-RTX-4060-VENTUS-2X-BLACK-8G-OC/Specification,Dimensions,VERIFIED_EXACT_VARIANT
+GV-N4060WF2OC-8GD,gpu_chip,TEXT,"""NVIDIA GeForce RTX 4060""",,https://www.gigabyte.com/vn/Graphics-Card/GV-N4060WF2OC-8GD/sp,Chipset,VERIFIED_EXACT_VARIANT
+GV-N4060WF2OC-8GD,processor_unit_label,TEXT,"""CUDA cores""",,https://www.gigabyte.com/vn/Graphics-Card/GV-N4060WF2OC-8GD/sp,CUDA Cores,VERIFIED_EXACT_VARIANT
+GV-N4060WF2OC-8GD,processor_unit_count,INTEGER,3072,units,https://www.gigabyte.com/vn/Graphics-Card/GV-N4060WF2OC-8GD/sp,CUDA Cores,VERIFIED_EXACT_VARIANT
+GV-N4060WF2OC-8GD,boost_clock_mhz,DECIMAL,2475.0,MHz,https://www.gigabyte.com/vn/Graphics-Card/GV-N4060WF2OC-8GD/sp,Core Clock,VERIFIED_EXACT_VARIANT
+GV-N4060WF2OC-8GD,vram_gb,INTEGER,8,GB,https://www.gigabyte.com/vn/Graphics-Card/GV-N4060WF2OC-8GD/sp,Memory Size,VERIFIED_EXACT_VARIANT
+GV-N4060WF2OC-8GD,memory_type,TEXT,"""GDDR6""",,https://www.gigabyte.com/vn/Graphics-Card/GV-N4060WF2OC-8GD/sp,Memory Type,VERIFIED_EXACT_VARIANT
+GV-N4060WF2OC-8GD,memory_bus_width_bit,INTEGER,128,bit,https://www.gigabyte.com/vn/Graphics-Card/GV-N4060WF2OC-8GD/sp,Memory Bus,VERIFIED_EXACT_VARIANT
+GV-N4060WF2OC-8GD,memory_data_rate_gbps,DECIMAL,17.0,Gbps,https://www.gigabyte.com/vn/Graphics-Card/GV-N4060WF2OC-8GD/sp,Memory Clock,VERIFIED_EXACT_VARIANT
+GV-N4060WF2OC-8GD,pcie_generation,TEXT,"""4.0""",,https://www.gigabyte.com/vn/Graphics-Card/GV-N4060WF2OC-8GD/sp,Card Bus,VERIFIED_EXACT_VARIANT
+GV-N4060WF2OC-8GD,display_outputs,JSON,"[""2 x DisplayPort 1.4a"",""2 x HDMI 2.1a""]",,https://www.gigabyte.com/vn/Graphics-Card/GV-N4060WF2OC-8GD/sp,Output,VERIFIED_EXACT_VARIANT
+GV-N4060WF2OC-8GD,recommended_psu_watt,INTEGER,450,W,https://www.gigabyte.com/vn/Graphics-Card/GV-N4060WF2OC-8GD/sp,Power requirement,VERIFIED_EXACT_VARIANT
+GV-N4060WF2OC-8GD,power_connectors,JSON,"[""1 x 8-pin""]",,https://www.gigabyte.com/vn/Graphics-Card/GV-N4060WF2OC-8GD/sp,Power Connectors,VERIFIED_EXACT_VARIANT
+GV-N4060WF2OC-8GD,board_length_mm,DECIMAL,192.0,mm,https://www.gigabyte.com/vn/Graphics-Card/GV-N4060WF2OC-8GD/sp,Card size,VERIFIED_EXACT_VARIANT
+ZT-D40600E-10M,gpu_chip,TEXT,"""NVIDIA GeForce RTX 4060""",,https://www.zotac.com/vn/product/graphics_card/zotac-gaming-geforce-rtx-4060-8gb-twin-edge,GPU,VERIFIED_EXACT_VARIANT
+ZT-D40600E-10M,architecture,TEXT,"""Ada Lovelace""",,https://www.zotac.com/vn/product/graphics_card/zotac-gaming-geforce-rtx-4060-8gb-twin-edge,NVIDIA Ada Lovelace architecture,VERIFIED_EXACT_VARIANT
+ZT-D40600E-10M,processor_unit_label,TEXT,"""CUDA cores""",,https://www.zotac.com/vn/product/graphics_card/zotac-gaming-geforce-rtx-4060-8gb-twin-edge,CUDA cores,VERIFIED_EXACT_VARIANT
+ZT-D40600E-10M,processor_unit_count,INTEGER,3072,units,https://www.zotac.com/vn/product/graphics_card/zotac-gaming-geforce-rtx-4060-8gb-twin-edge,CUDA cores,VERIFIED_EXACT_VARIANT
+ZT-D40600E-10M,boost_clock_mhz,DECIMAL,2490.0,MHz,https://www.zotac.com/vn/product/graphics_card/zotac-gaming-geforce-rtx-4060-8gb-twin-edge,Engine boost clock,VERIFIED_EXACT_VARIANT
+ZT-D40600E-10M,vram_gb,INTEGER,8,GB,https://www.zotac.com/vn/product/graphics_card/zotac-gaming-geforce-rtx-4060-8gb-twin-edge,Memory,VERIFIED_EXACT_VARIANT
+ZT-D40600E-10M,memory_type,TEXT,"""GDDR6""",,https://www.zotac.com/vn/product/graphics_card/zotac-gaming-geforce-rtx-4060-8gb-twin-edge,Memory,VERIFIED_EXACT_VARIANT
+ZT-D40600E-10M,memory_bus_width_bit,INTEGER,128,bit,https://www.zotac.com/vn/product/graphics_card/zotac-gaming-geforce-rtx-4060-8gb-twin-edge,Memory bus,VERIFIED_EXACT_VARIANT
+ZT-D40600E-10M,memory_data_rate_gbps,DECIMAL,17.0,Gbps,https://www.zotac.com/vn/product/graphics_card/zotac-gaming-geforce-rtx-4060-8gb-twin-edge,Memory clock,VERIFIED_EXACT_VARIANT
+ZT-D40600E-10M,pcie_generation,TEXT,"""4.0""",,https://www.zotac.com/vn/product/graphics_card/zotac-gaming-geforce-rtx-4060-8gb-twin-edge,PCI Express,VERIFIED_EXACT_VARIANT
+ZT-D40600E-10M,pcie_link_width,TEXT,"""x8""",,https://www.zotac.com/vn/product/graphics_card/zotac-gaming-geforce-rtx-4060-8gb-twin-edge,PCI Express,VERIFIED_EXACT_VARIANT
+ZT-D40600E-10M,display_outputs,JSON,"[""3 x DisplayPort 1.4a"",""1 x HDMI 2.1a""]",,https://www.zotac.com/vn/product/graphics_card/zotac-gaming-geforce-rtx-4060-8gb-twin-edge,Connections,VERIFIED_EXACT_VARIANT
+ZT-D40600E-10M,recommended_psu_watt,INTEGER,500,W,https://www.zotac.com/vn/product/graphics_card/zotac-gaming-geforce-rtx-4060-8gb-twin-edge,Power requirements,VERIFIED_EXACT_VARIANT
+ZT-D40600E-10M,power_connectors,JSON,"[""1 x 8-pin""]",,https://www.zotac.com/vn/product/graphics_card/zotac-gaming-geforce-rtx-4060-8gb-twin-edge,Power requirements,VERIFIED_EXACT_VARIANT
+ZT-D40600E-10M,board_length_mm,DECIMAL,221.4,mm,https://www.zotac.com/vn/product/graphics_card/zotac-gaming-geforce-rtx-4060-8gb-twin-edge,Dimensions,VERIFIED_EXACT_VARIANT
+ZT-D40600E-10M,slot_thickness,DECIMAL,2.0,slots,https://www.zotac.com/vn/product/graphics_card/zotac-gaming-geforce-rtx-4060-8gb-twin-edge,Dimensions,VERIFIED_EXACT_VARIANT
+DUAL-RTX4060TI-O8G,gpu_chip,TEXT,"""NVIDIA GeForce RTX 4060 Ti""",,https://www.asus.com/vn/motherboards-components/graphics-cards/dual/dual-rtx4060ti-o8g/techspec/,Graphic Engine,VERIFIED_EXACT_VARIANT
+DUAL-RTX4060TI-O8G,processor_unit_label,TEXT,"""CUDA cores""",,https://www.asus.com/vn/motherboards-components/graphics-cards/dual/dual-rtx4060ti-o8g/techspec/,CUDA Core,VERIFIED_EXACT_VARIANT
+DUAL-RTX4060TI-O8G,processor_unit_count,INTEGER,4352,units,https://www.asus.com/vn/motherboards-components/graphics-cards/dual/dual-rtx4060ti-o8g/techspec/,CUDA Core,VERIFIED_EXACT_VARIANT
+DUAL-RTX4060TI-O8G,boost_clock_mhz,DECIMAL,2565.0,MHz,https://www.asus.com/vn/motherboards-components/graphics-cards/dual/dual-rtx4060ti-o8g/techspec/,Engine Clock (Default mode / Boost),VERIFIED_EXACT_VARIANT
+DUAL-RTX4060TI-O8G,vram_gb,INTEGER,8,GB,https://www.asus.com/vn/motherboards-components/graphics-cards/dual/dual-rtx4060ti-o8g/techspec/,Video Memory,VERIFIED_EXACT_VARIANT
+DUAL-RTX4060TI-O8G,memory_type,TEXT,"""GDDR6""",,https://www.asus.com/vn/motherboards-components/graphics-cards/dual/dual-rtx4060ti-o8g/techspec/,Video Memory,VERIFIED_EXACT_VARIANT
+DUAL-RTX4060TI-O8G,memory_bus_width_bit,INTEGER,128,bit,https://www.asus.com/vn/motherboards-components/graphics-cards/dual/dual-rtx4060ti-o8g/techspec/,Memory Interface,VERIFIED_EXACT_VARIANT
+DUAL-RTX4060TI-O8G,memory_data_rate_gbps,DECIMAL,18.0,Gbps,https://www.asus.com/vn/motherboards-components/graphics-cards/dual/dual-rtx4060ti-o8g/techspec/,Memory Speed,VERIFIED_EXACT_VARIANT
+DUAL-RTX4060TI-O8G,pcie_generation,TEXT,"""4.0""",,https://www.asus.com/vn/motherboards-components/graphics-cards/dual/dual-rtx4060ti-o8g/techspec/,Bus Standard,VERIFIED_EXACT_VARIANT
+DUAL-RTX4060TI-O8G,display_outputs,JSON,"[""3 x DisplayPort 1.4a"",""1 x HDMI 2.1a""]",,https://www.asus.com/vn/motherboards-components/graphics-cards/dual/dual-rtx4060ti-o8g/techspec/,Interface,VERIFIED_EXACT_VARIANT
+DUAL-RTX4060TI-O8G,recommended_psu_watt,INTEGER,650,W,https://www.asus.com/vn/motherboards-components/graphics-cards/dual/dual-rtx4060ti-o8g/techspec/,Recommended PSU,VERIFIED_EXACT_VARIANT
+DUAL-RTX4060TI-O8G,power_connectors,JSON,"[""1 x 8-pin""]",,https://www.asus.com/vn/motherboards-components/graphics-cards/dual/dual-rtx4060ti-o8g/techspec/,Power Connectors,VERIFIED_EXACT_VARIANT
+DUAL-RTX4060TI-O8G,board_length_mm,DECIMAL,227.2,mm,https://www.asus.com/vn/motherboards-components/graphics-cards/dual/dual-rtx4060ti-o8g/techspec/,Dimensions,VERIFIED_EXACT_VARIANT
+DUAL-RTX4060TI-O8G,slot_thickness,DECIMAL,2.5,slots,https://www.asus.com/vn/motherboards-components/graphics-cards/dual/dual-rtx4060ti-o8g/techspec/,Slot,VERIFIED_EXACT_VARIANT
+RTX4060TIVENTUS2XBLACK8GOC,gpu_chip,TEXT,"""NVIDIA GeForce RTX 4060 Ti""",,https://vn.msi.com/Graphics-Card/GeForce-RTX-4060-Ti-VENTUS-2X-BLACK-8G-OC/Specification,GPU,VERIFIED_EXACT_VARIANT
+RTX4060TIVENTUS2XBLACK8GOC,processor_unit_label,TEXT,"""CUDA cores""",,https://vn.msi.com/Graphics-Card/GeForce-RTX-4060-Ti-VENTUS-2X-BLACK-8G-OC/Specification,CUDA Cores,VERIFIED_EXACT_VARIANT
+RTX4060TIVENTUS2XBLACK8GOC,processor_unit_count,INTEGER,4352,units,https://vn.msi.com/Graphics-Card/GeForce-RTX-4060-Ti-VENTUS-2X-BLACK-8G-OC/Specification,CUDA Cores,VERIFIED_EXACT_VARIANT
+RTX4060TIVENTUS2XBLACK8GOC,vram_gb,INTEGER,8,GB,https://vn.msi.com/Graphics-Card/GeForce-RTX-4060-Ti-VENTUS-2X-BLACK-8G-OC/Specification,Memory,VERIFIED_EXACT_VARIANT
+RTX4060TIVENTUS2XBLACK8GOC,memory_type,TEXT,"""GDDR6""",,https://vn.msi.com/Graphics-Card/GeForce-RTX-4060-Ti-VENTUS-2X-BLACK-8G-OC/Specification,Memory,VERIFIED_EXACT_VARIANT
+RTX4060TIVENTUS2XBLACK8GOC,display_outputs,JSON,"[""3 x DisplayPort 1.4a"",""1 x HDMI 2.1a""]",,https://vn.msi.com/Graphics-Card/GeForce-RTX-4060-Ti-VENTUS-2X-BLACK-8G-OC/Specification,Output,VERIFIED_EXACT_VARIANT
+RTX4060TIVENTUS2XBLACK8GOC,board_power_watt,INTEGER,160,W,https://vn.msi.com/Graphics-Card/GeForce-RTX-4060-Ti-VENTUS-2X-BLACK-8G-OC/Specification,Power consumption,VERIFIED_EXACT_VARIANT
+RTX4060TIVENTUS2XBLACK8GOC,recommended_psu_watt,INTEGER,550,W,https://vn.msi.com/Graphics-Card/GeForce-RTX-4060-Ti-VENTUS-2X-BLACK-8G-OC/Specification,Recommended PSU,VERIFIED_EXACT_VARIANT
+RTX4060TIVENTUS2XBLACK8GOC,power_connectors,JSON,"[""1 x 8-pin""]",,https://vn.msi.com/Graphics-Card/GeForce-RTX-4060-Ti-VENTUS-2X-BLACK-8G-OC/Specification,Power connectors,VERIFIED_EXACT_VARIANT
+GV-N406TEAGLE-OC-8GD,gpu_chip,TEXT,"""NVIDIA GeForce RTX 4060 Ti""",,https://www.gigabyte.com/vn/Graphics-Card/GV-N406TEAGLE-OC-8GD/sp,Chipset,VERIFIED_EXACT_VARIANT
+GV-N406TEAGLE-OC-8GD,processor_unit_label,TEXT,"""CUDA cores""",,https://www.gigabyte.com/vn/Graphics-Card/GV-N406TEAGLE-OC-8GD/sp,CUDA Cores,VERIFIED_EXACT_VARIANT
+GV-N406TEAGLE-OC-8GD,processor_unit_count,INTEGER,4352,units,https://www.gigabyte.com/vn/Graphics-Card/GV-N406TEAGLE-OC-8GD/sp,CUDA Cores,VERIFIED_EXACT_VARIANT
+GV-N406TEAGLE-OC-8GD,boost_clock_mhz,DECIMAL,2550.0,MHz,https://www.gigabyte.com/vn/Graphics-Card/GV-N406TEAGLE-OC-8GD/sp,Core Clock,VERIFIED_EXACT_VARIANT
+GV-N406TEAGLE-OC-8GD,vram_gb,INTEGER,8,GB,https://www.gigabyte.com/vn/Graphics-Card/GV-N406TEAGLE-OC-8GD/sp,Memory Size,VERIFIED_EXACT_VARIANT
+GV-N406TEAGLE-OC-8GD,memory_type,TEXT,"""GDDR6""",,https://www.gigabyte.com/vn/Graphics-Card/GV-N406TEAGLE-OC-8GD/sp,Memory Type,VERIFIED_EXACT_VARIANT
+GV-N406TEAGLE-OC-8GD,memory_bus_width_bit,INTEGER,128,bit,https://www.gigabyte.com/vn/Graphics-Card/GV-N406TEAGLE-OC-8GD/sp,Memory Bus,VERIFIED_EXACT_VARIANT
+GV-N406TEAGLE-OC-8GD,memory_data_rate_gbps,DECIMAL,18.0,Gbps,https://www.gigabyte.com/vn/Graphics-Card/GV-N406TEAGLE-OC-8GD/sp,Memory Clock,VERIFIED_EXACT_VARIANT
+GV-N406TEAGLE-OC-8GD,pcie_generation,TEXT,"""4.0""",,https://www.gigabyte.com/vn/Graphics-Card/GV-N406TEAGLE-OC-8GD/sp,Card Bus,VERIFIED_EXACT_VARIANT
+GV-N406TEAGLE-OC-8GD,display_outputs,JSON,"[""2 x DisplayPort 1.4a"",""2 x HDMI 2.1a""]",,https://www.gigabyte.com/vn/Graphics-Card/GV-N406TEAGLE-OC-8GD/sp,Output,VERIFIED_EXACT_VARIANT
+GV-N406TEAGLE-OC-8GD,recommended_psu_watt,INTEGER,500,W,https://www.gigabyte.com/vn/Graphics-Card/GV-N406TEAGLE-OC-8GD/sp,Power requirement,VERIFIED_EXACT_VARIANT
+GV-N406TEAGLE-OC-8GD,power_connectors,JSON,"[""1 x 8-pin""]",,https://www.gigabyte.com/vn/Graphics-Card/GV-N406TEAGLE-OC-8GD/sp,Power Connectors,VERIFIED_EXACT_VARIANT
+GV-N406TEAGLE-OC-8GD,board_length_mm,DECIMAL,272.0,mm,https://www.gigabyte.com/vn/Graphics-Card/GV-N406TEAGLE-OC-8GD/sp,Card size,VERIFIED_EXACT_VARIANT
+DUAL-RTX4070S-O12G,gpu_chip,TEXT,"""NVIDIA GeForce RTX 4070 SUPER""",,https://www.asus.com/vn/motherboards-components/graphics-cards/dual/dual-rtx4070s-o12g/techspec/,Graphic Engine,VERIFIED_EXACT_VARIANT
+DUAL-RTX4070S-O12G,processor_unit_label,TEXT,"""CUDA cores""",,https://www.asus.com/vn/motherboards-components/graphics-cards/dual/dual-rtx4070s-o12g/techspec/,CUDA Core,VERIFIED_EXACT_VARIANT
+DUAL-RTX4070S-O12G,processor_unit_count,INTEGER,7168,units,https://www.asus.com/vn/motherboards-components/graphics-cards/dual/dual-rtx4070s-o12g/techspec/,CUDA Core,VERIFIED_EXACT_VARIANT
+DUAL-RTX4070S-O12G,boost_clock_mhz,DECIMAL,2520.0,MHz,https://www.asus.com/vn/motherboards-components/graphics-cards/dual/dual-rtx4070s-o12g/techspec/,Engine Clock (Default mode / Boost),VERIFIED_EXACT_VARIANT
+DUAL-RTX4070S-O12G,vram_gb,INTEGER,12,GB,https://www.asus.com/vn/motherboards-components/graphics-cards/dual/dual-rtx4070s-o12g/techspec/,Video Memory,VERIFIED_EXACT_VARIANT
+DUAL-RTX4070S-O12G,memory_type,TEXT,"""GDDR6X""",,https://www.asus.com/vn/motherboards-components/graphics-cards/dual/dual-rtx4070s-o12g/techspec/,Video Memory,VERIFIED_EXACT_VARIANT
+DUAL-RTX4070S-O12G,memory_bus_width_bit,INTEGER,192,bit,https://www.asus.com/vn/motherboards-components/graphics-cards/dual/dual-rtx4070s-o12g/techspec/,Memory Interface,VERIFIED_EXACT_VARIANT
+DUAL-RTX4070S-O12G,memory_data_rate_gbps,DECIMAL,21.0,Gbps,https://www.asus.com/vn/motherboards-components/graphics-cards/dual/dual-rtx4070s-o12g/techspec/,Memory Speed,VERIFIED_EXACT_VARIANT
+DUAL-RTX4070S-O12G,pcie_generation,TEXT,"""4.0""",,https://www.asus.com/vn/motherboards-components/graphics-cards/dual/dual-rtx4070s-o12g/techspec/,Bus Standard,VERIFIED_EXACT_VARIANT
+DUAL-RTX4070S-O12G,display_outputs,JSON,"[""3 x DisplayPort 1.4a"",""1 x HDMI 2.1a""]",,https://www.asus.com/vn/motherboards-components/graphics-cards/dual/dual-rtx4070s-o12g/techspec/,Interface,VERIFIED_EXACT_VARIANT
+DUAL-RTX4070S-O12G,recommended_psu_watt,INTEGER,750,W,https://www.asus.com/vn/motherboards-components/graphics-cards/dual/dual-rtx4070s-o12g/techspec/,Recommended PSU,VERIFIED_EXACT_VARIANT
+DUAL-RTX4070S-O12G,power_connectors,JSON,"[""1 x 16-pin""]",,https://www.asus.com/vn/motherboards-components/graphics-cards/dual/dual-rtx4070s-o12g/techspec/,Power Connectors,VERIFIED_EXACT_VARIANT
+DUAL-RTX4070S-O12G,board_length_mm,DECIMAL,267.0,mm,https://www.asus.com/vn/motherboards-components/graphics-cards/dual/dual-rtx4070s-o12g/techspec/,Dimensions,VERIFIED_EXACT_VARIANT
+DUAL-RTX4070S-O12G,slot_thickness,DECIMAL,2.56,slots,https://www.asus.com/vn/motherboards-components/graphics-cards/dual/dual-rtx4070s-o12g/techspec/,Slot,VERIFIED_EXACT_VARIANT
+RTX4070SUPERVENTUS2X12GOC,gpu_chip,TEXT,"""NVIDIA GeForce RTX 4070 SUPER""",,https://vn.msi.com/Graphics-Card/GeForce-RTX-4070-SUPER-12G-VENTUS-2X-OC/Specification,GPU,VERIFIED_EXACT_VARIANT
+RTX4070SUPERVENTUS2X12GOC,processor_unit_label,TEXT,"""CUDA cores""",,https://vn.msi.com/Graphics-Card/GeForce-RTX-4070-SUPER-12G-VENTUS-2X-OC/Specification,CUDA Cores,VERIFIED_EXACT_VARIANT
+RTX4070SUPERVENTUS2X12GOC,processor_unit_count,INTEGER,7168,units,https://vn.msi.com/Graphics-Card/GeForce-RTX-4070-SUPER-12G-VENTUS-2X-OC/Specification,CUDA Cores,VERIFIED_EXACT_VARIANT
+RTX4070SUPERVENTUS2X12GOC,boost_clock_mhz,DECIMAL,2505.0,MHz,https://vn.msi.com/Graphics-Card/GeForce-RTX-4070-SUPER-12G-VENTUS-2X-OC/Specification,Boost,VERIFIED_EXACT_VARIANT
+RTX4070SUPERVENTUS2X12GOC,vram_gb,INTEGER,12,GB,https://vn.msi.com/Graphics-Card/GeForce-RTX-4070-SUPER-12G-VENTUS-2X-OC/Specification,Memory,VERIFIED_EXACT_VARIANT
+RTX4070SUPERVENTUS2X12GOC,memory_type,TEXT,"""GDDR6X""",,https://vn.msi.com/Graphics-Card/GeForce-RTX-4070-SUPER-12G-VENTUS-2X-OC/Specification,Memory,VERIFIED_EXACT_VARIANT
+RTX4070SUPERVENTUS2X12GOC,memory_bus_width_bit,INTEGER,192,bit,https://vn.msi.com/Graphics-Card/GeForce-RTX-4070-SUPER-12G-VENTUS-2X-OC/Specification,Memory Bus,VERIFIED_EXACT_VARIANT
+RTX4070SUPERVENTUS2X12GOC,memory_data_rate_gbps,DECIMAL,21.0,Gbps,https://vn.msi.com/Graphics-Card/GeForce-RTX-4070-SUPER-12G-VENTUS-2X-OC/Specification,Memory Clock,VERIFIED_EXACT_VARIANT
+RTX4070SUPERVENTUS2X12GOC,pcie_generation,TEXT,"""4.0""",,https://vn.msi.com/Graphics-Card/GeForce-RTX-4070-SUPER-12G-VENTUS-2X-OC/Specification,Interface,VERIFIED_EXACT_VARIANT
+RTX4070SUPERVENTUS2X12GOC,display_outputs,JSON,"[""3 x DisplayPort 1.4a"",""1 x HDMI 2.1a""]",,https://vn.msi.com/Graphics-Card/GeForce-RTX-4070-SUPER-12G-VENTUS-2X-OC/Specification,Output,VERIFIED_EXACT_VARIANT
+RTX4070SUPERVENTUS2X12GOC,board_power_watt,INTEGER,220,W,https://vn.msi.com/Graphics-Card/GeForce-RTX-4070-SUPER-12G-VENTUS-2X-OC/Specification,Power consumption,VERIFIED_EXACT_VARIANT
+RTX4070SUPERVENTUS2X12GOC,recommended_psu_watt,INTEGER,650,W,https://vn.msi.com/Graphics-Card/GeForce-RTX-4070-SUPER-12G-VENTUS-2X-OC/Specification,Recommended PSU,VERIFIED_EXACT_VARIANT
+RTX4070SUPERVENTUS2X12GOC,power_connectors,JSON,"[""1 x 16-pin""]",,https://vn.msi.com/Graphics-Card/GeForce-RTX-4070-SUPER-12G-VENTUS-2X-OC/Specification,Power connectors,VERIFIED_EXACT_VARIANT
+RTX4070SUPERVENTUS2X12GOC,board_length_mm,DECIMAL,242.0,mm,https://vn.msi.com/Graphics-Card/GeForce-RTX-4070-SUPER-12G-VENTUS-2X-OC/Specification,Dimensions,VERIFIED_EXACT_VARIANT
+GV-N407SWF3OC-12GD,gpu_chip,TEXT,"""NVIDIA GeForce RTX 4070 SUPER""",,https://www.gigabyte.com/Graphics-Card/GV-N407SWF3OC-12GD-rev-11/sp,Graphics Processing,VERIFIED_EXACT_VARIANT
+GV-N407SWF3OC-12GD,processor_unit_label,TEXT,"""CUDA cores""",,https://www.gigabyte.com/Graphics-Card/GV-N407SWF3OC-12GD-rev-11/sp,CUDA Cores,VERIFIED_EXACT_VARIANT
+GV-N407SWF3OC-12GD,processor_unit_count,INTEGER,7168,units,https://www.gigabyte.com/Graphics-Card/GV-N407SWF3OC-12GD-rev-11/sp,CUDA Cores,VERIFIED_EXACT_VARIANT
+GV-N407SWF3OC-12GD,boost_clock_mhz,DECIMAL,2505.0,MHz,https://www.gigabyte.com/Graphics-Card/GV-N407SWF3OC-12GD-rev-11/sp,Core Clock,VERIFIED_EXACT_VARIANT
+GV-N407SWF3OC-12GD,vram_gb,INTEGER,12,GB,https://www.gigabyte.com/Graphics-Card/GV-N407SWF3OC-12GD-rev-11/sp,Memory Size,VERIFIED_EXACT_VARIANT
+GV-N407SWF3OC-12GD,memory_type,TEXT,"""GDDR6X""",,https://www.gigabyte.com/Graphics-Card/GV-N407SWF3OC-12GD-rev-11/sp,Memory Type,VERIFIED_EXACT_VARIANT
+GV-N407SWF3OC-12GD,memory_bus_width_bit,INTEGER,192,bit,https://www.gigabyte.com/Graphics-Card/GV-N407SWF3OC-12GD-rev-11/sp,Memory Bus,VERIFIED_EXACT_VARIANT
+GV-N407SWF3OC-12GD,memory_data_rate_gbps,DECIMAL,21.0,Gbps,https://www.gigabyte.com/Graphics-Card/GV-N407SWF3OC-12GD-rev-11/sp,Memory Clock,VERIFIED_EXACT_VARIANT
+GV-N407SWF3OC-12GD,pcie_generation,TEXT,"""4.0""",,https://www.gigabyte.com/Graphics-Card/GV-N407SWF3OC-12GD-rev-11/sp,Card Bus,VERIFIED_EXACT_VARIANT
+GV-N407SWF3OC-12GD,display_outputs,JSON,"[""3 x DisplayPort 1.4a"",""1 x HDMI 2.1a""]",,https://www.gigabyte.com/Graphics-Card/GV-N407SWF3OC-12GD-rev-11/sp,Output,VERIFIED_EXACT_VARIANT
+GV-N407SWF3OC-12GD,recommended_psu_watt,INTEGER,700,W,https://www.gigabyte.com/Graphics-Card/GV-N407SWF3OC-12GD-rev-11/sp,Recommended PSU,VERIFIED_EXACT_VARIANT
+GV-N407SWF3OC-12GD,power_connectors,JSON,"[""1 x 16-pin""]",,https://www.gigabyte.com/Graphics-Card/GV-N407SWF3OC-12GD-rev-11/sp,Power Connectors,VERIFIED_EXACT_VARIANT
+GV-N407SWF3OC-12GD,board_length_mm,DECIMAL,261.0,mm,https://www.gigabyte.com/Graphics-Card/GV-N407SWF3OC-12GD-rev-11/sp,Card size,VERIFIED_EXACT_VARIANT
+11324-01-20G,gpu_chip,TEXT,"""AMD Radeon RX 7600""",,https://www.sapphiretech.com/en/consumer/pulse-radeon-rx-7600-8g-gddr6,GPU,VERIFIED_EXACT_VARIANT
+11324-01-20G,architecture,TEXT,"""RDNA 3""",,https://www.sapphiretech.com/en/consumer/pulse-radeon-rx-7600-8g-gddr6,AMD RDNA 3 Architecture,VERIFIED_EXACT_VARIANT
+11324-01-20G,processor_unit_label,TEXT,"""Stream Processors""",,https://www.sapphiretech.com/en/consumer/pulse-radeon-rx-7600-8g-gddr6,Stream Processors,VERIFIED_EXACT_VARIANT
+11324-01-20G,processor_unit_count,INTEGER,2048,units,https://www.sapphiretech.com/en/consumer/pulse-radeon-rx-7600-8g-gddr6,Stream Processors,VERIFIED_EXACT_VARIANT
+11324-01-20G,boost_clock_mhz,DECIMAL,2755.0,MHz,https://www.sapphiretech.com/en/consumer/pulse-radeon-rx-7600-8g-gddr6,Boost Clock,VERIFIED_EXACT_VARIANT
+11324-01-20G,vram_gb,INTEGER,8,GB,https://www.sapphiretech.com/en/consumer/pulse-radeon-rx-7600-8g-gddr6,Memory Size/Bus,VERIFIED_EXACT_VARIANT
+11324-01-20G,memory_type,TEXT,"""GDDR6""",,https://www.sapphiretech.com/en/consumer/pulse-radeon-rx-7600-8g-gddr6,Memory Size/Bus,VERIFIED_EXACT_VARIANT
+11324-01-20G,memory_bus_width_bit,INTEGER,128,bit,https://www.sapphiretech.com/en/consumer/pulse-radeon-rx-7600-8g-gddr6,Memory Size/Bus,VERIFIED_EXACT_VARIANT
+11324-01-20G,memory_data_rate_gbps,DECIMAL,18.0,Gbps,https://www.sapphiretech.com/en/consumer/pulse-radeon-rx-7600-8g-gddr6,Memory Clock,VERIFIED_EXACT_VARIANT
+11324-01-20G,pcie_generation,TEXT,"""4.0""",,https://www.sapphiretech.com/en/consumer/pulse-radeon-rx-7600-8g-gddr6,Interface,VERIFIED_EXACT_VARIANT
+11324-01-20G,pcie_link_width,TEXT,"""x8""",,https://www.sapphiretech.com/en/consumer/pulse-radeon-rx-7600-8g-gddr6,Interface,VERIFIED_EXACT_VARIANT
+11324-01-20G,display_outputs,JSON,"[""3 x DisplayPort 1.4"",""1 x HDMI""]",,https://www.sapphiretech.com/en/consumer/pulse-radeon-rx-7600-8g-gddr6,Output,VERIFIED_EXACT_VARIANT
+11324-01-20G,board_power_watt,INTEGER,185,W,https://www.sapphiretech.com/en/consumer/pulse-radeon-rx-7600-8g-gddr6,Power Consumption,VERIFIED_EXACT_VARIANT
+11324-01-20G,recommended_psu_watt,INTEGER,550,W,https://www.sapphiretech.com/en/consumer/pulse-radeon-rx-7600-8g-gddr6,System Requirement,VERIFIED_EXACT_VARIANT
+11324-01-20G,power_connectors,JSON,"[""1 x 8-pin""]",,https://www.sapphiretech.com/en/consumer/pulse-radeon-rx-7600-8g-gddr6,System Requirement,VERIFIED_EXACT_VARIANT
+11324-01-20G,board_length_mm,DECIMAL,240.0,mm,https://www.sapphiretech.com/en/consumer/pulse-radeon-rx-7600-8g-gddr6,Dimension,VERIFIED_EXACT_VARIANT
+11324-01-20G,slot_thickness,DECIMAL,2.0,slots,https://www.sapphiretech.com/en/consumer/pulse-radeon-rx-7600-8g-gddr6,Form Factor,VERIFIED_EXACT_VARIANT
+11324-01-20G,cooling_design,TEXT,"""Dual-X Cooling Technology""",,https://www.sapphiretech.com/en/consumer/pulse-radeon-rx-7600-8g-gddr6,Sapphire Features,VERIFIED_EXACT_VARIANT
+RX7600-8G-F,gpu_chip,TEXT,"""AMD Radeon RX 7600""",,https://www.powercolor.com/product-detail110.htm,GPU,VERIFIED_EXACT_VARIANT
+RX7600-8G-F,architecture,TEXT,"""RDNA 3""",,https://www.powercolor.com/product-detail110.htm,AMD RDNA 3 Architecture,VERIFIED_EXACT_VARIANT
+RX7600-8G-F,processor_unit_label,TEXT,"""Stream Processors""",,https://www.powercolor.com/product-detail110.htm,Stream Processors,VERIFIED_EXACT_VARIANT
+RX7600-8G-F,processor_unit_count,INTEGER,2048,units,https://www.powercolor.com/product-detail110.htm,Stream Processors,VERIFIED_EXACT_VARIANT
+RX7600-8G-F,boost_clock_mhz,DECIMAL,2655.0,MHz,https://www.powercolor.com/product-detail110.htm,Boost Clock,VERIFIED_EXACT_VARIANT
+RX7600-8G-F,vram_gb,INTEGER,8,GB,https://www.powercolor.com/product-detail110.htm,Memory Size,VERIFIED_EXACT_VARIANT
+RX7600-8G-F,memory_type,TEXT,"""GDDR6""",,https://www.powercolor.com/product-detail110.htm,Memory Type,VERIFIED_EXACT_VARIANT
+RX7600-8G-F,memory_bus_width_bit,INTEGER,128,bit,https://www.powercolor.com/product-detail110.htm,Memory Bus,VERIFIED_EXACT_VARIANT
+RX7600-8G-F,memory_data_rate_gbps,DECIMAL,18.0,Gbps,https://www.powercolor.com/product-detail110.htm,Memory Clock,VERIFIED_EXACT_VARIANT
+RX7600-8G-F,pcie_generation,TEXT,"""4.0""",,https://www.powercolor.com/product-detail110.htm,PCI Express,VERIFIED_EXACT_VARIANT
+RX7600-8G-F,pcie_link_width,TEXT,"""x8""",,https://www.powercolor.com/product-detail110.htm,PCI Express,VERIFIED_EXACT_VARIANT
+RX7600-8G-F,display_outputs,JSON,"[""3 x DisplayPort 1.4"",""1 x HDMI 2.1""]",,https://www.powercolor.com/product-detail110.htm,Output,VERIFIED_EXACT_VARIANT
+11335-04-20G,gpu_chip,TEXT,"""AMD Radeon RX 7700 XT""",,https://www.sapphiretech.com/en/consumer/pulse-radeon-rx-7700-xt-12g-gddr6,GPU,VERIFIED_EXACT_VARIANT
+11335-04-20G,architecture,TEXT,"""RDNA 3""",,https://www.sapphiretech.com/en/consumer/pulse-radeon-rx-7700-xt-12g-gddr6,AMD RDNA 3 Architecture,VERIFIED_EXACT_VARIANT
+11335-04-20G,processor_unit_label,TEXT,"""Stream Processors""",,https://www.sapphiretech.com/en/consumer/pulse-radeon-rx-7700-xt-12g-gddr6,Stream Processors,VERIFIED_EXACT_VARIANT
+11335-04-20G,processor_unit_count,INTEGER,3456,units,https://www.sapphiretech.com/en/consumer/pulse-radeon-rx-7700-xt-12g-gddr6,Stream Processors,VERIFIED_EXACT_VARIANT
+11335-04-20G,boost_clock_mhz,DECIMAL,2544.0,MHz,https://www.sapphiretech.com/en/consumer/pulse-radeon-rx-7700-xt-12g-gddr6,Boost Clock,VERIFIED_EXACT_VARIANT
+11335-04-20G,vram_gb,INTEGER,12,GB,https://www.sapphiretech.com/en/consumer/pulse-radeon-rx-7700-xt-12g-gddr6,Memory Size/Bus,VERIFIED_EXACT_VARIANT
+11335-04-20G,memory_type,TEXT,"""GDDR6""",,https://www.sapphiretech.com/en/consumer/pulse-radeon-rx-7700-xt-12g-gddr6,Memory Size/Bus,VERIFIED_EXACT_VARIANT
+11335-04-20G,memory_bus_width_bit,INTEGER,192,bit,https://www.sapphiretech.com/en/consumer/pulse-radeon-rx-7700-xt-12g-gddr6,Memory Size/Bus,VERIFIED_EXACT_VARIANT
+11335-04-20G,memory_data_rate_gbps,DECIMAL,18.0,Gbps,https://www.sapphiretech.com/en/consumer/pulse-radeon-rx-7700-xt-12g-gddr6,Memory Clock,VERIFIED_EXACT_VARIANT
+11335-04-20G,pcie_generation,TEXT,"""4.0""",,https://www.sapphiretech.com/en/consumer/pulse-radeon-rx-7700-xt-12g-gddr6,Interface,VERIFIED_EXACT_VARIANT
+11335-04-20G,pcie_link_width,TEXT,"""x16""",,https://www.sapphiretech.com/en/consumer/pulse-radeon-rx-7700-xt-12g-gddr6,Interface,VERIFIED_EXACT_VARIANT
+11335-04-20G,display_outputs,JSON,"[""2 x HDMI 2.1"",""2 x DisplayPort 2.1""]",,https://www.sapphiretech.com/en/consumer/pulse-radeon-rx-7700-xt-12g-gddr6,Output,VERIFIED_EXACT_VARIANT
+11335-04-20G,board_power_watt,INTEGER,230,W,https://www.sapphiretech.com/en/consumer/pulse-radeon-rx-7700-xt-12g-gddr6,Power Consumption,VERIFIED_EXACT_VARIANT
+11335-04-20G,recommended_psu_watt,INTEGER,700,W,https://www.sapphiretech.com/en/consumer/pulse-radeon-rx-7700-xt-12g-gddr6,System Requirement,VERIFIED_EXACT_VARIANT
+11335-04-20G,power_connectors,JSON,"[""2 x 8-pin""]",,https://www.sapphiretech.com/en/consumer/pulse-radeon-rx-7700-xt-12g-gddr6,System Requirement,VERIFIED_EXACT_VARIANT
+11335-04-20G,board_length_mm,DECIMAL,280.0,mm,https://www.sapphiretech.com/en/consumer/pulse-radeon-rx-7700-xt-12g-gddr6,Dimension,VERIFIED_EXACT_VARIANT
+11335-04-20G,slot_thickness,DECIMAL,2.5,slots,https://www.sapphiretech.com/en/consumer/pulse-radeon-rx-7700-xt-12g-gddr6,Form Factor,VERIFIED_EXACT_VARIANT
+11335-04-20G,cooling_design,TEXT,"""Dual-X Cooling Technology""",,https://www.sapphiretech.com/en/consumer/pulse-radeon-rx-7700-xt-12g-gddr6,Sapphire Features,VERIFIED_EXACT_VARIANT
+RX7800XT-SL-16GO,gpu_chip,TEXT,"""AMD Radeon RX 7800 XT""",,https://www.asrock.com/Graphics-Card/AMD/Radeon%20RX%207800%20XT%20Steel%20Legend%2016GB%20OC/index.asp,Graphics Engine,VERIFIED_EXACT_VARIANT
+RX7800XT-SL-16GO,architecture,TEXT,"""RDNA 3""",,https://www.asrock.com/Graphics-Card/AMD/Radeon%20RX%207800%20XT%20Steel%20Legend%2016GB%20OC/index.asp,AMD RDNA 3 Compute Units,VERIFIED_EXACT_VARIANT
+RX7800XT-SL-16GO,processor_unit_label,TEXT,"""Stream Processors""",,https://www.asrock.com/Graphics-Card/AMD/Radeon%20RX%207800%20XT%20Steel%20Legend%2016GB%20OC/index.asp,Stream Processors,VERIFIED_EXACT_VARIANT
+RX7800XT-SL-16GO,processor_unit_count,INTEGER,3840,units,https://www.asrock.com/Graphics-Card/AMD/Radeon%20RX%207800%20XT%20Steel%20Legend%2016GB%20OC/index.asp,Stream Processors,VERIFIED_EXACT_VARIANT
+RX7800XT-SL-16GO,boost_clock_mhz,DECIMAL,2520.0,MHz,https://www.asrock.com/Graphics-Card/AMD/Radeon%20RX%207800%20XT%20Steel%20Legend%2016GB%20OC/index.asp,Boost Clock,VERIFIED_EXACT_VARIANT
+RX7800XT-SL-16GO,vram_gb,INTEGER,16,GB,https://www.asrock.com/Graphics-Card/AMD/Radeon%20RX%207800%20XT%20Steel%20Legend%2016GB%20OC/index.asp,Memory,VERIFIED_EXACT_VARIANT
+RX7800XT-SL-16GO,memory_type,TEXT,"""GDDR6""",,https://www.asrock.com/Graphics-Card/AMD/Radeon%20RX%207800%20XT%20Steel%20Legend%2016GB%20OC/index.asp,Memory,VERIFIED_EXACT_VARIANT
+RX7800XT-SL-16GO,memory_bus_width_bit,INTEGER,256,bit,https://www.asrock.com/Graphics-Card/AMD/Radeon%20RX%207800%20XT%20Steel%20Legend%2016GB%20OC/index.asp,Memory Interface,VERIFIED_EXACT_VARIANT
+RX7800XT-SL-16GO,memory_data_rate_gbps,DECIMAL,19.5,Gbps,https://www.asrock.com/Graphics-Card/AMD/Radeon%20RX%207800%20XT%20Steel%20Legend%2016GB%20OC/index.asp,Memory Speed,VERIFIED_EXACT_VARIANT
+RX7800XT-SL-16GO,pcie_generation,TEXT,"""4.0""",,https://www.asrock.com/Graphics-Card/AMD/Radeon%20RX%207800%20XT%20Steel%20Legend%2016GB%20OC/index.asp,Bus Standard,VERIFIED_EXACT_VARIANT
+RX7800XT-SL-16GO,pcie_link_width,TEXT,"""x16""",,https://www.asrock.com/Graphics-Card/AMD/Radeon%20RX%207800%20XT%20Steel%20Legend%2016GB%20OC/index.asp,Bus Standard,VERIFIED_EXACT_VARIANT
+RX7800XT-SL-16GO,display_outputs,JSON,"[""3 x DisplayPort 2.1"",""1 x HDMI 2.1""]",,https://www.asrock.com/Graphics-Card/AMD/Radeon%20RX%207800%20XT%20Steel%20Legend%2016GB%20OC/index.asp,Interface,VERIFIED_EXACT_VARIANT
+RX7800XT-SL-16GO,recommended_psu_watt,INTEGER,800,W,https://www.asrock.com/Graphics-Card/AMD/Radeon%20RX%207800%20XT%20Steel%20Legend%2016GB%20OC/index.asp,Recommended PSU,VERIFIED_EXACT_VARIANT
+RX7800XT-SL-16GO,power_connectors,JSON,"[""2 x 8-pin""]",,https://www.asrock.com/Graphics-Card/AMD/Radeon%20RX%207800%20XT%20Steel%20Legend%2016GB%20OC/index.asp,Power Connector,VERIFIED_EXACT_VARIANT
+RX7800XT-SL-16GO,board_length_mm,DECIMAL,304.0,mm,https://www.asrock.com/Graphics-Card/AMD/Radeon%20RX%207800%20XT%20Steel%20Legend%2016GB%20OC/index.asp,Dimensions,VERIFIED_EXACT_VARIANT
+RX7800XT-SL-16GO,slot_thickness,DECIMAL,2.8,slots,https://www.asrock.com/Graphics-Card/AMD/Radeon%20RX%207800%20XT%20Steel%20Legend%2016GB%20OC/index.asp,Dimensions,VERIFIED_EXACT_VARIANT
+RX7800XT-SL-16GO,cooling_design,TEXT,"""Triple Fan Design""",,https://www.asrock.com/Graphics-Card/AMD/Radeon%20RX%207800%20XT%20Steel%20Legend%2016GB%20OC/index.asp,Key Features,VERIFIED_EXACT_VARIANT
+11330-01-20G,gpu_chip,TEXT,"""AMD Radeon RX 7800 XT""",,https://www.sapphiretech.com/en/consumer/nitro-radeon-rx-7800-xt-16g-gddr6,GPU,VERIFIED_EXACT_VARIANT
+11330-01-20G,architecture,TEXT,"""RDNA 3""",,https://www.sapphiretech.com/en/consumer/nitro-radeon-rx-7800-xt-16g-gddr6,AMD RDNA 3 Architecture,VERIFIED_EXACT_VARIANT
+11330-01-20G,processor_unit_label,TEXT,"""Stream Processors""",,https://www.sapphiretech.com/en/consumer/nitro-radeon-rx-7800-xt-16g-gddr6,Stream Processors,VERIFIED_EXACT_VARIANT
+11330-01-20G,processor_unit_count,INTEGER,3840,units,https://www.sapphiretech.com/en/consumer/nitro-radeon-rx-7800-xt-16g-gddr6,Stream Processors,VERIFIED_EXACT_VARIANT
+11330-01-20G,boost_clock_mhz,DECIMAL,2565.0,MHz,https://www.sapphiretech.com/en/consumer/nitro-radeon-rx-7800-xt-16g-gddr6,Boost Clock,VERIFIED_EXACT_VARIANT
+11330-01-20G,vram_gb,INTEGER,16,GB,https://www.sapphiretech.com/en/consumer/nitro-radeon-rx-7800-xt-16g-gddr6,Memory Size/Bus,VERIFIED_EXACT_VARIANT
+11330-01-20G,memory_type,TEXT,"""GDDR6""",,https://www.sapphiretech.com/en/consumer/nitro-radeon-rx-7800-xt-16g-gddr6,Memory Size/Bus,VERIFIED_EXACT_VARIANT
+11330-01-20G,memory_bus_width_bit,INTEGER,256,bit,https://www.sapphiretech.com/en/consumer/nitro-radeon-rx-7800-xt-16g-gddr6,Memory Size/Bus,VERIFIED_EXACT_VARIANT
+11330-01-20G,memory_data_rate_gbps,DECIMAL,19.5,Gbps,https://www.sapphiretech.com/en/consumer/nitro-radeon-rx-7800-xt-16g-gddr6,Memory Clock,VERIFIED_EXACT_VARIANT
+11330-01-20G,pcie_generation,TEXT,"""4.0""",,https://www.sapphiretech.com/en/consumer/nitro-radeon-rx-7800-xt-16g-gddr6,Interface,VERIFIED_EXACT_VARIANT
+11330-01-20G,pcie_link_width,TEXT,"""x16""",,https://www.sapphiretech.com/en/consumer/nitro-radeon-rx-7800-xt-16g-gddr6,Interface,VERIFIED_EXACT_VARIANT
+11330-01-20G,display_outputs,JSON,"[""2 x HDMI 2.1"",""2 x DisplayPort 2.1""]",,https://www.sapphiretech.com/en/consumer/nitro-radeon-rx-7800-xt-16g-gddr6,Output,VERIFIED_EXACT_VARIANT
+11330-01-20G,board_power_watt,INTEGER,288,W,https://www.sapphiretech.com/en/consumer/nitro-radeon-rx-7800-xt-16g-gddr6,Power Consumption,VERIFIED_EXACT_VARIANT
+11330-01-20G,recommended_psu_watt,INTEGER,700,W,https://www.sapphiretech.com/en/consumer/nitro-radeon-rx-7800-xt-16g-gddr6,System Requirement,VERIFIED_EXACT_VARIANT
+11330-01-20G,power_connectors,JSON,"[""2 x 8-pin""]",,https://www.sapphiretech.com/en/consumer/nitro-radeon-rx-7800-xt-16g-gddr6,System Requirement,VERIFIED_EXACT_VARIANT
+11330-01-20G,board_length_mm,DECIMAL,320.0,mm,https://www.sapphiretech.com/en/consumer/nitro-radeon-rx-7800-xt-16g-gddr6,Dimension,VERIFIED_EXACT_VARIANT
+11330-01-20G,slot_thickness,DECIMAL,3.0,slots,https://www.sapphiretech.com/en/consumer/nitro-radeon-rx-7800-xt-16g-gddr6,Form Factor,VERIFIED_EXACT_VARIANT
+11330-01-20G,cooling_design,TEXT,"""Tri-X Cooling Technology""",,https://www.sapphiretech.com/en/consumer/nitro-radeon-rx-7800-xt-16g-gddr6,Sapphire Features,VERIFIED_EXACT_VARIANT
+DUAL-RTX4060-O8G,max_display_resolution,TEXT,"""7680 x 4320""",,https://www.asus.com/vn/motherboards-components/graphics-cards/dual/dual-rtx4060-o8g/techspec/,Digital Max Resolution,VERIFIED_EXACT_VARIANT
+DUAL-RTX4060-O8G,max_simultaneous_displays,INTEGER,4,displays,https://www.asus.com/vn/motherboards-components/graphics-cards/dual/dual-rtx4060-o8g/techspec/,Maximum Display Support,VERIFIED_EXACT_VARIANT
+DUAL-RTX4060-O8G,hdcp_version,TEXT,"""2.3""",,https://www.asus.com/vn/motherboards-components/graphics-cards/dual/dual-rtx4060-o8g/techspec/,HDCP Support,VERIFIED_EXACT_VARIANT
+DUAL-RTX4060-O8G,board_width_mm,DECIMAL,123.24,mm,https://www.asus.com/vn/motherboards-components/graphics-cards/dual/dual-rtx4060-o8g/techspec/,Dimensions,VERIFIED_EXACT_VARIANT
+DUAL-RTX4060-O8G,board_height_mm,DECIMAL,49.6,mm,https://www.asus.com/vn/motherboards-components/graphics-cards/dual/dual-rtx4060-o8g/techspec/,Dimensions,VERIFIED_EXACT_VARIANT
+DUAL-RTX4060-O8G,included_accessories,JSON,"[""1 x Collection Card"",""1 x Speedsetup Manual"",""1 x Thank you Card""]",,https://www.asus.com/vn/motherboards-components/graphics-cards/dual/dual-rtx4060-o8g/techspec/,Accessories,VERIFIED_EXACT_VARIANT
+RTX4060VENTUS2XBLACK8GOC,max_display_resolution,TEXT,"""7680 x 4320""",,https://vn.msi.com/Graphics-Card/GeForce-RTX-4060-VENTUS-2X-BLACK-8G-OC/Specification,Digital Maximum Resolution,VERIFIED_EXACT_VARIANT
+RTX4060VENTUS2XBLACK8GOC,max_simultaneous_displays,INTEGER,4,displays,https://vn.msi.com/Graphics-Card/GeForce-RTX-4060-VENTUS-2X-BLACK-8G-OC/Specification,Maximum Displays,VERIFIED_EXACT_VARIANT
+RTX4060VENTUS2XBLACK8GOC,directx_support,TEXT,"""DirectX 12 Ultimate""",,https://vn.msi.com/Graphics-Card/GeForce-RTX-4060-VENTUS-2X-BLACK-8G-OC/Specification,DirectX Version Support,VERIFIED_EXACT_VARIANT
+RTX4060VENTUS2XBLACK8GOC,opengl_version,TEXT,"""4.6""",,https://vn.msi.com/Graphics-Card/GeForce-RTX-4060-VENTUS-2X-BLACK-8G-OC/Specification,OpenGL Version Support,VERIFIED_EXACT_VARIANT
+RTX4060VENTUS2XBLACK8GOC,board_width_mm,DECIMAL,120.0,mm,https://vn.msi.com/Graphics-Card/GeForce-RTX-4060-VENTUS-2X-BLACK-8G-OC/Specification,Dimensions,VERIFIED_EXACT_VARIANT
+RTX4060VENTUS2XBLACK8GOC,board_height_mm,DECIMAL,41.0,mm,https://vn.msi.com/Graphics-Card/GeForce-RTX-4060-VENTUS-2X-BLACK-8G-OC/Specification,Dimensions,VERIFIED_EXACT_VARIANT
+GV-N4060WF2OC-8GD,max_display_resolution,TEXT,"""7680 x 4320""",,https://www.gigabyte.com/vn/Graphics-Card/GV-N4060WF2OC-8GD/sp,Digital max resolution,VERIFIED_EXACT_VARIANT
+GV-N4060WF2OC-8GD,max_simultaneous_displays,INTEGER,4,displays,https://www.gigabyte.com/vn/Graphics-Card/GV-N4060WF2OC-8GD/sp,Multi-view,VERIFIED_EXACT_VARIANT
+GV-N4060WF2OC-8GD,directx_support,TEXT,"""DirectX 12 Ultimate""",,https://www.gigabyte.com/vn/Graphics-Card/GV-N4060WF2OC-8GD/sp,DirectX,VERIFIED_EXACT_VARIANT
+GV-N4060WF2OC-8GD,opengl_version,TEXT,"""4.6""",,https://www.gigabyte.com/vn/Graphics-Card/GV-N4060WF2OC-8GD/sp,OpenGL,VERIFIED_EXACT_VARIANT
+GV-N4060WF2OC-8GD,board_width_mm,DECIMAL,120.0,mm,https://www.gigabyte.com/vn/Graphics-Card/GV-N4060WF2OC-8GD/sp,Card size,VERIFIED_EXACT_VARIANT
+GV-N4060WF2OC-8GD,board_height_mm,DECIMAL,41.0,mm,https://www.gigabyte.com/vn/Graphics-Card/GV-N4060WF2OC-8GD/sp,Card size,VERIFIED_EXACT_VARIANT
+GV-N4060WF2OC-8GD,included_accessories,JSON,"[""Quick guide""]",,https://www.gigabyte.com/vn/Graphics-Card/GV-N4060WF2OC-8GD/sp,Accessories,VERIFIED_EXACT_VARIANT
+ZT-D40600E-10M,max_display_resolution,TEXT,"""7680 x 4320""",,https://www.zotac.com/vn/product/graphics_card/zotac-gaming-geforce-rtx-4060-8gb-twin-edge,Connections / Max resolution,VERIFIED_EXACT_VARIANT
+ZT-D40600E-10M,max_simultaneous_displays,INTEGER,4,displays,https://www.zotac.com/vn/product/graphics_card/zotac-gaming-geforce-rtx-4060-8gb-twin-edge,Multi-display,VERIFIED_EXACT_VARIANT
+ZT-D40600E-10M,hdcp_version,TEXT,"""2.3""",,https://www.zotac.com/vn/product/graphics_card/zotac-gaming-geforce-rtx-4060-8gb-twin-edge,HDCP support,VERIFIED_EXACT_VARIANT
+ZT-D40600E-10M,directx_support,TEXT,"""DirectX 12 Ultimate""",,https://www.zotac.com/vn/product/graphics_card/zotac-gaming-geforce-rtx-4060-8gb-twin-edge,Software compatibility,VERIFIED_EXACT_VARIANT
+ZT-D40600E-10M,opengl_version,TEXT,"""4.6""",,https://www.zotac.com/vn/product/graphics_card/zotac-gaming-geforce-rtx-4060-8gb-twin-edge,Software compatibility,VERIFIED_EXACT_VARIANT
+ZT-D40600E-10M,vulkan_version,TEXT,"""1.3""",,https://www.zotac.com/vn/product/graphics_card/zotac-gaming-geforce-rtx-4060-8gb-twin-edge,Software compatibility,VERIFIED_EXACT_VARIANT
+ZT-D40600E-10M,board_width_mm,DECIMAL,122.7,mm,https://www.zotac.com/vn/product/graphics_card/zotac-gaming-geforce-rtx-4060-8gb-twin-edge,Dimensions,VERIFIED_EXACT_VARIANT
+ZT-D40600E-10M,board_height_mm,DECIMAL,43.1,mm,https://www.zotac.com/vn/product/graphics_card/zotac-gaming-geforce-rtx-4060-8gb-twin-edge,Dimensions,VERIFIED_EXACT_VARIANT
+DUAL-RTX4060TI-O8G,max_display_resolution,TEXT,"""7680 x 4320""",,https://www.asus.com/vn/motherboards-components/graphics-cards/dual/dual-rtx4060ti-o8g/techspec/,Digital Max Resolution,VERIFIED_EXACT_VARIANT
+DUAL-RTX4060TI-O8G,max_simultaneous_displays,INTEGER,4,displays,https://www.asus.com/vn/motherboards-components/graphics-cards/dual/dual-rtx4060ti-o8g/techspec/,Maximum Display Support,VERIFIED_EXACT_VARIANT
+DUAL-RTX4060TI-O8G,hdcp_version,TEXT,"""2.3""",,https://www.asus.com/vn/motherboards-components/graphics-cards/dual/dual-rtx4060ti-o8g/techspec/,HDCP Support,VERIFIED_EXACT_VARIANT
+DUAL-RTX4060TI-O8G,board_width_mm,DECIMAL,123.24,mm,https://www.asus.com/vn/motherboards-components/graphics-cards/dual/dual-rtx4060ti-o8g/techspec/,Dimensions,VERIFIED_EXACT_VARIANT
+DUAL-RTX4060TI-O8G,board_height_mm,DECIMAL,49.6,mm,https://www.asus.com/vn/motherboards-components/graphics-cards/dual/dual-rtx4060ti-o8g/techspec/,Dimensions,VERIFIED_EXACT_VARIANT
+DUAL-RTX4060TI-O8G,included_accessories,JSON,"[""1 x Collection Card"",""1 x Speedsetup Manual"",""1 x Thank you Card""]",,https://www.asus.com/vn/motherboards-components/graphics-cards/dual/dual-rtx4060ti-o8g/techspec/,Accessories,VERIFIED_EXACT_VARIANT
+RTX4060TIVENTUS2XBLACK8GOC,max_display_resolution,TEXT,"""7680 x 4320""",,https://vn.msi.com/Graphics-Card/GeForce-RTX-4060-Ti-VENTUS-2X-BLACK-8G-OC/Specification,Digital Maximum Resolution,VERIFIED_EXACT_VARIANT
+RTX4060TIVENTUS2XBLACK8GOC,max_simultaneous_displays,INTEGER,4,displays,https://vn.msi.com/Graphics-Card/GeForce-RTX-4060-Ti-VENTUS-2X-BLACK-8G-OC/Specification,Maximum Displays,VERIFIED_EXACT_VARIANT
+RTX4060TIVENTUS2XBLACK8GOC,opengl_version,TEXT,"""4.6""",,https://vn.msi.com/Graphics-Card/GeForce-RTX-4060-Ti-VENTUS-2X-BLACK-8G-OC/Specification,OpenGL Version Support,VERIFIED_EXACT_VARIANT
+GV-N406TEAGLE-OC-8GD,max_display_resolution,TEXT,"""7680 x 4320""",,https://www.gigabyte.com/vn/Graphics-Card/GV-N406TEAGLE-OC-8GD/sp,Digital max resolution,VERIFIED_EXACT_VARIANT
+GV-N406TEAGLE-OC-8GD,max_simultaneous_displays,INTEGER,4,displays,https://www.gigabyte.com/vn/Graphics-Card/GV-N406TEAGLE-OC-8GD/sp,Multi-view,VERIFIED_EXACT_VARIANT
+GV-N406TEAGLE-OC-8GD,directx_support,TEXT,"""DirectX 12 Ultimate""",,https://www.gigabyte.com/vn/Graphics-Card/GV-N406TEAGLE-OC-8GD/sp,DirectX,VERIFIED_EXACT_VARIANT
+GV-N406TEAGLE-OC-8GD,opengl_version,TEXT,"""4.6""",,https://www.gigabyte.com/vn/Graphics-Card/GV-N406TEAGLE-OC-8GD/sp,OpenGL,VERIFIED_EXACT_VARIANT
+GV-N406TEAGLE-OC-8GD,board_width_mm,DECIMAL,115.0,mm,https://www.gigabyte.com/vn/Graphics-Card/GV-N406TEAGLE-OC-8GD/sp,Card size,VERIFIED_EXACT_VARIANT
+GV-N406TEAGLE-OC-8GD,board_height_mm,DECIMAL,41.0,mm,https://www.gigabyte.com/vn/Graphics-Card/GV-N406TEAGLE-OC-8GD/sp,Card size,VERIFIED_EXACT_VARIANT
+GV-N406TEAGLE-OC-8GD,included_accessories,JSON,"[""Quick guide""]",,https://www.gigabyte.com/vn/Graphics-Card/GV-N406TEAGLE-OC-8GD/sp,Accessories,VERIFIED_EXACT_VARIANT
+DUAL-RTX4070S-O12G,max_display_resolution,TEXT,"""7680 x 4320""",,https://www.asus.com/vn/motherboards-components/graphics-cards/dual/dual-rtx4070s-o12g/techspec/,Digital Max Resolution,VERIFIED_EXACT_VARIANT
+DUAL-RTX4070S-O12G,max_simultaneous_displays,INTEGER,4,displays,https://www.asus.com/vn/motherboards-components/graphics-cards/dual/dual-rtx4070s-o12g/techspec/,Maximum Display Support,VERIFIED_EXACT_VARIANT
+DUAL-RTX4070S-O12G,hdcp_version,TEXT,"""2.3""",,https://www.asus.com/vn/motherboards-components/graphics-cards/dual/dual-rtx4070s-o12g/techspec/,HDCP Support,VERIFIED_EXACT_VARIANT
+DUAL-RTX4070S-O12G,board_width_mm,DECIMAL,134.0,mm,https://www.asus.com/vn/motherboards-components/graphics-cards/dual/dual-rtx4070s-o12g/techspec/,Dimensions,VERIFIED_EXACT_VARIANT
+DUAL-RTX4070S-O12G,board_height_mm,DECIMAL,51.0,mm,https://www.asus.com/vn/motherboards-components/graphics-cards/dual/dual-rtx4070s-o12g/techspec/,Dimensions,VERIFIED_EXACT_VARIANT
+DUAL-RTX4070S-O12G,included_accessories,JSON,"[""1 x Collection Card"",""1 x Speedsetup Manual"",""1 x Thank you Card"",""1 x Adapter cable (1 to 2)""]",,https://www.asus.com/vn/motherboards-components/graphics-cards/dual/dual-rtx4070s-o12g/techspec/,Accessories,VERIFIED_EXACT_VARIANT
+RTX4070SUPERVENTUS2X12GOC,max_display_resolution,TEXT,"""7680 x 4320""",,https://vn.msi.com/Graphics-Card/GeForce-RTX-4070-SUPER-12G-VENTUS-2X-OC/Specification,Digital Maximum Resolution,VERIFIED_EXACT_VARIANT
+RTX4070SUPERVENTUS2X12GOC,max_simultaneous_displays,INTEGER,4,displays,https://vn.msi.com/Graphics-Card/GeForce-RTX-4070-SUPER-12G-VENTUS-2X-OC/Specification,Maximum Displays,VERIFIED_EXACT_VARIANT
+RTX4070SUPERVENTUS2X12GOC,directx_support,TEXT,"""DirectX 12 Ultimate""",,https://vn.msi.com/Graphics-Card/GeForce-RTX-4070-SUPER-12G-VENTUS-2X-OC/Specification,DirectX Version Support,VERIFIED_EXACT_VARIANT
+RTX4070SUPERVENTUS2X12GOC,opengl_version,TEXT,"""4.6""",,https://vn.msi.com/Graphics-Card/GeForce-RTX-4070-SUPER-12G-VENTUS-2X-OC/Specification,OpenGL Version Support,VERIFIED_EXACT_VARIANT
+RTX4070SUPERVENTUS2X12GOC,board_width_mm,DECIMAL,125.0,mm,https://vn.msi.com/Graphics-Card/GeForce-RTX-4070-SUPER-12G-VENTUS-2X-OC/Specification,Dimensions,VERIFIED_EXACT_VARIANT
+RTX4070SUPERVENTUS2X12GOC,board_height_mm,DECIMAL,43.0,mm,https://vn.msi.com/Graphics-Card/GeForce-RTX-4070-SUPER-12G-VENTUS-2X-OC/Specification,Dimensions,VERIFIED_EXACT_VARIANT
+GV-N407SWF3OC-12GD,max_display_resolution,TEXT,"""7680 x 4320""",,https://www.gigabyte.com/Graphics-Card/GV-N407SWF3OC-12GD-rev-11/sp,Digital max resolution,VERIFIED_EXACT_VARIANT
+GV-N407SWF3OC-12GD,max_simultaneous_displays,INTEGER,4,displays,https://www.gigabyte.com/Graphics-Card/GV-N407SWF3OC-12GD-rev-11/sp,Multi-view,VERIFIED_EXACT_VARIANT
+GV-N407SWF3OC-12GD,directx_support,TEXT,"""DirectX 12 Ultimate""",,https://www.gigabyte.com/Graphics-Card/GV-N407SWF3OC-12GD-rev-11/sp,DirectX,VERIFIED_EXACT_VARIANT
+GV-N407SWF3OC-12GD,opengl_version,TEXT,"""4.6""",,https://www.gigabyte.com/Graphics-Card/GV-N407SWF3OC-12GD-rev-11/sp,OpenGL,VERIFIED_EXACT_VARIANT
+GV-N407SWF3OC-12GD,board_width_mm,DECIMAL,126.0,mm,https://www.gigabyte.com/Graphics-Card/GV-N407SWF3OC-12GD-rev-11/sp,Card size,VERIFIED_EXACT_VARIANT
+GV-N407SWF3OC-12GD,board_height_mm,DECIMAL,50.0,mm,https://www.gigabyte.com/Graphics-Card/GV-N407SWF3OC-12GD-rev-11/sp,Card size,VERIFIED_EXACT_VARIANT
+GV-N407SWF3OC-12GD,included_accessories,JSON,"[""Quick guide"",""One 16-pin to two 8-pin power adaptor""]",,https://www.gigabyte.com/Graphics-Card/GV-N407SWF3OC-12GD-rev-11/sp,Accessories,VERIFIED_EXACT_VARIANT
+11324-01-20G,max_display_resolution,TEXT,"""7680 x 4320""",,https://www.sapphiretech.com/en/consumer/pulse-radeon-rx-7600-8g-gddr6,Resolution,VERIFIED_EXACT_VARIANT
+11324-01-20G,max_simultaneous_displays,INTEGER,4,displays,https://www.sapphiretech.com/en/consumer/pulse-radeon-rx-7600-8g-gddr6,Displays,VERIFIED_EXACT_VARIANT
+11324-01-20G,directx_support,TEXT,"""DirectX 12 Ultimate""",,https://www.sapphiretech.com/en/consumer/pulse-radeon-rx-7600-8g-gddr6,AMD Features,VERIFIED_EXACT_VARIANT
+11324-01-20G,fan_count,INTEGER,2,fans,https://www.sapphiretech.com/en/consumer/pulse-radeon-rx-7600-8g-gddr6,Cooler Type,VERIFIED_EXACT_VARIANT
+11324-01-20G,board_width_mm,DECIMAL,107.1,mm,https://www.sapphiretech.com/en/consumer/pulse-radeon-rx-7600-8g-gddr6,Dimension,VERIFIED_EXACT_VARIANT
+11324-01-20G,board_height_mm,DECIMAL,44.07,mm,https://www.sapphiretech.com/en/consumer/pulse-radeon-rx-7600-8g-gddr6,Dimension,VERIFIED_EXACT_VARIANT
+11335-04-20G,max_display_resolution,TEXT,"""7680 x 4320""",,https://www.sapphiretech.com/en/consumer/pulse-radeon-rx-7700-xt-12g-gddr6,Resolution,VERIFIED_EXACT_VARIANT
+11335-04-20G,max_simultaneous_displays,INTEGER,4,displays,https://www.sapphiretech.com/en/consumer/pulse-radeon-rx-7700-xt-12g-gddr6,Displays,VERIFIED_EXACT_VARIANT
+11335-04-20G,directx_support,TEXT,"""DirectX 12 Ultimate""",,https://www.sapphiretech.com/en/consumer/pulse-radeon-rx-7700-xt-12g-gddr6,AMD Features,VERIFIED_EXACT_VARIANT
+11335-04-20G,fan_count,INTEGER,2,fans,https://www.sapphiretech.com/en/consumer/pulse-radeon-rx-7700-xt-12g-gddr6,Cooler Type,VERIFIED_EXACT_VARIANT
+11335-04-20G,board_width_mm,DECIMAL,128.75,mm,https://www.sapphiretech.com/en/consumer/pulse-radeon-rx-7700-xt-12g-gddr6,Dimension,VERIFIED_EXACT_VARIANT
+11335-04-20G,board_height_mm,DECIMAL,52.57,mm,https://www.sapphiretech.com/en/consumer/pulse-radeon-rx-7700-xt-12g-gddr6,Dimension,VERIFIED_EXACT_VARIANT
+RX7800XT-SL-16GO,max_display_resolution,TEXT,"""7680 x 4320""",,https://www.asrock.com/Graphics-Card/AMD/Radeon%20RX%207800%20XT%20Steel%20Legend%2016GB%20OC/index.asp,Resolution,VERIFIED_EXACT_VARIANT
+RX7800XT-SL-16GO,max_simultaneous_displays,INTEGER,4,displays,https://www.asrock.com/Graphics-Card/AMD/Radeon%20RX%207800%20XT%20Steel%20Legend%2016GB%20OC/index.asp,Multi-view,VERIFIED_EXACT_VARIANT
+RX7800XT-SL-16GO,directx_support,TEXT,"""DirectX 12 Ultimate""",,https://www.asrock.com/Graphics-Card/AMD/Radeon%20RX%207800%20XT%20Steel%20Legend%2016GB%20OC/index.asp,Key Specification,VERIFIED_EXACT_VARIANT
+RX7800XT-SL-16GO,opengl_version,TEXT,"""4.6""",,https://www.asrock.com/Graphics-Card/AMD/Radeon%20RX%207800%20XT%20Steel%20Legend%2016GB%20OC/index.asp,OpenGL,VERIFIED_EXACT_VARIANT
+RX7800XT-SL-16GO,fan_count,INTEGER,3,fans,https://www.asrock.com/Graphics-Card/AMD/Radeon%20RX%207800%20XT%20Steel%20Legend%2016GB%20OC/index.asp,Key Features,VERIFIED_EXACT_VARIANT
+RX7800XT-SL-16GO,board_width_mm,DECIMAL,131.0,mm,https://www.asrock.com/Graphics-Card/AMD/Radeon%20RX%207800%20XT%20Steel%20Legend%2016GB%20OC/index.asp,Dimensions,VERIFIED_EXACT_VARIANT
+RX7800XT-SL-16GO,board_height_mm,DECIMAL,56.0,mm,https://www.asrock.com/Graphics-Card/AMD/Radeon%20RX%207800%20XT%20Steel%20Legend%2016GB%20OC/index.asp,Dimensions,VERIFIED_EXACT_VARIANT
+11330-01-20G,max_display_resolution,TEXT,"""7680 x 4320""",,https://www.sapphiretech.com/en/consumer/nitro-radeon-rx-7800-xt-16g-gddr6,Resolution,VERIFIED_EXACT_VARIANT
+11330-01-20G,max_simultaneous_displays,INTEGER,4,displays,https://www.sapphiretech.com/en/consumer/nitro-radeon-rx-7800-xt-16g-gddr6,Displays,VERIFIED_EXACT_VARIANT
+11330-01-20G,directx_support,TEXT,"""DirectX 12 Ultimate""",,https://www.sapphiretech.com/en/consumer/nitro-radeon-rx-7800-xt-16g-gddr6,AMD Features,VERIFIED_EXACT_VARIANT
+11330-01-20G,fan_count,INTEGER,3,fans,https://www.sapphiretech.com/en/consumer/nitro-radeon-rx-7800-xt-16g-gddr6,Cooler Type,VERIFIED_EXACT_VARIANT
+11330-01-20G,board_width_mm,DECIMAL,134.85,mm,https://www.sapphiretech.com/en/consumer/nitro-radeon-rx-7800-xt-16g-gddr6,Dimension,VERIFIED_EXACT_VARIANT
+11330-01-20G,board_height_mm,DECIMAL,61.57,mm,https://www.sapphiretech.com/en/consumer/nitro-radeon-rx-7800-xt-16g-gddr6,Dimension,VERIFIED_EXACT_VARIANT

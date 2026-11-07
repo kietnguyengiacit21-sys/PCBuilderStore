@@ -263,8 +263,16 @@ function GalleryThumbnails({
 }
 
 export function ProductImageGallery({ product }: { product: CatalogProduct }) {
-  const images = product.images;
-  const [selectedIndex, setSelectedIndex] = useState(() => Math.max(0, images.findIndex((image) => image.isPrimary)));
+  const images = product.images.reduce<CatalogImage[]>((uniqueImages, image) => {
+    const existingIndex = uniqueImages.findIndex((item) => item.url === image.url);
+    if (existingIndex < 0) uniqueImages.push(image);
+    else if (image.isPrimary && !uniqueImages[existingIndex].isPrimary) uniqueImages[existingIndex] = image;
+    return uniqueImages;
+  }, []);
+  const [selectedIndex, setSelectedIndex] = useState(() => {
+    const primaryIndex = images.findIndex((image) => image.isPrimary);
+    return primaryIndex >= 0 ? primaryIndex : 0;
+  });
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const lightboxRef = useRef<HTMLDialogElement>(null);
   const mainImageButtonRef = useRef<HTMLButtonElement>(null);
@@ -319,15 +327,19 @@ export function ProductImageGallery({ product }: { product: CatalogProduct }) {
           type="button"
           className="v2-gallery-image-button"
           onClick={() => setLightboxOpen(true)}
-          aria-label={images.length ? `Phóng to ảnh ${selectedIndex + 1} trên ${images.length}` : `Minh họa ${product.productName}`}
+          aria-label={images.length > 1
+            ? `Phóng to ảnh ${selectedIndex + 1} trên ${images.length}`
+            : images.length === 1 ? `Phóng to ảnh sản phẩm ${product.productName}` : `Minh họa ${product.productName}`}
         >
           <ProductArtwork image={currentImage} productName={product.productName} productType={product.productType} />
         </button>
-        <IconButton className="v2-gallery-arrow is-previous" label="Ảnh trước" disabled={images.length < 2} onClick={showPrevious}><ChevronIcon direction="previous" /></IconButton>
-        <IconButton className="v2-gallery-arrow is-next" label="Ảnh tiếp theo" disabled={images.length < 2} onClick={showNext}><ChevronIcon direction="next" /></IconButton>
-        <span className="v2-gallery-count" aria-live="polite">{images.length ? `${selectedIndex + 1} / ${images.length}` : "Chưa có ảnh xác minh"}</span>
+        {images.length > 1 && <>
+          <IconButton className="v2-gallery-arrow is-previous" label="Ảnh trước" onClick={showPrevious}><ChevronIcon direction="previous" /></IconButton>
+          <IconButton className="v2-gallery-arrow is-next" label="Ảnh tiếp theo" onClick={showNext}><ChevronIcon direction="next" /></IconButton>
+          <span className="v2-gallery-count" aria-live="polite">{selectedIndex + 1} / {images.length}</span>
+        </>}
       </div>
-      <GalleryThumbnails images={images} selectedIndex={selectedIndex} product={product} onSelect={selectImage} />
+      {images.length > 1 && <GalleryThumbnails images={images} selectedIndex={selectedIndex} product={product} onSelect={selectImage} />}
       <dialog
         ref={lightboxRef}
         className="v2-gallery-lightbox"
@@ -345,15 +357,15 @@ export function ProductImageGallery({ product }: { product: CatalogProduct }) {
       >
         <div className="v2-lightbox-content">
           <div className="v2-lightbox-toolbar">
-            <span className="v2-mono">{images.length ? `${selectedIndex + 1} / ${images.length}` : "Chưa có ảnh xác minh"}</span>
+            <span className="v2-mono">{images.length > 1 ? `${selectedIndex + 1} / ${images.length}` : product.productName}</span>
             <IconButton className="v2-lightbox-close" label="Đóng thư viện ảnh" onClick={closeLightbox}><CloseIcon /></IconButton>
           </div>
           <div className="v2-lightbox-stage">
-            <IconButton label="Ảnh trước" disabled={images.length < 2} onClick={showPrevious}><ChevronIcon direction="previous" /></IconButton>
+            {images.length > 1 && <IconButton label="Ảnh trước" onClick={showPrevious}><ChevronIcon direction="previous" /></IconButton>}
             <ProductArtwork image={currentImage} productName={product.productName} productType={product.productType} />
-            <IconButton label="Ảnh tiếp theo" disabled={images.length < 2} onClick={showNext}><ChevronIcon direction="next" /></IconButton>
+            {images.length > 1 && <IconButton label="Ảnh tiếp theo" onClick={showNext}><ChevronIcon direction="next" /></IconButton>}
           </div>
-          <GalleryThumbnails images={images} selectedIndex={selectedIndex} product={product} onSelect={selectImage} />
+          {images.length > 1 && <GalleryThumbnails images={images} selectedIndex={selectedIndex} product={product} onSelect={selectImage} />}
         </div>
       </dialog>
     </section>

@@ -5,6 +5,7 @@ import com.pc_builder_store.catalog.dto.CatalogAttributeDefinitionsResponse;
 import com.pc_builder_store.catalog.dto.CatalogProduct;
 import com.pc_builder_store.catalog.dto.CatalogProductPage;
 import com.pc_builder_store.catalog.dto.CatalogProductResponse;
+import com.pc_builder_store.catalog.dto.PublicCatalogAttributeDefinitionsResponse;
 import com.pc_builder_store.catalog.dto.UpdateGpuSpecificationsRequest;
 import com.pc_builder_store.catalog.service.CatalogService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -33,8 +34,19 @@ public class CatalogController {
     }
 
     @GetMapping("/attribute-definitions")
-    public CatalogAttributeDefinitionsResponse attributeDefinitions() {
-        return new CatalogAttributeDefinitionsResponse(catalogService.getAttributeDefinitions());
+    public PublicCatalogAttributeDefinitionsResponse attributeDefinitions() {
+        return new PublicCatalogAttributeDefinitionsResponse(catalogService.getAttributeDefinitions());
+    }
+
+    @GetMapping("/admin/attribute-definitions")
+    public CatalogAttributeDefinitionsResponse adminAttributeDefinitions() {
+        return new CatalogAttributeDefinitionsResponse(catalogService.getAdminAttributeDefinitions());
+    }
+
+    @GetMapping("/admin/products/{modelCode}")
+    public CatalogProductResponse adminProduct(@PathVariable String modelCode) {
+        CatalogProduct product = catalogService.getAdminProduct(modelCode);
+        return new CatalogProductResponse(product, catalogService.demoNotice());
     }
 
     @GetMapping("/products")

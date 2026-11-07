@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { fetchCatalogAttributeDefinitions } from "../catalog-api";
-import type { CatalogAttributeDefinition } from "../catalog-api";
+import type { PublicCatalogAttributeDefinition } from "../catalog-api";
 
 export function useCatalogAttributeDefinitions() {
-  const [definitions, setDefinitions] = useState<CatalogAttributeDefinition[]>([]);
+  const [definitions, setDefinitions] = useState<PublicCatalogAttributeDefinition[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>();
 

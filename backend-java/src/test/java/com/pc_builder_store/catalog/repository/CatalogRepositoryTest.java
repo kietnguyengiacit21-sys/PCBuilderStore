@@ -10,7 +10,9 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.pc_builder_store.catalog.CatalogInternalLedger;
 import com.pc_builder_store.catalog.dto.CatalogAttributeDefinition;
+import com.pc_builder_store.catalog.dto.CatalogFacets;
 import com.pc_builder_store.catalog.dto.CatalogProduct;
 import com.pc_builder_store.catalog.dto.CatalogQuery;
 import com.pc_builder_store.catalog.dto.CatalogVerificationStatus;
@@ -20,9 +22,11 @@ import com.pc_builder_store.catalog.dto.CatalogQuery.Sort;
 import com.pc_builder_store.catalog.exception.InvalidCatalogQueryException;
 import java.math.BigDecimal;
 import java.sql.ResultSet;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
@@ -33,24 +37,31 @@ class CatalogRepositoryTest {
     private final NamedParameterJdbcTemplate jdbcTemplate =
             mock(NamedParameterJdbcTemplate.class);
     private final CatalogRepository repository =
-            new CatalogRepository(jdbcTemplate, JsonMapper.builder().build());
+            new CatalogRepository(
+                    jdbcTemplate,
+                    JsonMapper.builder().build(),
+                    new CatalogInternalLedger(new ClassPathResource(
+                            "catalog-internal/catalog-attribute-internal-ledger.csv")));
 
     @Test
     void buildsParameterizedSearchAndAttributeFilters() {
         CatalogQuery query = new CatalogQuery(
                 2, 15, "unsafe%' OR TRUE --", "GPU", null, "Acme",
                 null, null, Sort.NAME, Direction.DESC,
-                List.of(new AttributeFilter("memory_type", "DDR5")));
+                List.of(new AttributeFilter("vram_gb", "8")));
 
         CatalogRepository.SqlQuery where = repository.productWhere(query);
 
         assertTrue(where.sql().contains(":search"));
         assertTrue(where.sql().contains(":type"));
         assertTrue(where.sql().contains(":brand"));
+        assertTrue(where.sql().contains("p.\"model_code\" IN (:publicModelCodes0)"));
         assertTrue(where.sql().contains("CAST(:attributeValue0 AS jsonb)"));
         assertFalse(where.sql().contains("unsafe"));
         assertEquals("%unsafe%' OR TRUE --%", where.parameters().getValue("search"));
-        assertEquals("\"DDR5\"", where.parameters().getValue("attributeValue0"));
+        assertEquals("8", where.parameters().getValue("attributeValue0"));
+        assertTrue(((List<?>) where.parameters().getValue("publicModelCodes0"))
+                .contains("DUAL-RTX4060-O8G"));
     }
 
     @Test
@@ -75,7 +86,7 @@ class CatalogRepositoryTest {
         CatalogRepository.SqlQuery where = repository.productWhere(new CatalogQuery(
                 1, 20, null, null, null, null, null, null,
                 Sort.NAME, Direction.ASC,
-                List.of(new AttributeFilter("description", "   "))));
+                List.of(new AttributeFilter("vram_gb", "   "))));
 
         assertEquals("\"   \"", where.parameters().getValue("attributeValue0"));
     }
@@ -132,13 +143,48 @@ class CatalogRepositoryTest {
     void rejectsAttributeCodesNotMarkedAsFilterable() {
         when(jdbcTemplate.queryForList(
                 anyString(), org.mockito.ArgumentMatchers.<Map<String, ?>>any(), eq(String.class)))
-                .thenReturn(List.of("supported"));
+                .thenReturn(List.of());
 
         assertThrows(InvalidCatalogQueryException.class, () -> repository.findProducts(
                 new CatalogQuery(
-                        1, 20, null, null, null, null, null, null,
+                        1, 20, null, "GPU", null, null, null, null,
                         Sort.NAME, Direction.ASC,
-                        List.of(new AttributeFilter("unsupported", "value")))));
+                        List.of(new AttributeFilter("vram_gb", "value")))));
+    }
+
+    @Test
+    void includesOnlyLedgerAllowlistedValuesInAttributeFacets() throws Exception {
+        when(jdbcTemplate.query(
+                        anyString(),
+                        org.mockito.ArgumentMatchers.<Map<String, ?>>any(),
+                        any(RowMapper.class)))
+                .thenAnswer(invocation -> {
+                    String sql = invocation.getArgument(0);
+                    if (!sql.contains("AS \"valueJson\"")) {
+                        return List.of();
+                    }
+                    RowMapper<?> rowMapper = invocation.getArgument(2);
+                    List<Object> rows = new ArrayList<>();
+                    rows.add(rowMapper.mapRow(facetRow(
+                            "GPU", "DUAL-RTX4060-O8G", "gpu_chip", "GPU Chip",
+                            "\"NVIDIA GeForce RTX 4060\""), 0));
+                    rows.add(rowMapper.mapRow(facetRow(
+                            "GPU", "DUAL-RTX4060-O8G", "architecture", "Architecture",
+                            "\"Ada Lovelace\""), 1));
+                    rows.add(rowMapper.mapRow(facetRow(
+                            "GPU", "DUAL-RTX4060-O8G", "unlisted_attribute", "Unlisted",
+                            "\"must not appear\""), 2));
+                    return rows;
+                });
+
+        CatalogFacets facets = repository.getFacets();
+
+        assertEquals(1, facets.attributes().size());
+        assertEquals("gpu_chip", facets.attributes().getFirst().code());
+        assertEquals(
+                List.of(new com.pc_builder_store.catalog.dto.CatalogAttributeFacet.Value(
+                        "NVIDIA GeForce RTX 4060", "\"NVIDIA GeForce RTX 4060\"")),
+                facets.attributes().getFirst().values());
     }
 
     @Test
@@ -244,5 +290,20 @@ class CatalogRepositoryTest {
             index += match.length();
         }
         return count;
+    }
+
+    private ResultSet facetRow(
+            String productType,
+            String modelCode,
+            String code,
+            String label,
+            String valueJson) throws Exception {
+        ResultSet row = mock(ResultSet.class);
+        when(row.getString("productType")).thenReturn(productType);
+        when(row.getString("modelCode")).thenReturn(modelCode);
+        when(row.getString("code")).thenReturn(code);
+        when(row.getString("label")).thenReturn(label);
+        when(row.getString("valueJson")).thenReturn(valueJson);
+        return row;
     }
 }

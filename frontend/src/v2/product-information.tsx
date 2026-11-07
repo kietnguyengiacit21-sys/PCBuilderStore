@@ -15,6 +15,14 @@ import {
   specificationGroupFor,
   specificationHighlightPriority,
 } from "./specification-metadata";
+import {
+  formatSystemDimensions,
+  parseJsonAttributeValue,
+  parsePCConfiguration,
+  pcComponentTypeLabel,
+  pcConfigurationSummaryEntries,
+  pcConfigurationStatusLabel,
+} from "./pc-configuration";
 
 export function formatWarranty(months: number | null | undefined): string | null {
   if (typeof months !== "number" || !Number.isSafeInteger(months) || months <= 0) return null;
@@ -66,9 +74,18 @@ export function formatSpecificationValue(
   definition?: CatalogAttributeDefinition,
 ): string {
   if (value === null || value === undefined || value === "") return "—";
-  if (typeof value === "object" && !Array.isArray(value)
+  if (definition?.dataType === "JSON") {
+    const parsed = parseJsonAttributeValue(value);
+    if (!parsed.valid) return "Dữ liệu JSON không hợp lệ";
+    value = parsed.value;
+  }
+  if (value === null || value === undefined || value === "") return "—";
+  if (typeof value === "object" && value !== null && !Array.isArray(value)
       && "status" in value && value.status === "NOT_APPLICABLE") {
     return "Không áp dụng";
+  }
+  if (definition?.code === "system_dimensions_mm") {
+    return formatSystemDimensions(value) ?? "Dữ liệu kích thước không hợp lệ";
   }
   if (definition?.dataType === "BOOLEAN" && typeof value === "boolean") {
     return value ? "Có" : "Không";
@@ -80,26 +97,36 @@ export function formatSpecificationValue(
   if (Array.isArray(value)) {
     return value.map((item) => formatSpecificationValue(item)).join(", ");
   }
-  if (typeof value === "object") return JSON.stringify(value);
+  if (typeof value === "object" && value !== null) {
+    return Object.entries(value)
+      .filter(([, nested]) => nested !== null && nested !== undefined && nested !== "")
+      .map(([key, nested]) => `${humanizeCode(key)}: ${formatSpecificationValue(nested)}`)
+      .join(" · ");
+  }
   return String(value);
 }
 
 function SpecificationValue({
   value,
   definition,
-  productType,
 }: {
   value: unknown;
   definition?: CatalogAttributeDefinition;
-  productType: string;
 }) {
+  const normalizedValue = definition?.dataType === "JSON"
+    ? parseJsonAttributeValue(value)
+    : { valid: true, value };
+  if (!normalizedValue.valid) return <span>Dữ liệu JSON không hợp lệ</span>;
+  value = normalizedValue.value;
   if (typeof value === "object" && value !== null && !Array.isArray(value)
       && "status" in value && value.status === "NOT_APPLICABLE") {
     return <span className="v2-spec-not-applicable">Không áp dụng</span>;
   }
+  if (definition?.code === "system_dimensions_mm") {
+    return formatSystemDimensions(value) ?? <span>Dữ liệu kích thước không hợp lệ</span>;
+  }
   if (!Array.isArray(value)) return formatSpecificationValue(value, definition);
   return <div className="v2-spec-array-value">
-    {productType === "PC" && <span className="v2-muted">Danh sách cấu hình được lưu; vai trò từng mục chưa được xác định trong dữ liệu.</span>}
     <ul>{value.map((item, index) => <li key={`${index}:${String(item)}`}>{formatStructuredListItem(item)}</li>)}</ul>
   </div>;
 }
@@ -341,6 +368,7 @@ export function TechnicalSpecifications({
   definitions,
   verificationMetadata,
   showEnglishLabels = true,
+  showInternalMetadata = true,
 }: {
   productType: string;
   productTypeName: string;
@@ -348,30 +376,37 @@ export function TechnicalSpecifications({
   definitions: CatalogAttributeDefinition[];
   verificationMetadata?: Record<string, CatalogAttributeVerification>;
   showEnglishLabels?: boolean;
+  showInternalMetadata?: boolean;
 }) {
-  const applicable = orderedSpecificationDefinitions(productType, definitions, specifications);
+  const isPCConfigurationField = (code: string) => productType === "PC"
+    && ["configuration_items", "configuration_summary", "bom_status"].includes(code);
+  const applicable = orderedSpecificationDefinitions(productType, definitions, specifications)
+    .filter((definition) => !isPCConfigurationField(definition.code));
   const knownCodes = new Set(applicable.map((definition) => definition.code));
   const additionalCodes = Object.keys(specifications)
-    .filter((code) => !knownCodes.has(code))
+    .filter((code) => !knownCodes.has(code) && !isPCConfigurationField(code))
     .sort((left, right) => left.localeCompare(right));
-  const rows = [
+  const allRows = [
     ...applicable.map((definition) => ({
       code: definition.code,
       definition,
       value: specifications[definition.code],
       present: hasValue(specifications, definition.code),
-      verification: verificationFor(
-        verificationMetadata, definition.code, hasValue(specifications, definition.code),
-      ),
+      verification: showInternalMetadata
+        ? verificationFor(verificationMetadata, definition.code, hasValue(specifications, definition.code))
+        : undefined,
     })),
     ...additionalCodes.map((code) => ({
       code,
       definition: undefined,
       value: specifications[code],
       present: hasValue(specifications, code),
-      verification: verificationFor(verificationMetadata, code, hasValue(specifications, code)),
+      verification: showInternalMetadata
+        ? verificationFor(verificationMetadata, code, hasValue(specifications, code))
+        : undefined,
     })),
   ];
+  const rows = showInternalMetadata ? allRows : allRows.filter((row) => row.present);
 
   if (rows.length === 0) {
     return <p>Chưa có thông số kỹ thuật được cung cấp cho model này.</p>;
@@ -388,38 +423,40 @@ export function TechnicalSpecifications({
   const orderedGroups = [...groups.values()].sort((left, right) =>
     (groupOrder.get(left.group.id) ?? left.group.order) - (groupOrder.get(right.group.id) ?? right.group.order));
 
-  return <div className="v2-technical-groups">
-    <p className="v2-spec-dictionary-note">
-      {productTypeName || productType} · Trạng thái xác minh được hiển thị riêng cho từng giá trị; trường thiếu được ghi là “Chưa có dữ liệu”.
-      Các thông số không tự xác nhận tính tương thích hay tính năng.
-      {productType === "GPU" && " Thông số GPU silicon và bo mạch là phạm vi khác nhau; không sao chép giá trị giữa hãng hoặc biến thể nếu chưa xác minh đúng mã model."}
-    </p>
+  return <div className={`v2-technical-groups${showInternalMetadata ? "" : " is-customer-view"}`}>
+    {showInternalMetadata
+      ? <p className="v2-spec-dictionary-note">
+        {productTypeName || productType} · Trạng thái xác minh được hiển thị riêng cho từng giá trị; trường thiếu được ghi là “Chưa có dữ liệu”.
+        Các thông số không tự xác nhận tính tương thích hay tính năng.
+        {productType === "GPU" && " Thông số GPU silicon và bo mạch có phạm vi khác nhau; không suy rộng giữa hãng hoặc model."}
+      </p>
+      : <p className="v2-spec-customer-note">Thông số kỹ thuật được trình bày theo nhóm để bạn dễ tham khảo.</p>}
     {orderedGroups.map(({ group, rows: groupRows }) => {
       const populated = groupRows.filter((row) => row.present).length;
       return <details className="v2-technical-group" key={group.id} open>
         <summary className="v2-technical-group-header">
           <h3>{group.label}</h3>
-          <span>{populated}/{groupRows.length} trường có dữ liệu</span>
+          {showInternalMetadata && <span>{populated}/{groupRows.length} trường có dữ liệu</span>}
         </summary>
         <dl className="v2-spec-grid">
           {groupRows.map(({ code, definition, value, present, verification }) => (
             <div key={code}>
               <dt>{attributeLabel(definitions, productType, code)}
-                {showEnglishLabels && definition && <small className="v2-spec-english-label">{attributeEnglishLabel(definitions, productType, code)}</small>}
-                {definition && <small className="v2-spec-policy">{{
+                {showInternalMetadata && showEnglishLabels && definition && <small className="v2-spec-english-label">{attributeEnglishLabel(definitions, productType, code)}</small>}
+                {showInternalMetadata && definition && <small className="v2-spec-policy">{{
                   required: "Mức độ: Bắt buộc",
                   conditional: "Mức độ: Theo loại",
                   optional: "Mức độ: Tùy chọn",
                 }[specificationDisplayPolicy(productType, definition)]}</small>}
-                {definition?.specificationScope && <small className="v2-spec-policy">
+                {showInternalMetadata && definition?.specificationScope && <small className="v2-spec-policy">
                   {definition.specificationScope === "GPU_SILICON" ? "Phạm vi: chip GPU" : "Phạm vi: biến thể bo mạch"}
                 </small>}
               </dt>
               <dd>
                 {present
-                  ? <SpecificationValue value={value} definition={definition} productType={productType} />
+                  ? <SpecificationValue value={value} definition={definition} />
                   : <span className="v2-spec-missing">Chưa có dữ liệu</span>}
-                <VerificationMetadataDisplay metadata={verification} />
+                {showInternalMetadata && verification && <VerificationMetadataDisplay metadata={verification} />}
               </dd>
             </div>
           ))}
@@ -434,24 +471,29 @@ export function SpecificationComparison({
   definitions,
   hideIdentical,
   showEnglishLabels = true,
+  showInternalMetadata = true,
 }: {
   products: CatalogProduct[];
   definitions: CatalogAttributeDefinition[];
   hideIdentical: boolean;
   showEnglishLabels?: boolean;
+  showInternalMetadata?: boolean;
 }) {
   if (!products.length || products.some((product) => product.productType !== products[0].productType)) {
     return null;
   }
   const productType = products[0].productType;
+  const isPCConfigurationField = (code: string) => productType === "PC"
+    && ["configuration_items", "configuration_summary", "bom_status"].includes(code);
   const applicableCodes = new Set(products.flatMap((product) =>
     orderedSpecificationDefinitions(productType, definitions, product.specifications)
-      .map((definition) => definition.code)));
+      .map((definition) => definition.code)
+      .filter((code) => !isPCConfigurationField(code))));
   const defined = orderedSpecificationDefinitions(productType, definitions)
-    .filter((definition) => applicableCodes.has(definition.code));
+    .filter((definition) => applicableCodes.has(definition.code) && !isPCConfigurationField(definition.code));
   const knownCodes = new Set(defined.map((definition) => definition.code));
   const extraCodes = [...new Set(products.flatMap((product) => Object.keys(product.specifications)))]
-    .filter((code) => !knownCodes.has(code))
+    .filter((code) => !knownCodes.has(code) && !isPCConfigurationField(code))
     .sort((left, right) => left.localeCompare(right));
   const rows = [
     ...defined.map((definition) => ({ code: definition.code, definition })),
@@ -472,27 +514,29 @@ export function SpecificationComparison({
   );
   const comparisonKey = (product: CatalogProduct, code: string, definition?: CatalogAttributeDefinition) => JSON.stringify([
     valueFor(product, code, definition),
-    verificationFor(product.verificationMetadata, code, hasValue(product.specifications, code)),
+    showInternalMetadata
+      ? verificationFor(product.verificationMetadata, code, hasValue(product.specifications, code))
+      : null,
   ]);
   const presentCount = (product: CatalogProduct) => rows.filter((row) => hasValue(product.specifications, row.code)).length;
 
-  return <section className="v2-spec-comparison">
+  return <section className={`v2-spec-comparison${showInternalMetadata ? "" : " is-customer-view"}`}>
     <div className="v2-spec-comparison-heading">
       <div>
         <h2>So sánh thông số kỹ thuật</h2>
-        <p>Số trường có dữ liệu được tính trên từ điển hiện tại, không phải đánh giá mức độ đầy đủ tổng thể.</p>
+        {showInternalMetadata && <p>Số trường có dữ liệu được tính trên từ điển hiện tại, không phải đánh giá mức độ đầy đủ tổng thể.</p>}
       </div>
-      <div className="v2-spec-coverage">
+      {showInternalMetadata && <div className="v2-spec-coverage">
         {products.map((product) => <span key={product.modelCode}>
           <span className="v2-mono">{product.modelCode}</span>
           <strong>{presentCount(product)}/{rows.length} trường hiện có dữ liệu</strong>
         </span>)}
-      </div>
+      </div>}
     </div>
-    <p className="v2-spec-dictionary-note">
+    {showInternalMetadata && <p className="v2-spec-dictionary-note">
       Trạng thái xác minh được hiển thị riêng cho từng giá trị; không dùng bảng này làm kết luận tương thích.
       {productType === "GPU" && " Chip GPU và biến thể bo mạch có phạm vi thông số khác nhau; không suy rộng giữa hãng hoặc mã model."}
-    </p>
+    </p>}
     {groups.map(({ group, rows: groupRows }) => {
       const visibleRows = groupRows.filter(({ code, definition }) => {
         if (!hideIdentical) return true;
@@ -502,7 +546,7 @@ export function SpecificationComparison({
       return <details className="v2-compare-spec-group" key={group.id} open>
         <summary>
           <strong>{group.label}</strong>
-          <span>{visibleRows.length}{hideIdentical ? `/${groupRows.length}` : ""} trường</span>
+          {showInternalMetadata && <span>{visibleRows.length}{hideIdentical ? `/${groupRows.length}` : ""} trường</span>}
         </summary>
         {visibleRows.length ? <div className="v2-table-wrap">
           <table className="v2-table v2-compare-spec-table">
@@ -514,11 +558,11 @@ export function SpecificationComparison({
               const differs = new Set(values).size > 1;
               return <tr className={differs ? "v2-diff-row" : ""} key={code}>
                 <th scope="row">{attributeLabel(definitions, productType, code)}
-                  {showEnglishLabels && definition && <small className="v2-spec-english-label">{attributeEnglishLabel(definitions, productType, code)}</small>}
-                  {definition?.specificationScope && <small className="v2-spec-policy">
+                  {showInternalMetadata && showEnglishLabels && definition && <small className="v2-spec-english-label">{attributeEnglishLabel(definitions, productType, code)}</small>}
+                  {showInternalMetadata && definition?.specificationScope && <small className="v2-spec-policy">
                     {definition.specificationScope === "GPU_SILICON" ? "Phạm vi: chip GPU" : "Phạm vi: biến thể bo mạch"}
                   </small>}
-                  {definition && <small className="v2-spec-policy">{{
+                  {showInternalMetadata && definition && <small className="v2-spec-policy">{{
                     required: "Mức độ: Bắt buộc",
                     conditional: "Mức độ: Theo loại",
                     optional: "Mức độ: Tùy chọn",
@@ -526,13 +570,13 @@ export function SpecificationComparison({
                 </th>
                 {products.map((product) => <td key={product.modelCode}>
                   {hasValue(product.specifications, code)
-                    ? <SpecificationValue value={product.specifications[code]} definition={definition} productType={productType} />
+                    ? <SpecificationValue value={product.specifications[code]} definition={definition} />
                     : "Chưa có dữ liệu"}
-                  <VerificationMetadataDisplay metadata={verificationFor(
+                  {showInternalMetadata && <VerificationMetadataDisplay metadata={verificationFor(
                       product.verificationMetadata,
                     code,
                     hasValue(product.specifications, code),
-                  )} />
+                  )} />}
                 </td>)}
               </tr>;
             })}</tbody>
@@ -549,33 +593,10 @@ interface StructuredConfigurationComponent {
   productName?: string;
 }
 
-const componentTypeOrder = [
-  "CPU", "GPU", "MOTHERBOARD", "RAM", "STORAGE", "PSU", "COOLER", "CASE", "ACCESSORY", "OTHER",
-];
+const componentTypeOrder = ["CPU", "GPU", "MOTHERBOARD", "RAM", "STORAGE", "PSU", "COOLER", "CASE", "ACCESSORY", "OTHER"];
 
 function structuredConfiguration(value: unknown): StructuredConfigurationComponent[] | undefined {
-  if (!Array.isArray(value) || value.length === 0) return undefined;
-  const parsed: StructuredConfigurationComponent[] = [];
-  for (const component of value) {
-    if (typeof component !== "object" || component === null || Array.isArray(component)) return undefined;
-    const record = component as Record<string, unknown>;
-    const componentType = record.component_type;
-    const modelCode = record.model_code;
-    const productName = record.product_name;
-    if (typeof componentType !== "string"
-        || !componentTypeOrder.includes(componentType.toUpperCase())
-        || typeof modelCode !== "string"
-        || !modelCode.trim()
-        || (productName !== undefined && typeof productName !== "string")) {
-      return undefined;
-    }
-    parsed.push({
-      componentType: componentType.toUpperCase(),
-      modelCode: modelCode.trim(),
-      ...(typeof productName === "string" && productName.trim() ? { productName: productName.trim() } : {}),
-    });
-  }
-  return parsed;
+  return parsePCConfiguration(value);
 }
 
 export function PCConfigurationComparison({ products }: { products: CatalogProduct[] }) {
@@ -605,7 +626,7 @@ export function PCConfigurationComparison({ products }: { products: CatalogProdu
           const normalized = values.map((value) => value?.join("\n") ?? "Chưa có cấu hình thành phần có định danh");
           const differs = new Set(normalized).size > 1;
           return <tr className={differs ? "v2-diff-row" : ""} key={componentType}>
-            <th scope="row">{componentType}</th>
+            <th scope="row">{pcComponentTypeLabel(componentType)}</th>
             {values.map((value, index) => <td key={products[index].modelCode}>
               {value?.length ? <ul>{value.map((item) => <li className="v2-mono" key={item}>{item}</li>)}</ul> : "Chưa có cấu hình thành phần có định danh"}
             </td>)}
@@ -613,6 +634,67 @@ export function PCConfigurationComparison({ products }: { products: CatalogProdu
         })}</tbody>
       </table>
     </div>
+  </section>;
+}
+
+export function PCConfigurationSummary({
+  specifications,
+  limit = 4,
+}: {
+  specifications: Record<string, unknown>;
+  limit?: number;
+}) {
+  const entries = pcConfigurationSummaryEntries(
+    specifications.configuration_items,
+    specifications.configuration_summary,
+  );
+  if (entries.length === 0) return null;
+  const visibleEntries = entries.slice(0, limit);
+  const status = pcConfigurationStatusLabel(specifications.bom_status);
+  return <section className="v2-pc-configuration-summary" aria-label="Tóm tắt cấu hình linh kiện">
+    <div className="v2-pc-configuration-summary-heading">
+      <strong>Cấu hình linh kiện</strong>
+      {status && <span>{status}</span>}
+    </div>
+    <ul>{visibleEntries.map((entry, index) => <li key={`${index}:${entry}`}>{entry}</li>)}</ul>
+    {entries.length > visibleEntries.length && <span className="v2-pc-configuration-more">
+      +{entries.length - visibleEntries.length} linh kiện
+    </span>}
+  </section>;
+}
+
+export function PCConfigurationDetails({
+  specifications,
+}: {
+  specifications: Record<string, unknown>;
+}) {
+  const components = parsePCConfiguration(specifications.configuration_items);
+  const status = pcConfigurationStatusLabel(specifications.bom_status);
+  return <section className="v2-pc-configuration-details" aria-labelledby="pc-configuration-title">
+    <div className="v2-pc-configuration-details-heading">
+      <div>
+        <p className="v2-eyebrow">Thông tin được ghi nhận</p>
+        <h2 id="pc-configuration-title">Cấu hình linh kiện</h2>
+      </div>
+      {status && <span className="v2-pc-configuration-status">{status}</span>}
+    </div>
+    <p className="v2-pc-configuration-note">
+      Danh sách thành phần theo thứ tự dữ liệu catalog; chưa phải kết quả kiểm tra tương thích.
+    </p>
+    {components?.length ? <div className="v2-table-wrap">
+      <table className="v2-table v2-pc-configuration-table">
+        <thead><tr>
+          <th scope="col">Loại linh kiện</th>
+          <th scope="col">Tên sản phẩm</th>
+          <th scope="col">Mã model</th>
+        </tr></thead>
+        <tbody>{components.map((component, index) => <tr key={`${index}:${component.componentType}:${component.modelCode}`}>
+          <td>{pcComponentTypeLabel(component.componentType)}</td>
+          <td>{component.productName ?? "Chưa có tên sản phẩm"}</td>
+          <td className="v2-mono">{component.modelCode}</td>
+        </tr>)}</tbody>
+      </table>
+    </div> : <p className="v2-pc-configuration-empty">Chưa có danh sách linh kiện có cấu trúc.</p>}
   </section>;
 }
 
@@ -627,7 +709,9 @@ export function SpecificationHighlights({
   definitions: CatalogAttributeDefinition[];
   limit?: number;
 }) {
-  const priorities = specificationHighlightPriority(productType);
+  const priorities = specificationHighlightPriority(productType)
+    .filter((code) => productType !== "PC"
+      || !["configuration_items", "configuration_summary", "bom_status"].includes(code));
   const entries = priorities
     .filter((code) => hasValue(specifications, code))
     .map((code) => [code, specifications[code]] as const)

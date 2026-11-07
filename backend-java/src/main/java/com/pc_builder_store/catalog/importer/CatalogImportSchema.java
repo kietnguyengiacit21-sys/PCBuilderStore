@@ -22,10 +22,12 @@ final class CatalogImportSchema {
                     "stock_quantity", "reserved_quantity", "warranty_months", "offer_status"),
             "product_attribute_definitions", Set.of(
                     "attribute_definition_id", "product_type_id", "attribute_code", "attribute_name",
-                    "data_type", "unit", "is_filterable", "is_build_critical"),
+                    "data_type", "unit", "is_filterable", "is_build_critical", "validation_json"),
             "product_attribute_values", Set.of(
                     "product_id", "attribute_definition_id", "value_text", "value_decimal",
-                    "value_integer", "value_boolean", "value_json"));
+                    "value_integer", "value_boolean", "value_json"),
+            "product_images", Set.of(
+                    "image_id", "product_id", "image_url", "alt_text", "is_primary", "sort_order"));
     private static final Set<String> REQUIRED_UNIQUE_CONSTRAINTS = Set.of(
             "uq_product_types_code",
             "uq_categories_code",
@@ -52,12 +54,7 @@ final class CatalogImportSchema {
                         + "WHERE table_schema = 'public'",
                 (resultSet, rowNumber) -> resultSet.getString("table_name") + "."
                         + resultSet.getString("column_name")));
-        List<String> missingColumns = REQUIRED_COLUMNS.entrySet().stream()
-                .flatMap(entry -> entry.getValue().stream()
-                        .filter(column -> !actualColumns.contains(entry.getKey() + "." + column))
-                        .map(column -> entry.getKey() + "." + column))
-                .sorted()
-                .toList();
+        List<String> missingColumns = missingRequiredColumns(actualColumns);
         if (!missingColumns.isEmpty()) {
             throw new IllegalStateException("Catalog schema is missing required columns: " + missingColumns + ".");
         }
@@ -81,5 +78,14 @@ final class CatalogImportSchema {
         if (!Boolean.TRUE.equals(attributeValuesPrimaryKeyExists)) {
             throw new IllegalStateException("Catalog schema is missing the product attribute values primary key.");
         }
+    }
+
+    static List<String> missingRequiredColumns(Set<String> actualColumns) {
+        return REQUIRED_COLUMNS.entrySet().stream()
+                .flatMap(entry -> entry.getValue().stream()
+                        .filter(column -> !actualColumns.contains(entry.getKey() + "." + column))
+                        .map(column -> entry.getKey() + "." + column))
+                .sorted()
+                .toList();
     }
 }

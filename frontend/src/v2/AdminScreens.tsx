@@ -2,13 +2,17 @@ import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { Link } from "react-router-dom";
 import {
-  fetchCatalogAttributeDefinitions,
+  fetchAdminCatalogAttributeDefinitions,
   fetchCatalogFacets,
-  fetchCatalogProduct,
+  fetchAdminCatalogProduct,
   fetchCatalogProducts,
   updateGpuCatalogSpecifications,
 } from "../catalog-api";
-import type { CatalogAttributeDefinition, CatalogFacets, CatalogProduct } from "../catalog-api";
+import type {
+  AdminCatalogAttributeDefinition,
+  CatalogFacets,
+  CatalogProduct,
+} from "../catalog-api";
 import type { CatalogProductPage } from "../catalog-api";
 import {
   getDemoCustomers,
@@ -159,7 +163,7 @@ function readDraft(): ProductDraft {
 function parseTypedSpecifications(
   input: Record<string, string>,
   productType: string,
-  definitions: CatalogAttributeDefinition[],
+  definitions: AdminCatalogAttributeDefinition[],
   clearEmpty = false,
 ): Record<string, unknown> {
   const parsed: Record<string, unknown> = {};
@@ -211,7 +215,7 @@ function specificationInputValue(value: unknown): string {
   return typeof value === "object" ? JSON.stringify(value, null, 2) ?? "" : String(value);
 }
 
-function GpuSpecificationEditor({ definitions }: { definitions: CatalogAttributeDefinition[] }) {
+function GpuSpecificationEditor({ definitions }: { definitions: AdminCatalogAttributeDefinition[] }) {
   const [products, setProducts] = useState<CatalogProduct[]>([]);
   const [modelCode, setModelCode] = useState("");
   const [specifications, setSpecifications] = useState<Record<string, string>>({});
@@ -246,7 +250,7 @@ function GpuSpecificationEditor({ definitions }: { definitions: CatalogAttribute
     if (!nextModelCode) return;
     setLoadingProduct(true);
     try {
-      const { data } = await fetchCatalogProduct(nextModelCode);
+      const { data } = await fetchAdminCatalogProduct(nextModelCode);
       if (data.productType !== "GPU") throw new Error("Sản phẩm được chọn không phải GPU.");
       setSpecifications(Object.fromEntries(
         gpuDefinitions.map((definition) => [
@@ -276,7 +280,7 @@ function GpuSpecificationEditor({ definitions }: { definitions: CatalogAttribute
         true,
       );
       await updateGpuCatalogSpecifications(modelCode, typedSpecifications);
-      const { data } = await fetchCatalogProduct(modelCode);
+      const { data } = await fetchAdminCatalogProduct(modelCode);
       setSpecifications(Object.fromEntries(
         gpuDefinitions.map((definition) => [
           definition.code,
@@ -374,7 +378,7 @@ export function ProductEditPage() {
   const [saved, setSaved] = useState(false);
   const [notice, setNotice] = useState("");
   const [facets, setFacets] = useState<CatalogFacets>();
-  const [definitions, setDefinitions] = useState<CatalogAttributeDefinition[]>([]);
+  const [definitions, setDefinitions] = useState<AdminCatalogAttributeDefinition[]>([]);
   const [facetError, setFacetError] = useState("");
   const [specificationError, setSpecificationError] = useState("");
   useEffect(() => {
@@ -385,7 +389,7 @@ export function ProductEditPage() {
         if (!controller.signal.aborted) setFacetError(reason instanceof Error ? reason.message : "Không thể tải danh mục.");
       },
     );
-    void fetchCatalogAttributeDefinitions(controller.signal).then(
+    void fetchAdminCatalogAttributeDefinitions(controller.signal).then(
       (response) => setDefinitions(response.data),
       (reason: unknown) => {
         if (!controller.signal.aborted) setFacetError(reason instanceof Error ? reason.message : "Không thể tải định nghĩa thuộc tính.");

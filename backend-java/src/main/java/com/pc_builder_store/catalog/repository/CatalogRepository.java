@@ -1,6 +1,7 @@
 package com.pc_builder_store.catalog.repository;
 
 import com.pc_builder_store.catalog.AttributeDefinitionRegistry;
+import com.pc_builder_store.catalog.CatalogInternalLedger;
 import com.pc_builder_store.catalog.dto.CatalogAttributeFacet;
 import com.pc_builder_store.catalog.dto.CatalogAttributeDefinition;
 import com.pc_builder_store.catalog.dto.CatalogAttributeVerification;
@@ -128,12 +129,15 @@ public class CatalogRepository {
 
     private final NamedParameterJdbcTemplate jdbcTemplate;
     private final ObjectMapper objectMapper;
+    private final CatalogInternalLedger internalLedger;
 
     public CatalogRepository(
             NamedParameterJdbcTemplate jdbcTemplate,
-            ObjectMapper objectMapper) {
+            ObjectMapper objectMapper,
+            CatalogInternalLedger internalLedger) {
         this.jdbcTemplate = jdbcTemplate;
         this.objectMapper = objectMapper;
+        this.internalLedger = internalLedger;
     }
 
     public CatalogFacets getFacets() {
@@ -311,7 +315,7 @@ public class CatalogRepository {
     }
 
     public ProductPage findProducts(CatalogQuery query) {
-        validateAttributeCodes(query.attributes());
+        validateAttributeCodes(query.attributes(), query.type());
         SqlQuery where = productWhere(query);
         String from = """
                 FROM "products" p
@@ -344,6 +348,15 @@ public class CatalogRepository {
     }
 
     public Optional<CatalogProduct> findActiveProduct(String modelCode) {
+        List<CatalogProduct> products = jdbcTemplate.query(
+                PRODUCT_SELECT
+                        + " WHERE p.\"product_status\" = 'ACTIVE' AND p.\"model_code\" = :modelCode LIMIT 1",
+                Map.of("modelCode", modelCode),
+                this::mapProduct);
+        return products.stream().findFirst();
+    }
+
+    public Optional<CatalogProduct> findAdminActiveProduct(String modelCode) {
         List<CatalogProduct> products = jdbcTemplate.query(
                 PRODUCT_SELECT
                         + " WHERE p.\"product_status\" = 'ACTIVE' AND p.\"model_code\" = :modelCode LIMIT 1",
@@ -387,6 +400,7 @@ public class CatalogRepository {
             AttributeFilter attribute = query.attributes().get(index);
             String codeParameter = "attributeCode" + index;
             String valueParameter = "attributeValue" + index;
+            String modelCodesParameter = "publicModelCodes" + index;
             conditions.add("""
                     EXISTS (
                       SELECT 1
@@ -397,6 +411,7 @@ public class CatalogRepository {
                       WHERE ad."product_type_id" = p."product_type_id"
                         AND ad."attribute_code" = :%s
                         AND ad."is_filterable" = TRUE
+                        AND p."model_code" IN (:%s)
                         AND COALESCE(
                           to_jsonb(av."value_text"),
                           to_jsonb(av."value_decimal"),
@@ -405,14 +420,17 @@ public class CatalogRepository {
                           av."value_json"
                         ) = CAST(:%s AS jsonb)
                     )
-                    """.formatted(codeParameter, valueParameter));
+                    """.formatted(codeParameter, modelCodesParameter, valueParameter));
             parameters.addValue(codeParameter, attribute.code());
+            parameters.addValue(
+                    modelCodesParameter,
+                    internalLedger.publicModelCodes(attribute.code(), query.type()));
             parameters.addValue(valueParameter, jsonFilterValue(attribute.value()));
         }
         return new SqlQuery(" WHERE " + String.join(" AND ", conditions), parameters);
     }
 
-    private void validateAttributeCodes(List<AttributeFilter> attributes) {
+    private void validateAttributeCodes(List<AttributeFilter> attributes, String productType) {
         if (attributes.isEmpty()) {
             return;
         }
@@ -430,7 +448,8 @@ public class CatalogRepository {
                 String.class);
         Set<String> supportedCodes = Set.copyOf(supported);
         for (String code : codes) {
-            if (!supportedCodes.contains(code)) {
+            if (!supportedCodes.contains(code)
+                    || internalLedger.publicModelCodes(code, productType).isEmpty()) {
                 throw new InvalidCatalogQueryException(
                         "Attribute \"" + code + "\" is not a supported filter.");
             }
@@ -450,6 +469,7 @@ public class CatalogRepository {
                 """
                 SELECT DISTINCT
                   pt."type_code" AS "productType",
+                  p."model_code" AS "modelCode",
                   ad."attribute_code" AS "code",
                   ad."attribute_name" AS "label",
                   COALESCE(
@@ -470,12 +490,17 @@ public class CatalogRepository {
                 Map.of(),
                 (resultSet, rowNumber) -> new AttributeValueRow(
                         resultSet.getString("productType"),
+                        resultSet.getString("modelCode"),
                         resultSet.getString("code"),
                         resultSet.getString("label"),
                         readJson(resultSet.getString("valueJson"))));
 
         Map<String, FacetBuilder> grouped = new LinkedHashMap<>();
         for (AttributeValueRow row : rows) {
+            if (!internalLedger.isPubliclyVisible(
+                    row.productType(), row.modelCode(), row.code())) {
+                continue;
+            }
             String key = row.productType() + ":" + row.code();
             FacetBuilder facet = grouped.computeIfAbsent(
                     key,
@@ -641,7 +666,7 @@ public class CatalogRepository {
     }
 
     private record AttributeValueRow(
-            String productType, String code, String label, JsonNode value) {
+            String productType, String modelCode, String code, String label, JsonNode value) {
     }
 
     private static final class FacetBuilder {

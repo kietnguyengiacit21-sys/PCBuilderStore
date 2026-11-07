@@ -70,6 +70,7 @@ function OrderItemInformation({
         productTypeName={item.productType}
         specifications={item.specifications}
         definitions={definitions}
+        showInternalMetadata={false}
       />
     </details>}
   </div>;
@@ -169,7 +170,7 @@ export function CartPage() {
             {item.specifications && item.productType && <SpecificationHighlights productType={item.productType} specifications={item.specifications} definitions={definitions} />}
             {item.specifications && item.productType && Object.keys(item.specifications).length > 0 && <details className="v2-order-spec-disclosure">
               <summary>Xem thông số đã lưu</summary>
-              <TechnicalSpecifications productType={item.productType} productTypeName={item.productType} specifications={item.specifications} definitions={definitions} />
+              <TechnicalSpecifications productType={item.productType} productTypeName={item.productType} specifications={item.specifications} definitions={definitions} showInternalMetadata={false} />
             </details>}
           </div>
           <label>Số lượng<input className="v2-form-input" type="number" min="1" value={item.quantity} onChange={(event) => update(items.map((entry, entryIndex) => entryIndex === index ? { ...entry, quantity: Math.max(1, Number(event.target.value) || 1) } : entry))} /></label>
@@ -317,7 +318,7 @@ export function OrderDetailPage() {
       {item.specifications && item.productType && <SpecificationHighlights productType={item.productType} specifications={item.specifications} definitions={definitions} limit={4} />}
       {item.specifications && item.productType && Object.keys(item.specifications).length > 0 && <details className="v2-order-spec-disclosure">
         <summary>Xem snapshot thông số đã lưu</summary>
-        <TechnicalSpecifications productType={item.productType} productTypeName={item.productType} specifications={item.specifications} definitions={definitions} />
+        <TechnicalSpecifications productType={item.productType} productTypeName={item.productType} specifications={item.specifications} definitions={definitions} showInternalMetadata={false} />
       </details>}
     </div>)}<div className="v2-summary-total"><span>Tổng</span><strong>{priceText(order.total)}</strong></div></Card></div> : <EmptyState title="Không tìm thấy đơn demo" message="Chọn một đơn từ lịch sử đơn hàng." action={<Link to="/customer/orders">Lịch sử đơn hàng</Link>} />}
   </div></RoleGate>;

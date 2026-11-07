@@ -20,6 +20,8 @@ import {
   SpecificationHighlights,
   SpecificationComparison,
   PCConfigurationComparison,
+  PCConfigurationDetails,
+  PCConfigurationSummary,
   TechnicalSpecifications,
   WarrantyDisplay,
   attributeLabel,
@@ -152,7 +154,9 @@ function ProductTile({
           {product.productName}
         </Link>
         <p className="v2-mono">{product.modelCode}</p>
-        <SpecificationHighlights productType={product.productType} specifications={product.specifications} definitions={definitions} />
+        {product.productType === "PC"
+          ? <PCConfigurationSummary specifications={product.specifications} />
+          : <SpecificationHighlights productType={product.productType} specifications={product.specifications} definitions={definitions} />}
         {offer ? (
           <div className="v2-product-offer">
             <strong>{money(offer.price, offer.currency)}</strong>
@@ -177,7 +181,7 @@ function ProductGrid({
 }) {
   if (!products.length) return <EmptyState title="Chưa có sản phẩm phù hợp" message="Thử thay đổi từ khóa hoặc bộ lọc." />;
   return <>
-    <p className="v2-spec-dictionary-note">Trạng thái xác minh theo từng thông số được hiển thị trong chi tiết sản phẩm.</p>
+    <p className="v2-spec-dictionary-note">Mở chi tiết sản phẩm để xem đầy đủ thông số kỹ thuật.</p>
     <div className="v2-product-grid">{products.map((product) => (
       <ProductTile key={product.productId} product={product} definitions={definitions} />
     ))}</div>
@@ -261,6 +265,7 @@ function HomepageProductTile({
           <p className="v2-eyebrow">{product.brandName ?? "Chưa có thương hiệu"} · {productTypeLabel(product.productType)}</p>
           <Link className="v2-product-name" to={productLink}>{product.productName}</Link>
           <p className="v2-mono">{product.modelCode}</p>
+          {product.productType === "PC" && <PCConfigurationSummary specifications={product.specifications} limit={3} />}
           {offer ? (
             <div className="v2-product-offer">
               <strong>{money(offer.price, offer.currency)}</strong>
@@ -389,9 +394,9 @@ function ProductQuickView({
             {verifiedSpecs.map((item) => <div key={item.label}><dt>{item.label}</dt><dd>{item.value}</dd></div>)}
           </dl>
         )}
-        {active.product.productType === "PC" && verifiedSpecs.length === 0 && (
-          <p className="v2-home-quick-view-note">Chưa có cấu hình thành phần được xác minh để hiển thị.</p>
-        )}
+        {active.product.productType === "PC"
+          ? <PCConfigurationSummary specifications={active.product.specifications} limit={3} />
+          : null}
         <Link className="v2-button v2-button-primary v2-home-quick-view-link" to={productLink} onClick={onClose}>Xem chi tiết sản phẩm <span aria-hidden="true">→</span></Link>
       </section>
     </>,
@@ -835,7 +840,8 @@ export function ProductPage() {
           {actionMessage && <p className="v2-muted" role="status">{actionMessage}</p>}
         </section>
       </div>
-      <Card title="Thông số kỹ thuật">
+      {product.productType === "PC" && <PCConfigurationDetails specifications={product.specifications} />}
+      <Card title="Thông số kỹ thuật" className="v2-product-specifications-card">
         <TechnicalSpecifications
           productType={product.productType}
           productTypeName={productTypeLabel(product.productType)}
@@ -843,6 +849,7 @@ export function ProductPage() {
           definitions={definitions}
           verificationMetadata={product.verificationMetadata}
           showEnglishLabels={false}
+          showInternalMetadata={false}
         />
       </Card>
     </div>
@@ -891,7 +898,7 @@ export function ComparePage() {
           <div className="v2-compare-product-art"><ProductArtwork image={product.images.find((image) => image.isPrimary) ?? product.images[0]} productName={product.productName} productType={product.productType} /></div>
           <div className="v2-cross-type-actions"><Link to={`/customer/product?modelCode=${encodeURIComponent(product.modelCode)}`}>Mở chi tiết</Link><SecondaryButton type="button" onClick={() => remove(product.modelCode)}>Bỏ khỏi so sánh</SecondaryButton></div>
           <OfferList offers={product.offers} />
-          <TechnicalSpecifications productType={product.productType} productTypeName={productTypeLabel(product.productType)} specifications={product.specifications} definitions={definitions} verificationMetadata={product.verificationMetadata} showEnglishLabels={false} />
+          <TechnicalSpecifications productType={product.productType} productTypeName={productTypeLabel(product.productType)} specifications={product.specifications} definitions={definitions} verificationMetadata={product.verificationMetadata} showEnglishLabels={false} showInternalMetadata={false} />
         </Card>)}</div>
       </div>}
       {products.length > 0 && compatibleTypes && <>
@@ -916,7 +923,7 @@ export function ComparePage() {
           </tbody>
         </table></div>
         <label className="v2-identical-toggle"><input type="checkbox" checked={hideIdentical} onChange={(event) => setHideIdentical(event.target.checked)} />Ẩn các thông số giống nhau</label>
-        <SpecificationComparison products={products} definitions={definitions} hideIdentical={hideIdentical} showEnglishLabels={false} />
+        <SpecificationComparison products={products} definitions={definitions} hideIdentical={hideIdentical} showEnglishLabels={false} showInternalMetadata={false} />
         <PCConfigurationComparison products={products} />
       </>}
     </div>

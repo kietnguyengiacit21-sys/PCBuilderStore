@@ -1,0 +1,169 @@
+diff --git a/frontend/src/CatalogPage.tsx b/frontend/src/CatalogPage.tsx
+--- a/frontend/src/CatalogPage.tsx
++++ b/frontend/src/CatalogPage.tsx
+@@ -12,3 +12,11 @@ catalog formatting helpers
+ } from "./catalog-api";
++import {
++  comparisonValuesDiffer,
++  formatSpecificationValue,
++  getProductHighlights,
++  getSpecificationLabel,
++  groupComparisonSpecifications,
++  groupSpecifications,
++} from "./product-specifications";
+ 
+ const demoNotice =
+@@ -34,24 +42,10 @@ remove raw attribute-code labels
+ function money(value: string | number | undefined, currency = "VND"): string {
+   if (value === undefined || !Number.isFinite(Number(value))) return "Liên hệ";
+   return new Intl.NumberFormat("vi-VN", {
+     style: "currency",
+     currency,
+     maximumFractionDigits: 0,
+   }).format(Number(value));
+ }
+ 
+-function displayValue(value: unknown): string {
+-  if (value === null || value === undefined || value === "") return "—";
+-  if (Array.isArray(value)) return value.map(displayValue).join(", ");
+-  if (typeof value === "object") return JSON.stringify(value);
+-  return String(value);
+-}
+-
+-function formatAttribute(code: string): string {
+-  return code
+-    .split("_")
+-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+-    .join(" ");
+-}
+-
+ function ErrorState({ message }: { message: string }) {
+@@ -75,3 +69,4 @@ product-card highlights
+   const offer = product.offers[0];
+   const image = product.images.find((item) => item.isPrimary) ?? product.images[0];
++  const highlights = getProductHighlights(product.productType, product.specifications);
+   return (
+@@ -101,4 +96,14 @@ product-card specification preview
+         {product.shortDescription && (
+           <p className="mt-3 line-clamp-2 text-body-sm text-on-surface-variant">{product.shortDescription}</p>
+         )}
++        {highlights.length > 0 && (
++          <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2">
++            {highlights.map((entry) => (
++              <div key={entry.code} className="min-w-0">
++                <dt className="text-xs text-on-surface-variant">{entry.label}</dt>
++                <dd className="truncate text-sm text-on-surface" title={entry.value}>{entry.value}</dd>
++              </div>
++            ))}
++          </dl>
++        )}
+         <div className="mt-auto pt-space-md">
+@@ -534,4 +539,5 @@ group product detail specifications
+   const offer = product.offers[0];
+   const image = product.images.find((item) => item.isPrimary) ?? product.images[0];
++  const specificationGroups = groupSpecifications(product.productType, product.specifications);
+   return (
+     <div className="mx-auto w-full max-w-7xl px-margin pb-space-3xl lg:px-margin-desktop">
+@@ -581,15 +587,22 @@ grouped Vietnamese product specifications
+       <section className="mt-space-2xl" aria-labelledby="specifications-title">
+         <h2 id="specifications-title" className="font-headline-lg text-on-surface">Thông số kỹ thuật</h2>
+-        {Object.keys(product.specifications).length === 0 ? (
++        {specificationGroups.length === 0 ? (
+           <p className="mt-space-md text-body-sm text-on-surface-variant">Chưa có thông số kỹ thuật.</p>
+         ) : (
+-          <dl className="mt-space-md grid gap-px overflow-hidden rounded border border-surface-container-high bg-surface-container-high sm:grid-cols-2">
+-            {Object.entries(product.specifications).map(([key, value]) => (
+-              <div key={key} className="flex justify-between gap-space-md bg-surface-container-low p-space-md">
+-                <dt className="text-body-sm text-on-surface-variant">{formatAttribute(key)}</dt>
+-                <dd className="text-right text-body-sm text-on-surface">{displayValue(value)}</dd>
+-              </div>
++          <div className="mt-space-md space-y-space-lg">
++            {specificationGroups.map((group) => (
++              <section key={group.title}>
++                <h3 className="mb-2 font-headline-sm text-primary">{group.title}</h3>
++                <dl className="grid gap-px overflow-hidden rounded border border-surface-container-high bg-surface-container-high sm:grid-cols-2">
++                  {group.entries.map((entry) => (
++                    <div key={entry.code} className="flex justify-between gap-space-md bg-surface-container-low p-space-md">
++                      <dt className="text-body-sm text-on-surface-variant">{entry.label}</dt>
++                      <dd className="text-right text-body-sm text-on-surface">{entry.value}</dd>
++                    </div>
++                  ))}
++                </dl>
++              </section>
+             ))}
+-          </dl>
++          </div>
+         )}
+       </section>
+@@ -624,43 +637,55 @@ group comparison specifications
+-  const specificationKeys = [...new Set(products.flatMap((product) => Object.keys(product.specifications)))].sort();
++  const specificationGroups = groupComparisonSpecifications(products);
+   return (
+     <div className="mx-auto w-full max-w-7xl px-margin py-space-xl lg:px-margin-desktop">
+       <h1 className="font-headline-xl text-on-surface">So sánh sản phẩm</h1>
+       <p className="my-space-md rounded border border-secondary/30 bg-secondary/5 p-space-md text-body-sm text-on-surface-variant">{demoNotice}</p>
+       {codes.length === 0 && <p className="rounded bg-surface-container-low p-space-xl text-on-surface-variant">Chưa có sản phẩm để so sánh. Hãy thêm sản phẩm từ danh sách.</p>}
+       {loading && <p role="status">Đang tải sản phẩm so sánh…</p>}
+       {error && <ErrorState message={error} />}
+       {products.length > 0 && (
+         <div className="mt-space-lg overflow-x-auto">
+           <table className="w-full min-w-[640px] border-collapse text-left text-body-sm">
+             <thead>
+               <tr className="bg-surface-container-high">
+                 <th className="p-space-md">Thông tin</th>
+                 {products.map((product) => (
+                   <th key={product.modelCode} className="min-w-48 p-space-md align-top">
+                     <a className="text-on-surface hover:text-primary" href={`/customer/product?modelCode=${encodeURIComponent(product.modelCode)}`}>{product.productName}</a>
+                     <p className="mt-1 font-tech-code-sm text-on-surface-variant">{product.modelCode}</p>
+                     <button className="mt-2 text-primary hover:underline" onClick={() => onRemove(codes.filter((code) => code !== product.modelCode))}>Xóa</button>
+                   </th>
+                 ))}
+               </tr>
+             </thead>
+             <tbody>
+               {[
+                 ["Thương hiệu", (product: CatalogProduct) => product.brandName ?? "—"],
+                 ["Loại sản phẩm", (product: CatalogProduct) => product.productTypeName],
+                 ["Danh mục", (product: CatalogProduct) => product.categoryName],
+                 ["Giá tham khảo", (product: CatalogProduct) => money(product.offers[0]?.price, product.offers[0]?.currency)],
+                 ["Tồn kho", (product: CatalogProduct) => product.offers[0] ? `${product.offers[0].isDemo ? "Minh họa: " : ""}${product.offers[0].availableQuantity}` : "—"],
+               ].map(([label, getter]) => (
+                 <tr key={String(label)} className="border-b border-surface-container-high">
+                   <th className="bg-surface-container-low p-space-md text-on-surface-variant">{String(label)}</th>
+                   {products.map((product) => <td key={product.modelCode} className="p-space-md">{(getter as (item: CatalogProduct) => string)(product)}</td>)}
+                 </tr>
+               ))}
+-              {specificationKeys.map((key) => (
+-                <tr key={key} className="border-b border-surface-container-high">
+-                  <th className="bg-surface-container-low p-space-md text-on-surface-variant">{formatAttribute(key)}</th>
+-                  {products.map((product) => <td key={product.modelCode} className="p-space-md">{displayValue(product.specifications[key])}</td>)}
+-                </tr>
+-              ))}
++              {specificationGroups.flatMap((group) => [
++                <tr key={`group-${group.title}`} className="bg-surface-container-high">
++                  <th colSpan={products.length + 1} className="p-space-md font-semibold text-on-surface">{group.title}</th>
++                </tr>,
++                ...group.codes.map((key) => {
++                  const labelProduct = products.find((product) => key in product.specifications) ?? products[0];
++                  return (
++                    <tr key={key} className={`border-b border-surface-container-high ${comparisonValuesDiffer(products, key) ? "bg-primary/5" : ""}`}>
++                      <th className="bg-surface-container-low p-space-md text-on-surface-variant">{getSpecificationLabel(labelProduct.productType, key)}</th>
++                      {products.map((product) => (
++                        <td key={product.modelCode} className="p-space-md">
++                          {formatSpecificationValue(product.productType, key, product.specifications[key])}
++                        </td>
++                      ))}
++                    </tr>
++                  );
++                }),
++              ])}
+             </tbody>
+diff --git a/frontend/vite.config.ts b/frontend/vite.config.ts
+--- a/frontend/vite.config.ts
++++ b/frontend/vite.config.ts
+@@ -9,3 +9,4 @@ allow monorepo dictionary import in Vite dev server
+     plugins: [react()],
+     server: {
++      fs: { allow: [".."] },
+       proxy: {
+

@@ -1,0 +1,953 @@
+diff --git a/backend-java/src/main/java/com/pc_builder_store/catalog/dto/CatalogProduct.java b/backend-java/src/main/java/com/pc_builder_store/catalog/dto/CatalogProduct.java
+index 07453fb..1755c89 100644
+--- a/backend-java/src/main/java/com/pc_builder_store/catalog/dto/CatalogProduct.java
++++ b/backend-java/src/main/java/com/pc_builder_store/catalog/dto/CatalogProduct.java
+@@ -1,6 +1,7 @@
+ package com.pc_builder_store.catalog.dto;
+ 
+ import java.util.List;
++import java.util.Map;
+ import tools.jackson.databind.JsonNode;
+ 
+ public record CatalogProduct(
+@@ -17,6 +18,28 @@ public record CatalogProduct(
+         String brandName,
+         List<CatalogOffer> offers,
+         JsonNode specifications,
++        Map<String, CatalogAttributeVerification> verificationMetadata,
+         List<CatalogImage> images,
+         boolean demoData) {
++
++    public CatalogProduct(
++            String productId,
++            String modelCode,
++            String productName,
++            String shortDescription,
++            String description,
++            String status,
++            String productType,
++            String productTypeName,
++            String categoryCode,
++            String categoryName,
++            String brandName,
++            List<CatalogOffer> offers,
++            JsonNode specifications,
++            List<CatalogImage> images,
++            boolean demoData) {
++        this(productId, modelCode, productName, shortDescription, description, status, productType,
++                productTypeName, categoryCode, categoryName, brandName, offers, specifications,
++                Map.of(), images, demoData);
++    }
+ }
+diff --git a/backend-java/src/main/java/com/pc_builder_store/catalog/repository/CatalogRepository.java b/backend-java/src/main/java/com/pc_builder_store/catalog/repository/CatalogRepository.java
+index 9f138fe..fba3690 100644
+--- a/backend-java/src/main/java/com/pc_builder_store/catalog/repository/CatalogRepository.java
++++ b/backend-java/src/main/java/com/pc_builder_store/catalog/repository/CatalogRepository.java
+@@ -3,11 +3,13 @@ package com.pc_builder_store.catalog.repository;
+ import com.pc_builder_store.catalog.AttributeDefinitionRegistry;
+ import com.pc_builder_store.catalog.dto.CatalogAttributeFacet;
+ import com.pc_builder_store.catalog.dto.CatalogAttributeDefinition;
++import com.pc_builder_store.catalog.dto.CatalogAttributeVerification;
+ import com.pc_builder_store.catalog.dto.CatalogFacets;
+ import com.pc_builder_store.catalog.dto.CatalogImage;
+ import com.pc_builder_store.catalog.dto.CatalogOffer;
+ import com.pc_builder_store.catalog.dto.CatalogOption;
+ import com.pc_builder_store.catalog.dto.CatalogProduct;
++import com.pc_builder_store.catalog.dto.CatalogVerificationStatus;
+ import com.pc_builder_store.catalog.dto.CatalogQuery;
+ import com.pc_builder_store.catalog.exception.CatalogProductNotFoundException;
+ import com.pc_builder_store.catalog.dto.CatalogQuery.AttributeFilter;
+@@ -18,6 +20,7 @@ import java.math.BigDecimal;
+ import java.net.URI;
+ import java.net.URISyntaxException;
+ import java.util.ArrayList;
++import java.util.Collections;
+ import java.util.LinkedHashMap;
+ import java.util.LinkedHashSet;
+ import java.util.List;
+@@ -77,6 +80,30 @@ public class CatalogRepository {
+                  AND av."product_id" = p."product_id"
+                 WHERE ad."product_type_id" = p."product_type_id"
+               ), '{}'::jsonb)::text AS "specificationsJson",
++              COALESCE((
++                SELECT jsonb_object_agg(ad."attribute_code", CASE
++                  WHEN av."product_id" IS NULL
++                    THEN jsonb_build_object('verificationStatus', 'UNKNOWN')
++                  WHEN vm."metadata" ->> 'verificationStatus' IN (
++                    'VERIFIED_EXACT_MODEL', 'VERIFIED_EXACT_VARIANT', 'NEEDS_REVIEW', 'UNKNOWN'
++                  )
++                    THEN jsonb_strip_nulls(jsonb_build_object(
++                      'verificationStatus', vm."metadata" -> 'verificationStatus',
++                      'sourceUrl', vm."metadata" -> 'sourceUrl',
++                      'sourceLocator', vm."metadata" -> 'sourceLocator',
++                      'verificationScope', vm."metadata" -> 'verificationScope'
++                    ))
++                  ELSE jsonb_build_object('verificationStatus', 'NEEDS_REVIEW')
++                END)
++                FROM "product_attribute_definitions" ad
++                LEFT JOIN "product_attribute_values" av
++                  ON av."attribute_definition_id" = ad."attribute_definition_id"
++                 AND av."product_id" = p."product_id"
++                LEFT JOIN LATERAL (
++                  SELECT ad."validation_json" -> 'verificationByModel' -> p."model_code" AS "metadata"
++                ) vm ON TRUE
++                WHERE ad."product_type_id" = p."product_type_id"
++              ), '{}'::jsonb)::text AS "verificationMetadataJson",
+               COALESCE((
+                 SELECT jsonb_agg(jsonb_build_object(
+                   'url', pi."image_url",
+@@ -477,10 +504,31 @@ public class CatalogRepository {
+                 resultSet.getString("brandName"),
+                 mapOffers(readJson(resultSet.getString("offersJson"))),
+                 readJson(resultSet.getString("specificationsJson")),
++                mapVerificationMetadata(readJson(resultSet.getString("verificationMetadataJson"))),
+                 mapImages(readJson(resultSet.getString("imagesJson"))),
+                 resultSet.getBoolean("demoData"));
+     }
+ 
++    private Map<String, CatalogAttributeVerification> mapVerificationMetadata(JsonNode metadata) {
++        if (metadata == null || !metadata.isObject()) {
++            return Map.of();
++        }
++        Map<String, CatalogAttributeVerification> mapped = new LinkedHashMap<>();
++        metadata.properties().forEach(entry -> {
++            JsonNode value = entry.getValue();
++            mapped.put(entry.getKey(), new CatalogAttributeVerification(
++                    CatalogVerificationStatus.valueOf(value.path("verificationStatus").asText()),
++                    nullableText(value.get("sourceUrl")),
++                    nullableText(value.get("sourceLocator")),
++                    nullableText(value.get("verificationScope"))));
++        });
++        return Collections.unmodifiableMap(mapped);
++    }
++
++    private String nullableText(JsonNode value) {
++        return value != null && value.isTextual() ? value.textValue() : null;
++    }
++
+     private List<CatalogOffer> mapOffers(JsonNode offers) {
+         List<CatalogOffer> mapped = new ArrayList<>();
+         for (JsonNode offer : offers) {
+diff --git a/backend-java/src/test/java/com/pc_builder_store/catalog/controller/CatalogControllerTest.java b/backend-java/src/test/java/com/pc_builder_store/catalog/controller/CatalogControllerTest.java
+index 91ccded..d1ae009 100644
+--- a/backend-java/src/test/java/com/pc_builder_store/catalog/controller/CatalogControllerTest.java
++++ b/backend-java/src/test/java/com/pc_builder_store/catalog/controller/CatalogControllerTest.java
+@@ -12,14 +12,17 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
+ 
+ import com.pc_builder_store.catalog.dto.CatalogAttributeFacet;
+ import com.pc_builder_store.catalog.dto.CatalogAttributeDefinition;
++import com.pc_builder_store.catalog.dto.CatalogAttributeVerification;
+ import com.pc_builder_store.catalog.dto.CatalogFacets;
+ import com.pc_builder_store.catalog.dto.CatalogImage;
+ import com.pc_builder_store.catalog.dto.CatalogOffer;
+ import com.pc_builder_store.catalog.dto.CatalogOption;
+ import com.pc_builder_store.catalog.dto.CatalogProduct;
++import com.pc_builder_store.catalog.dto.CatalogVerificationStatus;
+ import com.pc_builder_store.catalog.repository.CatalogRepository;
+ import java.math.BigDecimal;
+ import java.util.List;
++import java.util.Map;
+ import java.util.Optional;
+ import org.junit.jupiter.api.Test;
+ import org.springframework.beans.factory.annotation.Autowired;
+@@ -121,6 +124,46 @@ class CatalogControllerTest {
+                         && query.attributes().size() == 1));
+     }
+ 
++    @Test
++    void returnsVerificationMetadataSeparatelyFromUnchangedSpecificationValues() throws Exception {
++        CatalogProduct base = product();
++        CatalogProduct verified = new CatalogProduct(
++                base.productId(),
++                "VERIFIED-MODEL",
++                base.productName(),
++                base.shortDescription(),
++                base.description(),
++                base.status(),
++                base.productType(),
++                base.productTypeName(),
++                base.categoryCode(),
++                base.categoryName(),
++                base.brandName(),
++                base.offers(),
++                base.specifications(),
++                Map.of("capacity_gb", new CatalogAttributeVerification(
++                        CatalogVerificationStatus.VERIFIED_EXACT_MODEL,
++                        "https://example.com/spec",
++                        "Capacity",
++                        "EXACT_MODEL")),
++                base.images(),
++                base.demoData());
++        when(catalogRepository.findActiveProduct("VERIFIED-MODEL"))
++                .thenReturn(Optional.of(verified));
++
++        mockMvc.perform(get("/api/catalog/products/VERIFIED-MODEL"))
++                .andExpect(status().isOk())
++                .andExpect(jsonPath("$.data.specifications.capacity_gb").value(16))
++                .andExpect(jsonPath("$.data.verificationMetadata.capacity_gb.verificationStatus")
++                        .value("VERIFIED_EXACT_MODEL"))
++                .andExpect(jsonPath("$.data.verificationMetadata.capacity_gb.sourceUrl")
++                        .value("https://example.com/spec"))
++                .andExpect(jsonPath("$.data.verificationMetadata.capacity_gb.sourceLocator")
++                        .value("Capacity"))
++                .andExpect(jsonPath("$.data.verificationMetadata.capacity_gb.verificationScope")
++                        .value("EXACT_MODEL"));
++    }
++
+     @Test
+     void forwardsMinMaxAndSortingRules() throws Exception {
+         when(catalogRepository.findProducts(org.mockito.ArgumentMatchers.any()))
+diff --git a/backend-java/src/test/java/com/pc_builder_store/catalog/repository/CatalogRepositoryTest.java b/backend-java/src/test/java/com/pc_builder_store/catalog/repository/CatalogRepositoryTest.java
+index 9b27ef5..e066120 100644
+--- a/backend-java/src/test/java/com/pc_builder_store/catalog/repository/CatalogRepositoryTest.java
++++ b/backend-java/src/test/java/com/pc_builder_store/catalog/repository/CatalogRepositoryTest.java
+@@ -13,6 +13,7 @@ import static org.mockito.Mockito.when;
+ import com.pc_builder_store.catalog.dto.CatalogAttributeDefinition;
+ import com.pc_builder_store.catalog.dto.CatalogProduct;
+ import com.pc_builder_store.catalog.dto.CatalogQuery;
++import com.pc_builder_store.catalog.dto.CatalogVerificationStatus;
+ import com.pc_builder_store.catalog.dto.CatalogQuery.AttributeFilter;
+ import com.pc_builder_store.catalog.dto.CatalogQuery.Direction;
+ import com.pc_builder_store.catalog.dto.CatalogQuery.Sort;
+@@ -158,6 +159,14 @@ class CatalogRepositoryTest {
+                 """);
+         when(row.getString("specificationsJson")).thenReturn(
+                 "{\"capacity_gb\":16,\"supports_xmp\":true}");
++        when(row.getString("verificationMetadataJson")).thenReturn("""
++                {
++                  "capacity_gb":{"verificationStatus":"VERIFIED_EXACT_MODEL","sourceUrl":"https://example.com/spec","sourceLocator":"Capacity","verificationScope":"EXACT_MODEL"},
++                  "memory_type":{"verificationStatus":"VERIFIED_EXACT_VARIANT","sourceUrl":"https://example.com/variant","sourceLocator":"Memory type","verificationScope":"EXACT_VARIANT"},
++                  "supports_xmp":{"verificationStatus":"NEEDS_REVIEW"},
++                  "missing_field":{"verificationStatus":"UNKNOWN"}
++                }
++                """);
+         when(row.getString("imagesJson")).thenReturn("""
+                 [{"url":"https://user:password@example.com/image.png","altText":"bad","isPrimary":true},
+                  {"url":"https://example.com:99999/image.png","altText":"bad port","isPrimary":true},
+@@ -174,6 +183,22 @@ class CatalogRepositoryTest {
+         assertTrue(product.offers().get(0).isDemo());
+         assertEquals(16, product.specifications().path("capacity_gb").intValue());
+         assertTrue(product.specifications().path("supports_xmp").booleanValue());
++        assertEquals(
++                CatalogVerificationStatus.VERIFIED_EXACT_MODEL,
++                product.verificationMetadata().get("capacity_gb").verificationStatus());
++        assertEquals("https://example.com/spec",
++                product.verificationMetadata().get("capacity_gb").sourceUrl());
++        assertEquals("Capacity", product.verificationMetadata().get("capacity_gb").sourceLocator());
++        assertEquals("EXACT_MODEL",
++                product.verificationMetadata().get("capacity_gb").verificationScope());
++        assertEquals(CatalogVerificationStatus.VERIFIED_EXACT_VARIANT,
++                product.verificationMetadata().get("memory_type").verificationStatus());
++        assertEquals("EXACT_VARIANT",
++                product.verificationMetadata().get("memory_type").verificationScope());
++        assertEquals(CatalogVerificationStatus.NEEDS_REVIEW,
++                product.verificationMetadata().get("supports_xmp").verificationStatus());
++        assertEquals(CatalogVerificationStatus.UNKNOWN,
++                product.verificationMetadata().get("missing_field").verificationStatus());
+         assertEquals(1, product.images().size());
+         assertEquals("https://example.com/image.png", product.images().get(0).url());
+         assertTrue(product.demoData());
+diff --git a/frontend/src/CatalogPage.tsx b/frontend/src/CatalogPage.tsx
+index 9ab2c9e..51b071a 100644
+--- a/frontend/src/CatalogPage.tsx
++++ b/frontend/src/CatalogPage.tsx
+@@ -10,6 +10,14 @@ import type {
+   CatalogProductFilters,
+   CatalogProductPage,
+ } from "./catalog-api";
++import {
++  comparisonValuesDiffer,
++  formatSpecificationValue,
++  getProductHighlights,
++  getSpecificationLabel,
++  groupComparisonSpecifications,
++  groupSpecifications,
++} from "./product-specifications";
+ 
+ const demoNotice =
+   "Giá và tồn kho có nhãn DEMO chỉ là dữ liệu minh họa, không phải thông tin bán hàng hoặc tồn kho thực tế.";
+@@ -40,20 +48,6 @@ function money(value: string | number | undefined, currency = "VND"): string {
+   }).format(Number(value));
+ }
+ 
+-function displayValue(value: unknown): string {
+-  if (value === null || value === undefined || value === "") return "—";
+-  if (Array.isArray(value)) return value.map(displayValue).join(", ");
+-  if (typeof value === "object") return JSON.stringify(value);
+-  return String(value);
+-}
+-
+-function formatAttribute(code: string): string {
+-  return code
+-    .split("_")
+-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+-    .join(" ");
+-}
+-
+ function ErrorState({ message }: { message: string }) {
+   return (
+     <div className="rounded border border-error/40 bg-error-container/20 p-space-md text-on-surface" role="alert">
+@@ -74,6 +68,7 @@ function ProductCard({
+ }) {
+   const offer = product.offers[0];
+   const image = product.images.find((item) => item.isPrimary) ?? product.images[0];
++  const highlights = getProductHighlights(product.productType, product.specifications);
+   return (
+     <article className="flex flex-col overflow-hidden rounded border border-surface-container-high bg-surface-container-low">
+       <a
+@@ -101,6 +96,16 @@ function ProductCard({
+         {product.shortDescription && (
+           <p className="mt-3 line-clamp-2 text-body-sm text-on-surface-variant">{product.shortDescription}</p>
+         )}
++        {highlights.length > 0 && (
++          <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2">
++            {highlights.map((entry) => (
++              <div key={entry.code} className="min-w-0">
++                <dt className="text-xs text-on-surface-variant">{entry.label}</dt>
++                <dd className="truncate text-sm text-on-surface" title={entry.value}>{entry.value}</dd>
++              </div>
++            ))}
++          </dl>
++        )}
+         <div className="mt-auto pt-space-md">
+           {offer ? (
+             <>
+@@ -533,6 +538,7 @@ function ProductDetail({ modelCode, onCompare, compareCodes }: {
+   if (!product) return null;
+   const offer = product.offers[0];
+   const image = product.images.find((item) => item.isPrimary) ?? product.images[0];
++  const specificationGroups = groupSpecifications(product.productType, product.specifications);
+   return (
+     <div className="mx-auto w-full max-w-7xl px-margin pb-space-3xl lg:px-margin-desktop">
+       <nav className="py-space-md text-body-sm text-on-surface-variant" aria-label="Đường dẫn">
+@@ -580,17 +586,24 @@ function ProductDetail({ modelCode, onCompare, compareCodes }: {
+       </div>
+       <section className="mt-space-2xl" aria-labelledby="specifications-title">
+         <h2 id="specifications-title" className="font-headline-lg text-on-surface">Thông số kỹ thuật</h2>
+-        {Object.keys(product.specifications).length === 0 ? (
++        {specificationGroups.length === 0 ? (
+           <p className="mt-space-md text-body-sm text-on-surface-variant">Chưa có thông số kỹ thuật.</p>
+         ) : (
+-          <dl className="mt-space-md grid gap-px overflow-hidden rounded border border-surface-container-high bg-surface-container-high sm:grid-cols-2">
+-            {Object.entries(product.specifications).map(([key, value]) => (
+-              <div key={key} className="flex justify-between gap-space-md bg-surface-container-low p-space-md">
+-                <dt className="text-body-sm text-on-surface-variant">{formatAttribute(key)}</dt>
+-                <dd className="text-right text-body-sm text-on-surface">{displayValue(value)}</dd>
+-              </div>
++          <div className="mt-space-md space-y-space-lg">
++            {specificationGroups.map((group) => (
++              <section key={group.title}>
++                <h3 className="mb-2 font-headline-sm text-primary">{group.title}</h3>
++                <dl className="grid gap-px overflow-hidden rounded border border-surface-container-high bg-surface-container-high sm:grid-cols-2">
++                  {group.entries.map((entry) => (
++                    <div key={entry.code} className="flex justify-between gap-space-md bg-surface-container-low p-space-md">
++                      <dt className="text-body-sm text-on-surface-variant">{entry.label}</dt>
++                      <dd className="text-right text-body-sm text-on-surface">{entry.value}</dd>
++                    </div>
++                  ))}
++                </dl>
++              </section>
+             ))}
+-          </dl>
++          </div>
+         )}
+       </section>
+     </div>
+@@ -621,7 +634,7 @@ function ProductComparison({ codes, onRemove }: { codes: string[]; onRemove: (co
+       });
+     return () => controller.abort();
+   }, [codes.join("|")]);
+-  const specificationKeys = [...new Set(products.flatMap((product) => Object.keys(product.specifications)))].sort();
++  const specificationGroups = groupComparisonSpecifications(products);
+   return (
+     <div className="mx-auto w-full max-w-7xl px-margin py-space-xl lg:px-margin-desktop">
+       <h1 className="font-headline-xl text-on-surface">So sánh sản phẩm</h1>
+@@ -657,12 +670,24 @@ function ProductComparison({ codes, onRemove }: { codes: string[]; onRemove: (co
+                   {products.map((product) => <td key={product.modelCode} className="p-space-md">{(getter as (item: CatalogProduct) => string)(product)}</td>)}
+                 </tr>
+               ))}
+-              {specificationKeys.map((key) => (
+-                <tr key={key} className="border-b border-surface-container-high">
+-                  <th className="bg-surface-container-low p-space-md text-on-surface-variant">{formatAttribute(key)}</th>
+-                  {products.map((product) => <td key={product.modelCode} className="p-space-md">{displayValue(product.specifications[key])}</td>)}
+-                </tr>
+-              ))}
++              {specificationGroups.flatMap((group) => [
++                <tr key={`group-${group.title}`} className="bg-surface-container-high">
++                  <th colSpan={products.length + 1} className="p-space-md font-semibold text-on-surface">{group.title}</th>
++                </tr>,
++                ...group.codes.map((key) => {
++                  const labelProduct = products.find((product) => key in product.specifications) ?? products[0];
++                  return (
++                    <tr key={key} className={`border-b border-surface-container-high ${comparisonValuesDiffer(products, key) ? "bg-primary/5" : ""}`}>
++                      <th className="bg-surface-container-low p-space-md text-on-surface-variant">{getSpecificationLabel(labelProduct.productType, key)}</th>
++                      {products.map((product) => (
++                        <td key={product.modelCode} className="p-space-md">
++                          {formatSpecificationValue(product.productType, key, product.specifications[key])}
++                        </td>
++                      ))}
++                    </tr>
++                  );
++                }),
++              ])}
+             </tbody>
+           </table>
+         </div>
+diff --git a/frontend/src/catalog-api.ts b/frontend/src/catalog-api.ts
+index a0753cf..198d7f9 100644
+--- a/frontend/src/catalog-api.ts
++++ b/frontend/src/catalog-api.ts
+@@ -18,6 +18,19 @@ export interface CatalogImage {
+   isPrimary: boolean;
+ }
+ 
++export type CatalogVerificationStatus =
++  | "VERIFIED_EXACT_MODEL"
++  | "VERIFIED_EXACT_VARIANT"
++  | "NEEDS_REVIEW"
++  | "UNKNOWN";
++
++export interface CatalogAttributeVerification {
++  verificationStatus: CatalogVerificationStatus;
++  sourceUrl: string | null;
++  sourceLocator: string | null;
++  verificationScope: string | null;
++}
++
+ export interface CatalogProduct {
+   productId: string;
+   modelCode: string;
+@@ -32,6 +45,7 @@ export interface CatalogProduct {
+   brandName: string | null;
+   offers: CatalogOffer[];
+   specifications: Record<string, unknown>;
++  verificationMetadata?: Record<string, CatalogAttributeVerification>;
+   images: CatalogImage[];
+ }
+ 
+diff --git a/frontend/src/v2/AdminScreens.tsx b/frontend/src/v2/AdminScreens.tsx
+index 844072f..44c9a8e 100644
+--- a/frontend/src/v2/AdminScreens.tsx
++++ b/frontend/src/v2/AdminScreens.tsx
+@@ -451,7 +451,7 @@ export function ProductEditPage() {
+             ? " · chip GPU (không tự sao chép)"
+             : attribute.specificationScope === "BOARD_VARIANT" ? " · biến thể bo mạch" : "";
+           const policy = specificationDisplayPolicy(draft.productType, attribute);
+-          const policyLabel = { required: "Cần xác minh", conditional: "Theo loại", optional: "Tùy chọn" }[policy];
++          const policyLabel = { required: "Mức độ: Bắt buộc", conditional: "Mức độ: Theo loại", optional: "Mức độ: Tùy chọn" }[policy];
+           return <FormField label={label} htmlFor={inputId} hint={`${attribute.productType}${englishLabelHint} · ${attribute.dataType} · ${policyLabel}${attribute.filterable ? " · có thể lọc" : ""}${scopeHint}`} key={`${attribute.productType}:${attribute.code}`}>
+             {control}
+           </FormField>;
+diff --git a/frontend/src/v2/CatalogScreens.tsx b/frontend/src/v2/CatalogScreens.tsx
+index cb554c4..80f4c50 100644
+--- a/frontend/src/v2/CatalogScreens.tsx
++++ b/frontend/src/v2/CatalogScreens.tsx
+@@ -177,7 +177,7 @@ function ProductGrid({
+ }) {
+   if (!products.length) return <EmptyState title="Chưa có sản phẩm phù hợp" message="Thử thay đổi từ khóa hoặc bộ lọc." />;
+   return <>
+-    <p className="v2-spec-dictionary-note">Thông số hiển thị là dữ liệu hiện có trong catalog; chưa được xác minh theo nguồn cho từng model.</p>
++    <p className="v2-spec-dictionary-note">Trạng thái xác minh theo từng thông số được hiển thị trong chi tiết sản phẩm.</p>
+     <div className="v2-product-grid">{products.map((product) => (
+       <ProductTile key={product.productId} product={product} definitions={definitions} />
+     ))}</div>
+@@ -210,12 +210,10 @@ function verifiedQuickViewSpecifications(
+ ) {
+   return definitions.flatMap((definition) => {
+     if (definition.productType !== product.productType) return [];
+-    const raw = product.specifications[definition.code];
+-    if (typeof raw !== "object" || raw === null || Array.isArray(raw)) return [];
+-    const valueRecord = raw as Record<string, unknown>;
+-    const status = valueRecord.verificationStatus ?? valueRecord.verification_status ?? valueRecord.status;
+-    if (typeof status !== "string" || status.toUpperCase() !== "VERIFIED" || !("value" in valueRecord)) return [];
+-    const value = valueRecord.value;
++    const verification = product.verificationMetadata?.[definition.code];
++    if (verification?.verificationStatus !== "VERIFIED_EXACT_MODEL"
++        && verification?.verificationStatus !== "VERIFIED_EXACT_VARIANT") return [];
++    const value = product.specifications[definition.code];
+     if (value === null || value === undefined || value === "") return [];
+     return [{
+       label: attributeLabel(definitions, product.productType, definition.code),
+@@ -843,6 +841,7 @@ export function ProductPage() {
+           productTypeName={productTypeLabel(product.productType)}
+           specifications={product.specifications}
+           definitions={definitions}
++          verificationMetadata={product.verificationMetadata}
+           showEnglishLabels={false}
+         />
+       </Card>
+@@ -892,7 +891,7 @@ export function ComparePage() {
+           <div className="v2-compare-product-art"><ProductArtwork image={product.images.find((image) => image.isPrimary) ?? product.images[0]} productName={product.productName} productType={product.productType} /></div>
+           <div className="v2-cross-type-actions"><Link to={`/customer/product?modelCode=${encodeURIComponent(product.modelCode)}`}>Mở chi tiết</Link><SecondaryButton type="button" onClick={() => remove(product.modelCode)}>Bỏ khỏi so sánh</SecondaryButton></div>
+           <OfferList offers={product.offers} />
+-          <TechnicalSpecifications productType={product.productType} productTypeName={productTypeLabel(product.productType)} specifications={product.specifications} definitions={definitions} showEnglishLabels={false} />
++          <TechnicalSpecifications productType={product.productType} productTypeName={productTypeLabel(product.productType)} specifications={product.specifications} definitions={definitions} verificationMetadata={product.verificationMetadata} showEnglishLabels={false} />
+         </Card>)}</div>
+       </div>}
+       {products.length > 0 && compatibleTypes && <>
+@@ -973,7 +972,7 @@ export function ProductManagementPage() {
+             <WarrantyDisplay months={offer.warrantyMonths} showMissing />
+           </div>)}</div>
+           : "Chưa có offer hoạt động."}</td>
+-        <td><Badge>{product.status}</Badge><details className="v2-product-inventory-details"><summary>Toàn bộ thông số ({Object.keys(product.specifications).length})</summary><TechnicalSpecifications productType={product.productType} productTypeName={product.productTypeName} specifications={product.specifications} definitions={definitions} /></details></td>
++        <td><Badge>{product.status}</Badge><details className="v2-product-inventory-details"><summary>Toàn bộ thông số ({Object.keys(product.specifications).length})</summary><TechnicalSpecifications productType={product.productType} productTypeName={product.productTypeName} specifications={product.specifications} definitions={definitions} verificationMetadata={product.verificationMetadata} /></details></td>
+       </tr>)}</tbody></table></div>}
+       {result && result.pagination.totalPages > 1 && <div className="v2-pager">
+         <SecondaryButton type="button" disabled={page <= 1 || loading} onClick={() => setPage((value) => value - 1)}>Trước</SecondaryButton>
+diff --git a/frontend/src/v2/product-information.tsx b/frontend/src/v2/product-information.tsx
+index d113ad3..cf2fe35 100644
+--- a/frontend/src/v2/product-information.tsx
++++ b/frontend/src/v2/product-information.tsx
+@@ -1,4 +1,10 @@
+-import type { CatalogAttributeDefinition, CatalogOffer, CatalogProduct } from "../catalog-api";
++import type {
++  CatalogAttributeDefinition,
++  CatalogAttributeVerification,
++  CatalogOffer,
++  CatalogProduct,
++  CatalogVerificationStatus,
++} from "../catalog-api";
+ import type { ReactNode } from "react";
+ import { Badge, Card } from "./components";
+ import { money } from "../demo/demo-store";
+@@ -98,6 +104,38 @@ function SpecificationValue({
+   </div>;
+ }
+ 
++const verificationLabels: Record<CatalogVerificationStatus, string> = {
++  VERIFIED_EXACT_MODEL: "Đã xác minh đúng model",
++  VERIFIED_EXACT_VARIANT: "Đã xác minh đúng biến thể",
++  NEEDS_REVIEW: "Cần xác minh",
++  UNKNOWN: "Chưa rõ",
++};
++
++function verificationFor(
++  metadata: Record<string, CatalogAttributeVerification> | undefined,
++  code: string,
++  hasSpecificationValue: boolean,
++): CatalogAttributeVerification {
++  const verification = metadata?.[code];
++  if (verification && verificationLabels[verification.verificationStatus]) return verification;
++  return {
++    verificationStatus: hasSpecificationValue ? "NEEDS_REVIEW" : "UNKNOWN",
++    sourceUrl: null,
++    sourceLocator: null,
++    verificationScope: null,
++  };
++}
++
++function VerificationMetadataDisplay({ metadata }: { metadata: CatalogAttributeVerification }) {
++  return <div className={`v2-spec-verification v2-spec-verification-${metadata.verificationStatus.toLowerCase()}`}>
++    <span>{verificationLabels[metadata.verificationStatus]}</span>
++    {metadata.verificationScope && <span>Phạm vi xác minh: {metadata.verificationScope === "EXACT_VARIANT"
++      ? "đúng biến thể" : metadata.verificationScope === "EXACT_MODEL" ? "đúng model" : metadata.verificationScope}</span>}
++    {metadata.sourceLocator && <span>Vị trí nguồn: {metadata.sourceLocator}</span>}
++    {metadata.sourceUrl && <a href={metadata.sourceUrl} target="_blank" rel="noreferrer">Mở nguồn</a>}
++  </div>;
++}
++
+ export function attributeLabel(
+   definitions: CatalogAttributeDefinition[],
+   productType: string,
+@@ -301,12 +339,14 @@ export function TechnicalSpecifications({
+   productTypeName,
+   specifications,
+   definitions,
++  verificationMetadata,
+   showEnglishLabels = true,
+ }: {
+   productType: string;
+   productTypeName: string;
+   specifications: Record<string, unknown>;
+   definitions: CatalogAttributeDefinition[];
++  verificationMetadata?: Record<string, CatalogAttributeVerification>;
+   showEnglishLabels?: boolean;
+ }) {
+   const applicable = orderedSpecificationDefinitions(productType, definitions, specifications);
+@@ -320,12 +360,16 @@ export function TechnicalSpecifications({
+       definition,
+       value: specifications[definition.code],
+       present: hasValue(specifications, definition.code),
++      verification: verificationFor(
++        verificationMetadata, definition.code, hasValue(specifications, definition.code),
++      ),
+     })),
+     ...additionalCodes.map((code) => ({
+       code,
+       definition: undefined,
+       value: specifications[code],
+       present: hasValue(specifications, code),
++      verification: verificationFor(verificationMetadata, code, hasValue(specifications, code)),
+     })),
+   ];
+ 
+@@ -346,8 +390,8 @@ export function TechnicalSpecifications({
+ 
+   return <div className="v2-technical-groups">
+     <p className="v2-spec-dictionary-note">
+-      {productTypeName || productType} · Trường chưa được cung cấp được ghi là “Chưa có dữ liệu”.
+-      Giá trị hiện có chưa được xác minh theo nguồn cho từng model; các nhóm không xác nhận tương thích hay tính năng.
++      {productTypeName || productType} · Trạng thái xác minh được hiển thị riêng cho từng giá trị; trường thiếu được ghi là “Chưa có dữ liệu”.
++      Các thông số không tự xác nhận tính tương thích hay tính năng.
+       {productType === "GPU" && " Thông số GPU silicon và bo mạch là phạm vi khác nhau; không sao chép giá trị giữa hãng hoặc biến thể nếu chưa xác minh đúng mã model."}
+     </p>
+     {orderedGroups.map(({ group, rows: groupRows }) => {
+@@ -358,22 +402,25 @@ export function TechnicalSpecifications({
+           <span>{populated}/{groupRows.length} trường có dữ liệu</span>
+         </summary>
+         <dl className="v2-spec-grid">
+-          {groupRows.map(({ code, definition, value, present }) => (
++          {groupRows.map(({ code, definition, value, present, verification }) => (
+             <div key={code}>
+               <dt>{attributeLabel(definitions, productType, code)}
+                 {showEnglishLabels && definition && <small className="v2-spec-english-label">{attributeEnglishLabel(definitions, productType, code)}</small>}
+                 {definition && <small className="v2-spec-policy">{{
+-                  required: "Cần xác minh",
+-                  conditional: "Theo loại",
+-                  optional: "Tùy chọn",
++                  required: "Mức độ: Bắt buộc",
++                  conditional: "Mức độ: Theo loại",
++                  optional: "Mức độ: Tùy chọn",
+                 }[specificationDisplayPolicy(productType, definition)]}</small>}
+                 {definition?.specificationScope && <small className="v2-spec-policy">
+                   {definition.specificationScope === "GPU_SILICON" ? "Phạm vi: chip GPU" : "Phạm vi: biến thể bo mạch"}
+                 </small>}
+               </dt>
+-              <dd>{present
+-                ? <SpecificationValue value={value} definition={definition} productType={productType} />
+-                : <span className="v2-spec-missing">Chưa có dữ liệu</span>}</dd>
++              <dd>
++                {present
++                  ? <SpecificationValue value={value} definition={definition} productType={productType} />
++                  : <span className="v2-spec-missing">Chưa có dữ liệu</span>}
++                <VerificationMetadataDisplay metadata={verification} />
++              </dd>
+             </div>
+           ))}
+         </dl>
+@@ -423,6 +470,10 @@ export function SpecificationComparison({
+       ? formatSpecificationValue(product.specifications[code], definition)
+       : "Chưa có dữ liệu"
+   );
++  const comparisonKey = (product: CatalogProduct, code: string, definition?: CatalogAttributeDefinition) => JSON.stringify([
++    valueFor(product, code, definition),
++    verificationFor(product.verificationMetadata, code, hasValue(product.specifications, code)),
++  ]);
+   const presentCount = (product: CatalogProduct) => rows.filter((row) => hasValue(product.specifications, row.code)).length;
+ 
+   return <section className="v2-spec-comparison">
+@@ -439,13 +490,13 @@ export function SpecificationComparison({
+       </div>
+     </div>
+     <p className="v2-spec-dictionary-note">
+-      Các giá trị hiện có trong catalog chưa được xác minh theo nguồn cho từng model; không dùng bảng này làm kết luận tương thích.
++      Trạng thái xác minh được hiển thị riêng cho từng giá trị; không dùng bảng này làm kết luận tương thích.
+       {productType === "GPU" && " Chip GPU và biến thể bo mạch có phạm vi thông số khác nhau; không suy rộng giữa hãng hoặc mã model."}
+     </p>
+     {groups.map(({ group, rows: groupRows }) => {
+       const visibleRows = groupRows.filter(({ code, definition }) => {
+         if (!hideIdentical) return true;
+-        const values = products.map((product) => valueFor(product, code, definition));
++        const values = products.map((product) => comparisonKey(product, code, definition));
+         return new Set(values).size > 1;
+       });
+       return <details className="v2-compare-spec-group" key={group.id} open>
+@@ -459,7 +510,7 @@ export function SpecificationComparison({
+               <th scope="col" key={product.modelCode}>{product.productName}<small className="v2-mono">{product.modelCode}</small></th>
+             ))}</tr></thead>
+             <tbody>{visibleRows.map(({ code, definition }) => {
+-              const values = products.map((product) => valueFor(product, code, definition));
++              const values = products.map((product) => comparisonKey(product, code, definition));
+               const differs = new Set(values).size > 1;
+               return <tr className={differs ? "v2-diff-row" : ""} key={code}>
+                 <th scope="row">{attributeLabel(definitions, productType, code)}
+@@ -467,11 +518,21 @@ export function SpecificationComparison({
+                   {definition?.specificationScope && <small className="v2-spec-policy">
+                     {definition.specificationScope === "GPU_SILICON" ? "Phạm vi: chip GPU" : "Phạm vi: biến thể bo mạch"}
+                   </small>}
++                  {definition && <small className="v2-spec-policy">{{
++                    required: "Mức độ: Bắt buộc",
++                    conditional: "Mức độ: Theo loại",
++                    optional: "Mức độ: Tùy chọn",
++                  }[specificationDisplayPolicy(productType, definition)]}</small>}
+                 </th>
+-                {products.map((product, index) => <td key={product.modelCode}>
++                {products.map((product) => <td key={product.modelCode}>
+                   {hasValue(product.specifications, code)
+                     ? <SpecificationValue value={product.specifications[code]} definition={definition} productType={productType} />
+-                    : values[index]}
++                    : "Chưa có dữ liệu"}
++                  <VerificationMetadataDisplay metadata={verificationFor(
++                      product.verificationMetadata,
++                    code,
++                    hasValue(product.specifications, code),
++                  )} />
+                 </td>)}
+               </tr>;
+             })}</tbody>
+diff --git a/frontend/src/v2/theme.css b/frontend/src/v2/theme.css
+index 6dcfe9f..94abde2 100644
+--- a/frontend/src/v2/theme.css
++++ b/frontend/src/v2/theme.css
+@@ -1696,6 +1696,34 @@
+   text-transform: capitalize;
+ }
+ 
++.v2-theme .v2-spec-verification {
++  display: flex;
++  flex-wrap: wrap;
++  align-items: center;
++  gap: 2px 8px;
++  margin-top: 5px;
++  font-size: 11px;
++}
++
++.v2-theme .v2-spec-verification-verified_exact_model,
++.v2-theme .v2-spec-verification-verified_exact_variant {
++  color: #17603d;
++}
++
++.v2-theme .v2-spec-verification-needs_review {
++  color: #8a4b00;
++}
++
++.v2-theme .v2-spec-verification-unknown {
++  color: var(--v2-muted);
++}
++
++.v2-theme .v2-spec-verification a {
++  color: inherit;
++  text-decoration: underline;
++  text-underline-offset: 2px;
++}
++
+ .v2-theme .v2-spec-not-applicable {
+   color: var(--v2-secondary);
+   font-style: italic;
+diff --git a/frontend/vite.config.ts b/frontend/vite.config.ts
+index 8e0b12e..5ccd16a 100644
+--- a/frontend/vite.config.ts
++++ b/frontend/vite.config.ts
+@@ -7,6 +7,7 @@ export default defineConfig(({ mode }) => {
+   return {
+     plugins: [react()],
+     server: {
++      fs: { allow: [".."] },
+       proxy: {
+         "/api": {
+           target: API_PROXY_TARGET || "http://localhost:8080",
+diff --git a/scripts/enrich-catalog-dev.ps1 b/scripts/enrich-catalog-dev.ps1
+index 3996833..d84a0d7 100644
+--- a/scripts/enrich-catalog-dev.ps1
++++ b/scripts/enrich-catalog-dev.ps1
+@@ -4,13 +4,17 @@ $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
+ $sqlFile = Join-Path $repoRoot "scripts\enrich-catalog-dev.sql"
+ $definitionsFile = Join-Path $repoRoot "backend-java\src\main\resources\catalog-attribute-definitions.csv"
+ $valuesFile = Join-Path $repoRoot "seed\catalog-verified-attribute-values.csv"
++$prepareValuesScript = Join-Path $PSScriptRoot "prepare-catalog-verified-values.ps1"
+ 
+-foreach ($requiredPath in @($sqlFile, $definitionsFile, $valuesFile)) {
++foreach ($requiredPath in @($sqlFile, $definitionsFile, $valuesFile, $prepareValuesScript)) {
+     if (-not (Test-Path -LiteralPath $requiredPath -PathType Leaf)) {
+         throw "Required catalog enrichment file not found: $requiredPath"
+     }
+ }
+ 
++# Rebuild the import CSV from exact-model/exact-variant approved evidence only.
++& $prepareValuesScript -RepoRoot $repoRoot
++
+ $psqlCandidates = @(
+     (Join-Path $env:ProgramFiles "PostgreSQL\18\bin\psql.exe"),
+     (Join-Path $env:ProgramFiles "PostgreSQL\17\bin\psql.exe"),
+@@ -21,8 +25,8 @@ if (-not $psql) {
+     throw "PostgreSQL psql.exe was not found. Install the PostgreSQL client or add psql.exe to PATH."
+ }
+ 
+-Write-Host "Applying approved catalog definitions to pc_builder_store_dev on ::1 only."
+-Write-Host "The script cannot modify products, offers, prices, stock, users, or the database schema."
++Write-Host "Applying catalog definitions and exact-variant approved values to pc_builder_store_dev on ::1 only."
++Write-Host "The SQL does not change products, offers, prices, stock, users, or the 35-table schema."
+ 
+ & $psql -X -w -v ON_ERROR_STOP=1 -v "repo_root=$repoRoot" `
+     -h "::1" -p 5432 -U postgres -d pc_builder_store_dev -f $sqlFile
+diff --git a/scripts/enrich-catalog-dev.sql b/scripts/enrich-catalog-dev.sql
+index e263ab9..dcce665 100644
+--- a/scripts/enrich-catalog-dev.sql
++++ b/scripts/enrich-catalog-dev.sql
+@@ -32,10 +32,13 @@ CREATE TEMP TABLE catalog_attribute_definition_stage (
+     filterable boolean NOT NULL,
+     build_critical boolean NOT NULL,
+     subtype text,
++    input_mode text,
++    options text,
++    specification_scope text,
+     PRIMARY KEY (product_type, code)
+ ) ON COMMIT DROP;
+ 
+-\copy catalog_attribute_definition_stage (product_type, code, label_vi, label_en, data_type, unit, filterable, build_critical, subtype) FROM 'backend-java/src/main/resources/catalog-attribute-definitions.csv' WITH (FORMAT csv, HEADER true, ENCODING 'UTF8')
++\copy catalog_attribute_definition_stage (product_type, code, label_vi, label_en, data_type, unit, filterable, build_critical, subtype, input_mode, options, specification_scope) FROM 'backend-java/src/main/resources/catalog-attribute-definitions.csv' WITH (FORMAT csv, HEADER true, ENCODING 'UTF8')
+ 
+ DO $validate_definitions$
+ BEGIN
+@@ -45,8 +48,12 @@ BEGIN
+            OR data_type NOT IN ('TEXT', 'DECIMAL', 'INTEGER', 'BOOLEAN', 'JSON')
+            OR code !~ '^[a-z][a-z0-9_]*$'
+            OR (product_type = 'ACCESSORY' AND subtype NOT IN ('MOUSE', 'KEYBOARD', 'MONITOR', 'HEADSET') AND code <> 'accessory_type')
++           OR (NULLIF(input_mode, '') IS NOT NULL AND input_mode NOT IN ('TEXT', 'TEXTAREA', 'NUMBER', 'BOOLEAN', 'JSON', 'JSON_ARRAY', 'SELECT'))
++           OR (NULLIF(specification_scope, '') IS NOT NULL AND specification_scope NOT IN ('GPU_SILICON', 'BOARD_VARIANT'))
++           OR (input_mode = 'SELECT' AND NULLIF(options, '') IS NULL)
++           OR (input_mode IS DISTINCT FROM 'SELECT' AND NULLIF(options, '') IS NOT NULL)
+     ) THEN
+-        RAISE EXCEPTION 'Catalog attribute dictionary contains an invalid type, code, datatype, or accessory subtype.';
++        RAISE EXCEPTION 'Catalog attribute dictionary contains an invalid type, code, datatype, subtype, input mode, option list, or specification scope.';
+     END IF;
+     IF EXISTS (
+         SELECT 1
+@@ -60,9 +67,22 @@ END
+ $validate_definitions$;
+ 
+ INSERT INTO product_attribute_definitions
+-    (product_type_id, attribute_code, attribute_name, data_type, unit, is_filterable, is_build_critical)
+-SELECT pt.product_type_id, staged.code, staged.label_vi, staged.data_type, NULLIF(staged.unit, ''),
+-       staged.filterable, staged.build_critical
++    (product_type_id, attribute_code, attribute_name, data_type, unit, is_filterable, is_build_critical, validation_json)
++SELECT pt.product_type_id,
++       staged.code,
++       staged.label_vi,
++       staged.data_type,
++       NULLIF(staged.unit, ''),
++       staged.filterable,
++       staged.build_critical,
++       jsonb_strip_nulls(jsonb_build_object(
++           'englishLabel', NULLIF(staged.label_en, ''),
++           'subtype', NULLIF(staged.subtype, ''),
++           'inputMode', NULLIF(staged.input_mode, ''),
++           'options', CASE WHEN NULLIF(staged.options, '') IS NULL THEN NULL
++                           ELSE to_jsonb(string_to_array(staged.options, '|')) END,
++           'specificationScope', NULLIF(staged.specification_scope, '')
++       ))
+   FROM catalog_attribute_definition_stage staged
+   JOIN product_types pt ON pt.type_code = staged.product_type
+ ON CONFLICT (product_type_id, attribute_code) DO UPDATE SET
+@@ -70,7 +90,8 @@ ON CONFLICT (product_type_id, attribute_code) DO UPDATE SET
+     data_type = EXCLUDED.data_type,
+     unit = EXCLUDED.unit,
+     is_filterable = EXCLUDED.is_filterable,
+-    is_build_critical = EXCLUDED.is_build_critical;
++    is_build_critical = EXCLUDED.is_build_critical,
++    validation_json = COALESCE(product_attribute_definitions.validation_json, '{}'::jsonb) || EXCLUDED.validation_json;
+ 
+ CREATE TEMP TABLE catalog_verified_attribute_value_stage (
+     model_code text NOT NULL,
+@@ -100,13 +121,12 @@ BEGIN
+             OR (data_type = 'INTEGER' AND (value_json #>> '{}')::numeric <> trunc((value_json #>> '{}')::numeric))
+             OR (data_type = 'BOOLEAN' AND jsonb_typeof(value_json) <> 'boolean')
+     ) THEN
+-        RAISE EXCEPTION 'Only sourced, exact-model verified attribute values with matching JSON types are accepted.';
++        RAISE EXCEPTION 'Only sourced, exact-model/exact-variant verified attribute values with matching JSON types are accepted.';
+     END IF;
+     IF EXISTS (
+         SELECT 1
+           FROM catalog_verified_attribute_value_stage staged
+           LEFT JOIN products p ON p.model_code = staged.model_code
+-          LEFT JOIN product_types pt ON pt.product_type_id = p.product_type_id
+           LEFT JOIN product_attribute_definitions ad
+             ON ad.product_type_id = p.product_type_id
+            AND ad.attribute_code = staged.attribute_code
+@@ -157,6 +177,32 @@ SELECT p.product_id,
+    AND ad.attribute_code = staged.attribute_code
+ ON CONFLICT (product_id, attribute_definition_id) DO NOTHING;
+ 
++WITH approved_verification AS (
++    SELECT ad.attribute_definition_id,
++           jsonb_object_agg(staged.model_code, jsonb_build_object(
++               'verificationStatus', staged.verification_status,
++               'sourceUrl', staged.source_url,
++               'sourceLocator', staged.source_locator,
++               'verificationScope', regexp_replace(staged.verification_status, '^VERIFIED_', '')
++           )) AS verification_by_model
++      FROM catalog_verified_attribute_value_stage staged
++      JOIN products p ON p.model_code = staged.model_code
++      JOIN product_attribute_definitions ad
++        ON ad.product_type_id = p.product_type_id
++       AND ad.attribute_code = staged.attribute_code
++     GROUP BY ad.attribute_definition_id
++)
++UPDATE product_attribute_definitions ad
++   SET validation_json = jsonb_set(
++       COALESCE(ad.validation_json, '{}'::jsonb),
++       '{verificationByModel}',
++       COALESCE(ad.validation_json -> 'verificationByModel', '{}'::jsonb)
++           || approved_verification.verification_by_model,
++       TRUE
++   )
++  FROM approved_verification
++ WHERE ad.attribute_definition_id = approved_verification.attribute_definition_id;
++
+ SELECT 'attribute_definitions' AS result, COUNT(*) AS count
+   FROM product_attribute_definitions;
+ SELECT 'verified_values_added_or_preserved' AS result, COUNT(*) AS count
+diff --git a/seed/catalog-verified-attribute-values.csv b/seed/catalog-verified-attribute-values.csv
+index 8096b52..7a25c1d 100644
+--- a/seed/catalog-verified-attribute-values.csv
++++ b/seed/catalog-verified-attribute-values.csv
+@@ -1 +1,58 @@
+-model_code,attribute_code,data_type,value_json,unit,source_url,source_locator,verification_status
++"model_code","attribute_code","data_type","value_json","unit","source_url","source_locator","verification_status"
++"DUAL-RTX4060-O8G","display_outputs","JSON","[{""type"":""HDMI"",""count"":1,""version"":""2.1a""},{""type"":""DisplayPort"",""count"":3,""version"":""1.4a""}]","","https://www.asus.com/motherboards-components/graphics-cards/dual/dual-rtx4060-o8g/techspec/","Interface","VERIFIED_EXACT_VARIANT"
++"DUAL-RTX4060-O8G","gpu_chip","TEXT","""NVIDIA GeForce RTX 4060""","","https://www.asus.com/motherboards-components/graphics-cards/dual/dual-rtx4060-o8g/techspec/","Graphic Engine","VERIFIED_EXACT_VARIANT"
++"DUAL-RTX4060-O8G","hdcp_version","TEXT","""2.3""","","https://www.asus.com/motherboards-components/graphics-cards/dual/dual-rtx4060-o8g/techspec/","Interface ? HDCP Support","VERIFIED_EXACT_VARIANT"
++"DUAL-RTX4060-O8G","included_accessories","JSON","[""Collection Card"",""Thank you Card""]","","https://www.asus.com/motherboards-components/graphics-cards/dual/dual-rtx4060-o8g/techspec/","Accessories","VERIFIED_EXACT_VARIANT"
++"DUAL-RTX4060-O8G","included_documentation","JSON","[""Speedsetup Manual""]","","https://www.asus.com/motherboards-components/graphics-cards/dual/dual-rtx4060-o8g/techspec/","Accessories","VERIFIED_EXACT_VARIANT"
++"DUAL-RTX4060-O8G","max_display_resolution","TEXT","""7680 x 4320""","","https://www.asus.com/motherboards-components/graphics-cards/dual/dual-rtx4060-o8g/techspec/","Resolution ? Digital Max Resolution","VERIFIED_EXACT_VARIANT"
++"DUAL-RTX4060-O8G","max_simultaneous_displays","INTEGER","4","displays","https://www.asus.com/motherboards-components/graphics-cards/dual/dual-rtx4060-o8g/techspec/","Maximum Display Support","VERIFIED_EXACT_VARIANT"
++"DUAL-RTX4060-O8G","memory_bus_width_bit","INTEGER","128","bit","https://www.asus.com/motherboards-components/graphics-cards/dual/dual-rtx4060-o8g/techspec/","Memory Interface","VERIFIED_EXACT_VARIANT"
++"DUAL-RTX4060-O8G","memory_data_rate_gbps","DECIMAL","17","Gbps","https://www.asus.com/motherboards-components/graphics-cards/dual/dual-rtx4060-o8g/techspec/","Memory Speed ? effective data rate","VERIFIED_EXACT_VARIANT"
++"DUAL-RTX4060-O8G","memory_type","TEXT","""GDDR6""","","https://www.asus.com/motherboards-components/graphics-cards/dual/dual-rtx4060-o8g/techspec/","Video Memory","VERIFIED_EXACT_VARIANT"
++"DUAL-RTX4060-O8G","multi_gpu_support","BOOLEAN","false","","https://www.asus.com/motherboards-components/graphics-cards/dual/dual-rtx4060-o8g/techspec/","NVlink / Crossfire Support ? No","VERIFIED_EXACT_VARIANT"
++"DUAL-RTX4060-O8G","opengl_version","TEXT","""OpenGL 4.6""","","https://www.asus.com/motherboards-components/graphics-cards/dual/dual-rtx4060-o8g/techspec/","OpenGL","VERIFIED_EXACT_VARIANT"
++"DUAL-RTX4060-O8G","pcie_generation","TEXT","""PCIe 4.0""","","https://www.asus.com/motherboards-components/graphics-cards/dual/dual-rtx4060-o8g/techspec/","Bus Standard","VERIFIED_EXACT_VARIANT"
++"DUAL-RTX4060-O8G","power_connectors","JSON","[{""type"":""8-pin"",""count"":1}]","","https://www.asus.com/motherboards-components/graphics-cards/dual/dual-rtx4060-o8g/techspec/","Power Connectors","VERIFIED_EXACT_VARIANT"
++"DUAL-RTX4060-O8G","processor_unit_count","INTEGER","3072","units","https://www.asus.com/motherboards-components/graphics-cards/dual/dual-rtx4060-o8g/techspec/","CUDA Core","VERIFIED_EXACT_VARIANT"
++"DUAL-RTX4060-O8G","processor_unit_label","TEXT","""CUDA cores""","","https://www.asus.com/motherboards-components/graphics-cards/dual/dual-rtx4060-o8g/techspec/","CUDA Core","VERIFIED_EXACT_VARIANT"
++"DUAL-RTX4060-O8G","recommended_psu_watt","INTEGER","550","W","https://www.asus.com/motherboards-components/graphics-cards/dual/dual-rtx4060-o8g/techspec/","Recommended PSU","VERIFIED_EXACT_VARIANT"
++"DUAL-RTX4060-O8G","slot_thickness","DECIMAL","2.5","slots","https://www.asus.com/motherboards-components/graphics-cards/dual/dual-rtx4060-o8g/techspec/","Slot","VERIFIED_EXACT_VARIANT"
++"DUAL-RTX4060-O8G","vram_gb","INTEGER","8","GB","https://www.asus.com/motherboards-components/graphics-cards/dual/dual-rtx4060-o8g/techspec/","Video Memory","VERIFIED_EXACT_VARIANT"
++"DUAL-RTX4060TI-O8G","display_outputs","JSON","[{""type"":""HDMI"",""count"":1,""version"":""2.1a""},{""type"":""DisplayPort"",""count"":3,""version"":""1.4a""}]","","https://www.asus.com/motherboards-components/graphics-cards/dual/dual-rtx4060ti-o8g/techspec/","Interface","VERIFIED_EXACT_VARIANT"
++"DUAL-RTX4060TI-O8G","gpu_chip","TEXT","""NVIDIA GeForce RTX 4060 Ti""","","https://www.asus.com/motherboards-components/graphics-cards/dual/dual-rtx4060ti-o8g/techspec/","Graphic Engine","VERIFIED_EXACT_VARIANT"
++"DUAL-RTX4060TI-O8G","hdcp_version","TEXT","""2.3""","","https://www.asus.com/motherboards-components/graphics-cards/dual/dual-rtx4060ti-o8g/techspec/","Interface ? HDCP Support","VERIFIED_EXACT_VARIANT"
++"DUAL-RTX4060TI-O8G","included_accessories","JSON","[""Collection Card"",""Thank you Card""]","","https://www.asus.com/motherboards-components/graphics-cards/dual/dual-rtx4060ti-o8g/techspec/","Accessories","VERIFIED_EXACT_VARIANT"
++"DUAL-RTX4060TI-O8G","included_documentation","JSON","[""Speedsetup Manual""]","","https://www.asus.com/motherboards-components/graphics-cards/dual/dual-rtx4060ti-o8g/techspec/","Accessories","VERIFIED_EXACT_VARIANT"
++"DUAL-RTX4060TI-O8G","max_display_resolution","TEXT","""7680 x 4320""","","https://www.asus.com/motherboards-components/graphics-cards/dual/dual-rtx4060ti-o8g/techspec/","Resolution ? Digital Max Resolution","VERIFIED_EXACT_VARIANT"
++"DUAL-RTX4060TI-O8G","max_simultaneous_displays","INTEGER","4","displays","https://www.asus.com/motherboards-components/graphics-cards/dual/dual-rtx4060ti-o8g/techspec/","Maximum Display Support","VERIFIED_EXACT_VARIANT"
++"DUAL-RTX4060TI-O8G","memory_bus_width_bit","INTEGER","128","bit","https://www.asus.com/motherboards-components/graphics-cards/dual/dual-rtx4060ti-o8g/techspec/","Memory Interface","VERIFIED_EXACT_VARIANT"
++"DUAL-RTX4060TI-O8G","memory_data_rate_gbps","DECIMAL","18","Gbps","https://www.asus.com/motherboards-components/graphics-cards/dual/dual-rtx4060ti-o8g/techspec/","Memory Speed ? effective data rate","VERIFIED_EXACT_VARIANT"
++"DUAL-RTX4060TI-O8G","memory_type","TEXT","""GDDR6""","","https://www.asus.com/motherboards-components/graphics-cards/dual/dual-rtx4060ti-o8g/techspec/","Video Memory","VERIFIED_EXACT_VARIANT"
++"DUAL-RTX4060TI-O8G","multi_gpu_support","BOOLEAN","false","","https://www.asus.com/motherboards-components/graphics-cards/dual/dual-rtx4060ti-o8g/techspec/","NVlink / Crossfire Support ? No","VERIFIED_EXACT_VARIANT"
++"DUAL-RTX4060TI-O8G","opengl_version","TEXT","""OpenGL 4.6""","","https://www.asus.com/motherboards-components/graphics-cards/dual/dual-rtx4060ti-o8g/techspec/","OpenGL","VERIFIED_EXACT_VARIANT"
++"DUAL-RTX4060TI-O8G","pcie_generation","TEXT","""PCIe 4.0""","","https://www.asus.com/motherboards-components/graphics-cards/dual/dual-rtx4060ti-o8g/techspec/","Bus Standard","VERIFIED_EXACT_VARIANT"
++"DUAL-RTX4060TI-O8G","power_connectors","JSON","[{""type"":""8-pin"",""count"":1}]","","https://www.asus.com/motherboards-components/graphics-cards/dual/dual-rtx4060ti-o8g/techspec/","Power Connectors","VERIFIED_EXACT_VARIANT"
++"DUAL-RTX4060TI-O8G","processor_unit_count","INTEGER","4352","units","https://www.asus.com/motherboards-components/graphics-cards/dual/dual-rtx4060ti-o8g/techspec/","CUDA Core","VERIFIED_EXACT_VARIANT"
++"DUAL-RTX4060TI-O8G","processor_unit_label","TEXT","""CUDA cores""","","https://www.asus.com/motherboards-components/graphics-cards/dual/dual-rtx4060ti-o8g/techspec/","CUDA Core","VERIFIED_EXACT_VARIANT"
++"DUAL-RTX4060TI-O8G","recommended_psu_watt","INTEGER","650","W","https://www.asus.com/motherboards-components/graphics-cards/dual/dual-rtx4060ti-o8g/techspec/","Recommended PSU","VERIFIED_EXACT_VARIANT"
++"DUAL-RTX4060TI-O8G","slot_thickness","DECIMAL","2.5","slots","https://www.asus.com/motherboards-components/graphics-cards/dual/dual-rtx4060ti-o8g/techspec/","Slot","VERIFIED_EXACT_VARIANT"
++"DUAL-RTX4060TI-O8G","vram_gb","INTEGER","8","GB","https://www.asus.com/motherboards-components/graphics-cards/dual/dual-rtx4060ti-o8g/techspec/","Video Memory","VERIFIED_EXACT_VARIANT"
++"DUAL-RTX4070S-O12G","display_outputs","JSON","[{""type"":""HDMI"",""count"":1,""version"":""2.1a""},{""type"":""DisplayPort"",""count"":3,""version"":""1.4a""}]","","https://www.asus.com/motherboards-components/graphics-cards/dual/dual-rtx4070s-o12g/techspec/","Interface","VERIFIED_EXACT_VARIANT"
++"DUAL-RTX4070S-O12G","gpu_chip","TEXT","""NVIDIA GeForce RTX 4070 SUPER""","","https://www.asus.com/motherboards-components/graphics-cards/dual/dual-rtx4070s-o12g/techspec/","Graphic Engine","VERIFIED_EXACT_VARIANT"
++"DUAL-RTX4070S-O12G","hdcp_version","TEXT","""2.3""","","https://www.asus.com/motherboards-components/graphics-cards/dual/dual-rtx4070s-o12g/techspec/","Interface ? HDCP Support","VERIFIED_EXACT_VARIANT"
++"DUAL-RTX4070S-O12G","included_accessories","JSON","[""Collection Card"",""Thank you Card"",""Adapter cable (1 to 2)""]","","https://www.asus.com/motherboards-components/graphics-cards/dual/dual-rtx4070s-o12g/techspec/","Accessories","VERIFIED_EXACT_VARIANT"
++"DUAL-RTX4070S-O12G","included_documentation","JSON","[""Speedsetup Manual""]","","https://www.asus.com/motherboards-components/graphics-cards/dual/dual-rtx4070s-o12g/techspec/","Accessories","VERIFIED_EXACT_VARIANT"
++"DUAL-RTX4070S-O12G","max_display_resolution","TEXT","""7680 x 4320""","","https://www.asus.com/motherboards-components/graphics-cards/dual/dual-rtx4070s-o12g/techspec/","Resolution ? Digital Max Resolution","VERIFIED_EXACT_VARIANT"
++"DUAL-RTX4070S-O12G","max_simultaneous_displays","INTEGER","4","displays","https://www.asus.com/motherboards-components/graphics-cards/dual/dual-rtx4070s-o12g/techspec/","Maximum Display Support","VERIFIED_EXACT_VARIANT"
++"DUAL-RTX4070S-O12G","memory_bus_width_bit","INTEGER","192","bit","https://www.asus.com/motherboards-components/graphics-cards/dual/dual-rtx4070s-o12g/techspec/","Memory Interface","VERIFIED_EXACT_VARIANT"
++"DUAL-RTX4070S-O12G","memory_data_rate_gbps","DECIMAL","21","Gbps","https://www.asus.com/motherboards-components/graphics-cards/dual/dual-rtx4070s-o12g/techspec/","Memory Speed ? effective data rate","VERIFIED_EXACT_VARIANT"
++"DUAL-RTX4070S-O12G","memory_type","TEXT","""GDDR6X""","","https://www.asus.com/motherboards-components/graphics-cards/dual/dual-rtx4070s-o12g/techspec/","Video Memory","VERIFIED_EXACT_VARIANT"
++"DUAL-RTX4070S-O12G","multi_gpu_support","BOOLEAN","false","","https://www.asus.com/motherboards-components/graphics-cards/dual/dual-rtx4070s-o12g/techspec/","NVlink / Crossfire Support ? No","VERIFIED_EXACT_VARIANT"
++"DUAL-RTX4070S-O12G","opengl_version","TEXT","""OpenGL 4.6""","","https://www.asus.com/motherboards-components/graphics-cards/dual/dual-rtx4070s-o12g/techspec/","OpenGL","VERIFIED_EXACT_VARIANT"
++"DUAL-RTX4070S-O12G","pcie_generation","TEXT","""PCIe 4.0""","","https://www.asus.com/motherboards-components/graphics-cards/dual/dual-rtx4070s-o12g/techspec/","Bus Standard","VERIFIED_EXACT_VARIANT"
++"DUAL-RTX4070S-O12G","power_connectors","JSON","[{""type"":""16-pin"",""count"":1}]","","https://www.asus.com/motherboards-components/graphics-cards/dual/dual-rtx4070s-o12g/techspec/","Power Connectors","VERIFIED_EXACT_VARIANT"
++"DUAL-RTX4070S-O12G","processor_unit_count","INTEGER","7168","units","https://www.asus.com/motherboards-components/graphics-cards/dual/dual-rtx4070s-o12g/techspec/","CUDA Core","VERIFIED_EXACT_VARIANT"
++"DUAL-RTX4070S-O12G","processor_unit_label","TEXT","""CUDA cores""","","https://www.asus.com/motherboards-components/graphics-cards/dual/dual-rtx4070s-o12g/techspec/","CUDA Core","VERIFIED_EXACT_VARIANT"
++"DUAL-RTX4070S-O12G","recommended_psu_watt","INTEGER","750","W","https://www.asus.com/motherboards-components/graphics-cards/dual/dual-rtx4070s-o12g/techspec/","Recommended PSU","VERIFIED_EXACT_VARIANT"
++"DUAL-RTX4070S-O12G","slot_thickness","DECIMAL","2.5","slots","https://www.asus.com/motherboards-components/graphics-cards/dual/dual-rtx4070s-o12g/techspec/","Slot","VERIFIED_EXACT_VARIANT"
++"DUAL-RTX4070S-O12G","vram_gb","INTEGER","12","GB","https://www.asus.com/motherboards-components/graphics-cards/dual/dual-rtx4070s-o12g/techspec/","Video Memory","VERIFIED_EXACT_VARIANT"

@@ -1,6 +1,9 @@
 package com.pc_builder_store.catalog.controller;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -68,46 +71,69 @@ class CatalogControllerTest {
     }
 
     @Test
-    void returnsAllTypedAttributeDefinitionsWithoutChangingFacetContract() throws Exception {
+    void filtersPublicAttributeDefinitionsAndKeepsFullAdminDefinitions() throws Exception {
         when(catalogRepository.getAttributeDefinitions()).thenReturn(List.of(
-                new CatalogAttributeDefinition("CPU", "core_count", "Core Count", "INTEGER", "cores", true),
-                new CatalogAttributeDefinition("CPU", "architecture", "Architecture", "TEXT", null, false),
                 new CatalogAttributeDefinition(
-                        "GPU", "memory_type", "Loại bộ nhớ đồ họa", "TEXT", null, false,
-                        "Graphics memory type", null, "SELECT", List.of("GDDR6", "GDDR7"), "BOARD_VARIANT")));
+                        "GPU", "gpu_chip", "GPU Chip", "TEXT", null, true,
+                        "GPU chip", "GPU", "TEXT", List.of(), "BOARD_VARIANT"),
+                new CatalogAttributeDefinition(
+                        "GPU", "architecture", "Architecture", "TEXT", null, false,
+                        "Architecture", "GPU", "TEXT", List.of(), "BOARD_VARIANT"),
+                new CatalogAttributeDefinition(
+                        "GPU", "unlisted_attribute", "Unlisted", "TEXT", null, false,
+                        "Unlisted internal label", "GPU", "SELECT", List.of("private option"),
+                        "BOARD_VARIANT")));
 
         mockMvc.perform(get("/api/catalog/attribute-definitions"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data[0].productType").value("CPU"))
-                .andExpect(jsonPath("$.data[0].code").value("core_count"))
-                .andExpect(jsonPath("$.data[0].dataType").value("INTEGER"))
-                .andExpect(jsonPath("$.data[0].unit").value("cores"))
-                .andExpect(jsonPath("$.data[0].filterable").value(true))
-                .andExpect(jsonPath("$.data[0].englishLabel").value("Core Count"))
+                .andExpect(jsonPath("$.data.length()").value(1))
+                .andExpect(jsonPath("$.data[0].productType").value("GPU"))
+                .andExpect(jsonPath("$.data[0].code").value("gpu_chip"))
+                .andExpect(jsonPath("$.data[0].label").value("GPU Chip"))
+                .andExpect(jsonPath("$.data[0].dataType").value("TEXT"))
+                .andExpect(jsonPath("$.data[0].unit").doesNotExist())
                 .andExpect(jsonPath("$.data[0].subtype").doesNotExist())
-                .andExpect(jsonPath("$.data[1].dataType").value("TEXT"))
-                .andExpect(jsonPath("$.data[1].filterable").value(false))
-                .andExpect(jsonPath("$.data[2].inputMode").value("SELECT"))
-                .andExpect(jsonPath("$.data[2].options[1]").value("GDDR7"))
-                .andExpect(jsonPath("$.data[2].specificationScope").value("BOARD_VARIANT"));
+                .andExpect(jsonPath("$.data[0].inputMode").doesNotExist())
+                .andExpect(jsonPath("$.data[0].options").doesNotExist())
+                .andExpect(jsonPath("$.data[0].englishLabel").doesNotExist())
+                .andExpect(jsonPath("$.data[0].specificationScope").doesNotExist())
+                .andExpect(jsonPath("$.data[0].filterable").doesNotExist())
+                .andExpect(jsonPath("$.data[?(@.code == 'architecture')]").doesNotExist())
+                .andExpect(jsonPath("$.data[?(@.code == 'unlisted_attribute')]").doesNotExist());
+
+        mockMvc.perform(get("/api/catalog/admin/attribute-definitions"))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/api/catalog/admin/attribute-definitions")
+                        .with(user("customer").roles("CUSTOMER")))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/catalog/admin/attribute-definitions")
+                        .with(user("admin").roles("ADMIN")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(3))
+                .andExpect(jsonPath("$.data[0].specificationScope").value("BOARD_VARIANT"))
+                .andExpect(jsonPath("$.data[2].options[0]").value("private option"))
+                .andExpect(jsonPath("$.data[2].englishLabel").value("Unlisted internal label"));
     }
 
     @Test
     void returnsPaginatedProductListWithNestedContractFields() throws Exception {
         when(catalogRepository.findProducts(org.mockito.ArgumentMatchers.any()))
-                .thenReturn(new CatalogRepository.ProductPage(List.of(product()), 1));
+                .thenReturn(new CatalogRepository.ProductPage(List.of(publicGpuProduct()), 1));
 
         mockMvc.perform(get("/api/catalog/products")
                         .param("page", "2")
                         .param("limit", "10")
                         .param("sort", "price")
                         .param("order", "desc")
-                        .param("attribute", "capacity_gb=16"))
+                        .param("attribute", "vram_gb=8"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data[0].productId").value("12345678901234567890"))
                 .andExpect(jsonPath("$.data[0].offers[0].price").value(123.45))
                 .andExpect(jsonPath("$.data[0].offers[0].availableQuantity").value(7))
-                .andExpect(jsonPath("$.data[0].specifications.capacity_gb").value(16))
+                .andExpect(jsonPath("$.data[0].specifications.gpu_chip")
+                        .value("NVIDIA GeForce RTX 4060"))
+                .andExpect(jsonPath("$.data[0].specifications.architecture").doesNotExist())
+                .andExpect(jsonPath("$.data[0].verificationMetadata").doesNotExist())
                 .andExpect(jsonPath("$.data[0].images[0].url").value("https://example.com/image.png"))
                 .andExpect(jsonPath("$.data[0].demoData").value(true))
                 .andExpect(jsonPath("$.pagination.page").value(2))
@@ -125,43 +151,86 @@ class CatalogControllerTest {
     }
 
     @Test
-    void returnsVerificationMetadataSeparatelyFromUnchangedSpecificationValues() throws Exception {
-        CatalogProduct base = product();
-        CatalogProduct verified = new CatalogProduct(
-                base.productId(),
-                "VERIFIED-MODEL",
-                base.productName(),
-                base.shortDescription(),
-                base.description(),
-                base.status(),
-                base.productType(),
-                base.productTypeName(),
-                base.categoryCode(),
-                base.categoryName(),
-                base.brandName(),
-                base.offers(),
-                base.specifications(),
-                Map.of("capacity_gb", new CatalogAttributeVerification(
-                        CatalogVerificationStatus.VERIFIED_EXACT_MODEL,
-                        "https://example.com/spec",
-                        "Capacity",
-                        "EXACT_MODEL")),
-                base.images(),
-                base.demoData());
-        when(catalogRepository.findActiveProduct("VERIFIED-MODEL"))
-                .thenReturn(Optional.of(verified));
+    void filtersPublicProductDetailsAndSearchWithoutChangingStoredValues() throws Exception {
+        CatalogProduct internalProduct = publicGpuProduct();
+        when(catalogRepository.findActiveProduct("DUAL-RTX4060-O8G"))
+                .thenReturn(Optional.of(internalProduct));
+        when(catalogRepository.findProducts(org.mockito.ArgumentMatchers.any()))
+                .thenReturn(new CatalogRepository.ProductPage(List.of(internalProduct), 1));
 
-        mockMvc.perform(get("/api/catalog/products/VERIFIED-MODEL"))
+        String detailResponse = mockMvc.perform(get("/api/catalog/products/DUAL-RTX4060-O8G"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.specifications.capacity_gb").value(16))
-                .andExpect(jsonPath("$.data.verificationMetadata.capacity_gb.verificationStatus")
-                        .value("VERIFIED_EXACT_MODEL"))
-                .andExpect(jsonPath("$.data.verificationMetadata.capacity_gb.sourceUrl")
-                        .value("https://example.com/spec"))
-                .andExpect(jsonPath("$.data.verificationMetadata.capacity_gb.sourceLocator")
-                        .value("Capacity"))
-                .andExpect(jsonPath("$.data.verificationMetadata.capacity_gb.verificationScope")
-                        .value("EXACT_MODEL"));
+                .andExpect(jsonPath("$.data.specifications.gpu_chip")
+                        .value("NVIDIA GeForce RTX 4060"))
+                .andExpect(jsonPath("$.data.specifications.architecture").doesNotExist())
+                .andExpect(jsonPath("$.data.specifications.unlisted_attribute").doesNotExist())
+                .andExpect(jsonPath("$.data.verificationMetadata").doesNotExist())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        String searchResponse = mockMvc.perform(get("/api/catalog/products")
+                        .param("q", "DUAL-RTX4060-O8G"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[0].specifications.gpu_chip")
+                        .value("NVIDIA GeForce RTX 4060"))
+                .andExpect(jsonPath("$.data[0].specifications.architecture").doesNotExist())
+                .andExpect(jsonPath("$.data[0].verificationMetadata").doesNotExist())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        for (String response : List.of(detailResponse, searchResponse)) {
+            assertFalse(response.contains("https://www.asus.com/motherboards-components/graphics-cards/dual/dual-rtx4060-o8g/techspec/"));
+            assertFalse(response.contains("Graphic Engine"));
+            assertFalse(response.contains("Exact ASUS model specification page reviewed"));
+            assertFalse(response.contains("2026-11-06"));
+            assertFalse(response.contains("verification_status"));
+            assertFalse(response.contains("public_visibility"));
+            assertFalse(response.contains("source_url"));
+            assertFalse(response.contains("source_locator"));
+            assertFalse(response.contains("specification_scope"));
+            assertFalse(response.contains("review_note"));
+            assertFalse(response.contains("review_date"));
+        }
+
+        assertEquals("Ada Lovelace", internalProduct.specifications().path("architecture").asString());
+        verify(catalogRepository, never()).updateGpuSpecifications(
+                org.mockito.ArgumentMatchers.anyString(),
+                org.mockito.ArgumentMatchers.anyMap());
+    }
+
+    @Test
+    void adminEndpointRetainsInternalValuesAndRequiresAdminRole() throws Exception {
+        CatalogProduct internalProduct = publicGpuProduct();
+        when(catalogRepository.findAdminActiveProduct("DUAL-RTX4060-O8G"))
+                .thenReturn(Optional.of(internalProduct));
+
+        mockMvc.perform(get("/api/catalog/admin/products/DUAL-RTX4060-O8G"))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/api/catalog/admin/products/DUAL-RTX4060-O8G")
+                        .with(user("customer").roles("CUSTOMER")))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/catalog/admin/products/DUAL-RTX4060-O8G")
+                        .with(user("admin").roles("ADMIN")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.specifications.gpu_chip")
+                        .value("NVIDIA GeForce RTX 4060"))
+                .andExpect(jsonPath("$.data.specifications.architecture").value("Ada Lovelace"))
+                .andExpect(jsonPath("$.data.verificationMetadata.architecture.verificationStatus")
+                        .value("NEEDS_REVIEW"));
+    }
+
+    @Test
+    void internalLedgerCsvHasNoDownloadRoute() throws Exception {
+        for (String resource : List.of(
+                "catalog-attribute-internal-ledger.csv",
+                "catalog-image-sources.csv",
+                "catalog-verified-attribute-values.csv")) {
+            mockMvc.perform(get("/catalog-internal/" + resource))
+                    .andExpect(status().is4xxClientError())
+                    .andExpect(result -> assertFalse(
+                            result.getResponse().getContentAsString().contains("public_visibility")));
+        }
     }
 
     @Test
@@ -243,7 +312,7 @@ class CatalogControllerTest {
 
     @Test
     void persistsGpuSpecificationUpdatesThroughTheCatalogRepository() throws Exception {
-        when(catalogRepository.findActiveProduct("GPU-TEST")).thenReturn(Optional.of(gpuProduct()));
+        when(catalogRepository.findAdminActiveProduct("GPU-TEST")).thenReturn(Optional.of(gpuProduct()));
 
         mockMvc.perform(put("/api/catalog/admin/products/GPU-TEST/specifications")
                         .with(csrf())
@@ -310,6 +379,43 @@ class CatalogControllerTest {
                         true)),
                 JsonMapper.builder().build().readTree("{\"capacity_gb\":16}"),
                 List.of(new CatalogImage("https://example.com/image.png", null, true)),
+                true);
+    }
+
+    private CatalogProduct publicGpuProduct() throws Exception {
+        CatalogProduct base = product();
+        return new CatalogProduct(
+                base.productId(),
+                "DUAL-RTX4060-O8G",
+                "ASUS Dual GeForce RTX 4060 8GB",
+                base.shortDescription(),
+                base.description(),
+                base.status(),
+                "GPU",
+                "Graphics card",
+                "GPU",
+                "Graphics card",
+                base.brandName(),
+                base.offers(),
+                JsonMapper.builder().build().readTree("""
+                        {
+                          "gpu_chip":"NVIDIA GeForce RTX 4060",
+                          "architecture":"Ada Lovelace",
+                          "unlisted_attribute":"must not be returned"
+                        }
+                        """),
+                Map.of(
+                        "gpu_chip", new CatalogAttributeVerification(
+                                CatalogVerificationStatus.VERIFIED_EXACT_VARIANT,
+                                "https://www.asus.com/motherboards-components/graphics-cards/dual/dual-rtx4060-o8g/techspec/",
+                                "Graphic Engine",
+                                "EXACT_VARIANT"),
+                        "architecture", new CatalogAttributeVerification(
+                                CatalogVerificationStatus.NEEDS_REVIEW,
+                                "https://www.asus.com/motherboards-components/graphics-cards/dual/dual-rtx4060-o8g/techspec/",
+                                "Not listed on the exact-model specification page",
+                                null)),
+                base.images(),
                 true);
     }
 

@@ -1,6 +1,7 @@
 package com.pc_builder_store.catalog.dto;
 
 import java.util.List;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 public record CatalogAttributeDefinition(
         String productType,
@@ -13,6 +14,7 @@ public record CatalogAttributeDefinition(
         String subtype,
         String inputMode,
         List<String> options,
+        @JsonInclude(JsonInclude.Include.NON_NULL)
         String specificationScope) {
 
     public CatalogAttributeDefinition(
