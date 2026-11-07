@@ -451,7 +451,7 @@ export function ProductEditPage() {
             ? " · chip GPU (không tự sao chép)"
             : attribute.specificationScope === "BOARD_VARIANT" ? " · biến thể bo mạch" : "";
           const policy = specificationDisplayPolicy(draft.productType, attribute);
-          const policyLabel = { required: "Cần xác minh", conditional: "Theo loại", optional: "Tùy chọn" }[policy];
+          const policyLabel = { required: "Mức độ: Bắt buộc", conditional: "Mức độ: Theo loại", optional: "Mức độ: Tùy chọn" }[policy];
           return <FormField label={label} htmlFor={inputId} hint={`${attribute.productType}${englishLabelHint} · ${attribute.dataType} · ${policyLabel}${attribute.filterable ? " · có thể lọc" : ""}${scopeHint}`} key={`${attribute.productType}:${attribute.code}`}>
             {control}
           </FormField>;

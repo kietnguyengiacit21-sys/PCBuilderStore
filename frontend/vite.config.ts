@@ -7,6 +7,7 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react()],
     server: {
+      fs: { allow: [".."] },
       proxy: {
         "/api": {
           target: API_PROXY_TARGET || "http://localhost:8080",

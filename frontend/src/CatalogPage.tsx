@@ -10,6 +10,14 @@ import type {
   CatalogProductFilters,
   CatalogProductPage,
 } from "./catalog-api";
+import {
+  comparisonValuesDiffer,
+  formatSpecificationValue,
+  getProductHighlights,
+  getSpecificationLabel,
+  groupComparisonSpecifications,
+  groupSpecifications,
+} from "./product-specifications";
 
 const demoNotice =
   "Giá và tồn kho có nhãn DEMO chỉ là dữ liệu minh họa, không phải thông tin bán hàng hoặc tồn kho thực tế.";
@@ -40,20 +48,6 @@ function money(value: string | number | undefined, currency = "VND"): string {
   }).format(Number(value));
 }
 
-function displayValue(value: unknown): string {
-  if (value === null || value === undefined || value === "") return "—";
-  if (Array.isArray(value)) return value.map(displayValue).join(", ");
-  if (typeof value === "object") return JSON.stringify(value);
-  return String(value);
-}
-
-function formatAttribute(code: string): string {
-  return code
-    .split("_")
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ");
-}
-
 function ErrorState({ message }: { message: string }) {
   return (
     <div className="rounded border border-error/40 bg-error-container/20 p-space-md text-on-surface" role="alert">
@@ -74,6 +68,7 @@ function ProductCard({
 }) {
   const offer = product.offers[0];
   const image = product.images.find((item) => item.isPrimary) ?? product.images[0];
+  const highlights = getProductHighlights(product.productType, product.specifications);
   return (
     <article className="flex flex-col overflow-hidden rounded border border-surface-container-high bg-surface-container-low">
       <a
@@ -100,6 +95,16 @@ function ProductCard({
         <p className="mt-1 font-tech-code-sm text-tech-code-sm text-on-surface-variant">{product.modelCode}</p>
         {product.shortDescription && (
           <p className="mt-3 line-clamp-2 text-body-sm text-on-surface-variant">{product.shortDescription}</p>
+        )}
+        {highlights.length > 0 && (
+          <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2">
+            {highlights.map((entry) => (
+              <div key={entry.code} className="min-w-0">
+                <dt className="text-xs text-on-surface-variant">{entry.label}</dt>
+                <dd className="truncate text-sm text-on-surface" title={entry.value}>{entry.value}</dd>
+              </div>
+            ))}
+          </dl>
         )}
         <div className="mt-auto pt-space-md">
           {offer ? (
@@ -533,6 +538,7 @@ function ProductDetail({ modelCode, onCompare, compareCodes }: {
   if (!product) return null;
   const offer = product.offers[0];
   const image = product.images.find((item) => item.isPrimary) ?? product.images[0];
+  const specificationGroups = groupSpecifications(product.productType, product.specifications);
   return (
     <div className="mx-auto w-full max-w-7xl px-margin pb-space-3xl lg:px-margin-desktop">
       <nav className="py-space-md text-body-sm text-on-surface-variant" aria-label="Đường dẫn">
@@ -580,17 +586,24 @@ function ProductDetail({ modelCode, onCompare, compareCodes }: {
       </div>
       <section className="mt-space-2xl" aria-labelledby="specifications-title">
         <h2 id="specifications-title" className="font-headline-lg text-on-surface">Thông số kỹ thuật</h2>
-        {Object.keys(product.specifications).length === 0 ? (
+        {specificationGroups.length === 0 ? (
           <p className="mt-space-md text-body-sm text-on-surface-variant">Chưa có thông số kỹ thuật.</p>
         ) : (
-          <dl className="mt-space-md grid gap-px overflow-hidden rounded border border-surface-container-high bg-surface-container-high sm:grid-cols-2">
-            {Object.entries(product.specifications).map(([key, value]) => (
-              <div key={key} className="flex justify-between gap-space-md bg-surface-container-low p-space-md">
-                <dt className="text-body-sm text-on-surface-variant">{formatAttribute(key)}</dt>
-                <dd className="text-right text-body-sm text-on-surface">{displayValue(value)}</dd>
-              </div>
+          <div className="mt-space-md space-y-space-lg">
+            {specificationGroups.map((group) => (
+              <section key={group.title}>
+                <h3 className="mb-2 font-headline-sm text-primary">{group.title}</h3>
+                <dl className="grid gap-px overflow-hidden rounded border border-surface-container-high bg-surface-container-high sm:grid-cols-2">
+                  {group.entries.map((entry) => (
+                    <div key={entry.code} className="flex justify-between gap-space-md bg-surface-container-low p-space-md">
+                      <dt className="text-body-sm text-on-surface-variant">{entry.label}</dt>
+                      <dd className="text-right text-body-sm text-on-surface">{entry.value}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </section>
             ))}
-          </dl>
+          </div>
         )}
       </section>
     </div>
@@ -621,7 +634,7 @@ function ProductComparison({ codes, onRemove }: { codes: string[]; onRemove: (co
       });
     return () => controller.abort();
   }, [codes.join("|")]);
-  const specificationKeys = [...new Set(products.flatMap((product) => Object.keys(product.specifications)))].sort();
+  const specificationGroups = groupComparisonSpecifications(products);
   return (
     <div className="mx-auto w-full max-w-7xl px-margin py-space-xl lg:px-margin-desktop">
       <h1 className="font-headline-xl text-on-surface">So sánh sản phẩm</h1>
@@ -657,12 +670,24 @@ function ProductComparison({ codes, onRemove }: { codes: string[]; onRemove: (co
                   {products.map((product) => <td key={product.modelCode} className="p-space-md">{(getter as (item: CatalogProduct) => string)(product)}</td>)}
                 </tr>
               ))}
-              {specificationKeys.map((key) => (
-                <tr key={key} className="border-b border-surface-container-high">
-                  <th className="bg-surface-container-low p-space-md text-on-surface-variant">{formatAttribute(key)}</th>
-                  {products.map((product) => <td key={product.modelCode} className="p-space-md">{displayValue(product.specifications[key])}</td>)}
-                </tr>
-              ))}
+              {specificationGroups.flatMap((group) => [
+                <tr key={`group-${group.title}`} className="bg-surface-container-high">
+                  <th colSpan={products.length + 1} className="p-space-md font-semibold text-on-surface">{group.title}</th>
+                </tr>,
+                ...group.codes.map((key) => {
+                  const labelProduct = products.find((product) => key in product.specifications) ?? products[0];
+                  return (
+                    <tr key={key} className={`border-b border-surface-container-high ${comparisonValuesDiffer(products, key) ? "bg-primary/5" : ""}`}>
+                      <th className="bg-surface-container-low p-space-md text-on-surface-variant">{getSpecificationLabel(labelProduct.productType, key)}</th>
+                      {products.map((product) => (
+                        <td key={product.modelCode} className="p-space-md">
+                          {formatSpecificationValue(product.productType, key, product.specifications[key])}
+                        </td>
+                      ))}
+                    </tr>
+                  );
+                }),
+              ])}
             </tbody>
           </table>
         </div>

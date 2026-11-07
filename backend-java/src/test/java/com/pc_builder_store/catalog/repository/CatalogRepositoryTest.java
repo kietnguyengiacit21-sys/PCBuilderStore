@@ -13,6 +13,7 @@ import static org.mockito.Mockito.when;
 import com.pc_builder_store.catalog.dto.CatalogAttributeDefinition;
 import com.pc_builder_store.catalog.dto.CatalogProduct;
 import com.pc_builder_store.catalog.dto.CatalogQuery;
+import com.pc_builder_store.catalog.dto.CatalogVerificationStatus;
 import com.pc_builder_store.catalog.dto.CatalogQuery.AttributeFilter;
 import com.pc_builder_store.catalog.dto.CatalogQuery.Direction;
 import com.pc_builder_store.catalog.dto.CatalogQuery.Sort;
@@ -158,6 +159,14 @@ class CatalogRepositoryTest {
                 """);
         when(row.getString("specificationsJson")).thenReturn(
                 "{\"capacity_gb\":16,\"supports_xmp\":true}");
+        when(row.getString("verificationMetadataJson")).thenReturn("""
+                {
+                  "capacity_gb":{"verificationStatus":"VERIFIED_EXACT_MODEL","sourceUrl":"https://example.com/spec","sourceLocator":"Capacity","verificationScope":"EXACT_MODEL"},
+                  "memory_type":{"verificationStatus":"VERIFIED_EXACT_VARIANT","sourceUrl":"https://example.com/variant","sourceLocator":"Memory type","verificationScope":"EXACT_VARIANT"},
+                  "supports_xmp":{"verificationStatus":"NEEDS_REVIEW"},
+                  "missing_field":{"verificationStatus":"UNKNOWN"}
+                }
+                """);
         when(row.getString("imagesJson")).thenReturn("""
                 [{"url":"https://user:password@example.com/image.png","altText":"bad","isPrimary":true},
                  {"url":"https://example.com:99999/image.png","altText":"bad port","isPrimary":true},
@@ -174,6 +183,22 @@ class CatalogRepositoryTest {
         assertTrue(product.offers().get(0).isDemo());
         assertEquals(16, product.specifications().path("capacity_gb").intValue());
         assertTrue(product.specifications().path("supports_xmp").booleanValue());
+        assertEquals(
+                CatalogVerificationStatus.VERIFIED_EXACT_MODEL,
+                product.verificationMetadata().get("capacity_gb").verificationStatus());
+        assertEquals("https://example.com/spec",
+                product.verificationMetadata().get("capacity_gb").sourceUrl());
+        assertEquals("Capacity", product.verificationMetadata().get("capacity_gb").sourceLocator());
+        assertEquals("EXACT_MODEL",
+                product.verificationMetadata().get("capacity_gb").verificationScope());
+        assertEquals(CatalogVerificationStatus.VERIFIED_EXACT_VARIANT,
+                product.verificationMetadata().get("memory_type").verificationStatus());
+        assertEquals("EXACT_VARIANT",
+                product.verificationMetadata().get("memory_type").verificationScope());
+        assertEquals(CatalogVerificationStatus.NEEDS_REVIEW,
+                product.verificationMetadata().get("supports_xmp").verificationStatus());
+        assertEquals(CatalogVerificationStatus.UNKNOWN,
+                product.verificationMetadata().get("missing_field").verificationStatus());
         assertEquals(1, product.images().size());
         assertEquals("https://example.com/image.png", product.images().get(0).url());
         assertTrue(product.demoData());

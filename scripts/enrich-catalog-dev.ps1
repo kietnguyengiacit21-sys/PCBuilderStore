@@ -4,12 +4,16 @@ $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $sqlFile = Join-Path $repoRoot "scripts\enrich-catalog-dev.sql"
 $definitionsFile = Join-Path $repoRoot "backend-java\src\main\resources\catalog-attribute-definitions.csv"
 $valuesFile = Join-Path $repoRoot "seed\catalog-verified-attribute-values.csv"
+$prepareValuesScript = Join-Path $PSScriptRoot "prepare-catalog-verified-values.ps1"
 
-foreach ($requiredPath in @($sqlFile, $definitionsFile, $valuesFile)) {
+foreach ($requiredPath in @($sqlFile, $definitionsFile, $valuesFile, $prepareValuesScript)) {
     if (-not (Test-Path -LiteralPath $requiredPath -PathType Leaf)) {
         throw "Required catalog enrichment file not found: $requiredPath"
     }
 }
+
+# Rebuild the import CSV from exact-model/exact-variant approved evidence only.
+& $prepareValuesScript -RepoRoot $repoRoot
 
 $psqlCandidates = @(
     (Join-Path $env:ProgramFiles "PostgreSQL\18\bin\psql.exe"),
@@ -21,8 +25,8 @@ if (-not $psql) {
     throw "PostgreSQL psql.exe was not found. Install the PostgreSQL client or add psql.exe to PATH."
 }
 
-Write-Host "Applying approved catalog definitions to pc_builder_store_dev on ::1 only."
-Write-Host "The script cannot modify products, offers, prices, stock, users, or the database schema."
+Write-Host "Applying catalog definitions and exact-variant approved values to pc_builder_store_dev on ::1 only."
+Write-Host "The SQL does not change products, offers, prices, stock, users, or the 35-table schema."
 
 & $psql -X -w -v ON_ERROR_STOP=1 -v "repo_root=$repoRoot" `
     -h "::1" -p 5432 -U postgres -d pc_builder_store_dev -f $sqlFile

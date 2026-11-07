@@ -12,14 +12,17 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 
 import com.pc_builder_store.catalog.dto.CatalogAttributeFacet;
 import com.pc_builder_store.catalog.dto.CatalogAttributeDefinition;
+import com.pc_builder_store.catalog.dto.CatalogAttributeVerification;
 import com.pc_builder_store.catalog.dto.CatalogFacets;
 import com.pc_builder_store.catalog.dto.CatalogImage;
 import com.pc_builder_store.catalog.dto.CatalogOffer;
 import com.pc_builder_store.catalog.dto.CatalogOption;
 import com.pc_builder_store.catalog.dto.CatalogProduct;
+import com.pc_builder_store.catalog.dto.CatalogVerificationStatus;
 import com.pc_builder_store.catalog.repository.CatalogRepository;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -119,6 +122,46 @@ class CatalogControllerTest {
                         && query.sort().name().equals("PRICE")
                         && query.order().name().equals("DESC")
                         && query.attributes().size() == 1));
+    }
+
+    @Test
+    void returnsVerificationMetadataSeparatelyFromUnchangedSpecificationValues() throws Exception {
+        CatalogProduct base = product();
+        CatalogProduct verified = new CatalogProduct(
+                base.productId(),
+                "VERIFIED-MODEL",
+                base.productName(),
+                base.shortDescription(),
+                base.description(),
+                base.status(),
+                base.productType(),
+                base.productTypeName(),
+                base.categoryCode(),
+                base.categoryName(),
+                base.brandName(),
+                base.offers(),
+                base.specifications(),
+                Map.of("capacity_gb", new CatalogAttributeVerification(
+                        CatalogVerificationStatus.VERIFIED_EXACT_MODEL,
+                        "https://example.com/spec",
+                        "Capacity",
+                        "EXACT_MODEL")),
+                base.images(),
+                base.demoData());
+        when(catalogRepository.findActiveProduct("VERIFIED-MODEL"))
+                .thenReturn(Optional.of(verified));
+
+        mockMvc.perform(get("/api/catalog/products/VERIFIED-MODEL"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.specifications.capacity_gb").value(16))
+                .andExpect(jsonPath("$.data.verificationMetadata.capacity_gb.verificationStatus")
+                        .value("VERIFIED_EXACT_MODEL"))
+                .andExpect(jsonPath("$.data.verificationMetadata.capacity_gb.sourceUrl")
+                        .value("https://example.com/spec"))
+                .andExpect(jsonPath("$.data.verificationMetadata.capacity_gb.sourceLocator")
+                        .value("Capacity"))
+                .andExpect(jsonPath("$.data.verificationMetadata.capacity_gb.verificationScope")
+                        .value("EXACT_MODEL"));
     }
 
     @Test

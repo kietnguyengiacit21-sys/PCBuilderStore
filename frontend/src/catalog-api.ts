@@ -18,6 +18,19 @@ export interface CatalogImage {
   isPrimary: boolean;
 }
 
+export type CatalogVerificationStatus =
+  | "VERIFIED_EXACT_MODEL"
+  | "VERIFIED_EXACT_VARIANT"
+  | "NEEDS_REVIEW"
+  | "UNKNOWN";
+
+export interface CatalogAttributeVerification {
+  verificationStatus: CatalogVerificationStatus;
+  sourceUrl: string | null;
+  sourceLocator: string | null;
+  verificationScope: string | null;
+}
+
 export interface CatalogProduct {
   productId: string;
   modelCode: string;
@@ -32,6 +45,7 @@ export interface CatalogProduct {
   brandName: string | null;
   offers: CatalogOffer[];
   specifications: Record<string, unknown>;
+  verificationMetadata?: Record<string, CatalogAttributeVerification>;
   images: CatalogImage[];
 }
 

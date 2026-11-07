@@ -1,4 +1,10 @@
-import type { CatalogAttributeDefinition, CatalogOffer, CatalogProduct } from "../catalog-api";
+import type {
+  CatalogAttributeDefinition,
+  CatalogAttributeVerification,
+  CatalogOffer,
+  CatalogProduct,
+  CatalogVerificationStatus,
+} from "../catalog-api";
 import type { ReactNode } from "react";
 import { Badge, Card } from "./components";
 import { money } from "../demo/demo-store";
@@ -95,6 +101,38 @@ function SpecificationValue({
   return <div className="v2-spec-array-value">
     {productType === "PC" && <span className="v2-muted">Danh sách cấu hình được lưu; vai trò từng mục chưa được xác định trong dữ liệu.</span>}
     <ul>{value.map((item, index) => <li key={`${index}:${String(item)}`}>{formatStructuredListItem(item)}</li>)}</ul>
+  </div>;
+}
+
+const verificationLabels: Record<CatalogVerificationStatus, string> = {
+  VERIFIED_EXACT_MODEL: "Đã xác minh đúng model",
+  VERIFIED_EXACT_VARIANT: "Đã xác minh đúng biến thể",
+  NEEDS_REVIEW: "Cần xác minh",
+  UNKNOWN: "Chưa rõ",
+};
+
+function verificationFor(
+  metadata: Record<string, CatalogAttributeVerification> | undefined,
+  code: string,
+  hasSpecificationValue: boolean,
+): CatalogAttributeVerification {
+  const verification = metadata?.[code];
+  if (verification && verificationLabels[verification.verificationStatus]) return verification;
+  return {
+    verificationStatus: hasSpecificationValue ? "NEEDS_REVIEW" : "UNKNOWN",
+    sourceUrl: null,
+    sourceLocator: null,
+    verificationScope: null,
+  };
+}
+
+function VerificationMetadataDisplay({ metadata }: { metadata: CatalogAttributeVerification }) {
+  return <div className={`v2-spec-verification v2-spec-verification-${metadata.verificationStatus.toLowerCase()}`}>
+    <span>{verificationLabels[metadata.verificationStatus]}</span>
+    {metadata.verificationScope && <span>Phạm vi xác minh: {metadata.verificationScope === "EXACT_VARIANT"
+      ? "đúng biến thể" : metadata.verificationScope === "EXACT_MODEL" ? "đúng model" : metadata.verificationScope}</span>}
+    {metadata.sourceLocator && <span>Vị trí nguồn: {metadata.sourceLocator}</span>}
+    {metadata.sourceUrl && <a href={metadata.sourceUrl} target="_blank" rel="noreferrer">Mở nguồn</a>}
   </div>;
 }
 
@@ -301,12 +339,14 @@ export function TechnicalSpecifications({
   productTypeName,
   specifications,
   definitions,
+  verificationMetadata,
   showEnglishLabels = true,
 }: {
   productType: string;
   productTypeName: string;
   specifications: Record<string, unknown>;
   definitions: CatalogAttributeDefinition[];
+  verificationMetadata?: Record<string, CatalogAttributeVerification>;
   showEnglishLabels?: boolean;
 }) {
   const applicable = orderedSpecificationDefinitions(productType, definitions, specifications);
@@ -320,12 +360,16 @@ export function TechnicalSpecifications({
       definition,
       value: specifications[definition.code],
       present: hasValue(specifications, definition.code),
+      verification: verificationFor(
+        verificationMetadata, definition.code, hasValue(specifications, definition.code),
+      ),
     })),
     ...additionalCodes.map((code) => ({
       code,
       definition: undefined,
       value: specifications[code],
       present: hasValue(specifications, code),
+      verification: verificationFor(verificationMetadata, code, hasValue(specifications, code)),
     })),
   ];
 
@@ -346,8 +390,8 @@ export function TechnicalSpecifications({
 
   return <div className="v2-technical-groups">
     <p className="v2-spec-dictionary-note">
-      {productTypeName || productType} · Trường chưa được cung cấp được ghi là “Chưa có dữ liệu”.
-      Giá trị hiện có chưa được xác minh theo nguồn cho từng model; các nhóm không xác nhận tương thích hay tính năng.
+      {productTypeName || productType} · Trạng thái xác minh được hiển thị riêng cho từng giá trị; trường thiếu được ghi là “Chưa có dữ liệu”.
+      Các thông số không tự xác nhận tính tương thích hay tính năng.
       {productType === "GPU" && " Thông số GPU silicon và bo mạch là phạm vi khác nhau; không sao chép giá trị giữa hãng hoặc biến thể nếu chưa xác minh đúng mã model."}
     </p>
     {orderedGroups.map(({ group, rows: groupRows }) => {
@@ -358,22 +402,25 @@ export function TechnicalSpecifications({
           <span>{populated}/{groupRows.length} trường có dữ liệu</span>
         </summary>
         <dl className="v2-spec-grid">
-          {groupRows.map(({ code, definition, value, present }) => (
+          {groupRows.map(({ code, definition, value, present, verification }) => (
             <div key={code}>
               <dt>{attributeLabel(definitions, productType, code)}
                 {showEnglishLabels && definition && <small className="v2-spec-english-label">{attributeEnglishLabel(definitions, productType, code)}</small>}
                 {definition && <small className="v2-spec-policy">{{
-                  required: "Cần xác minh",
-                  conditional: "Theo loại",
-                  optional: "Tùy chọn",
+                  required: "Mức độ: Bắt buộc",
+                  conditional: "Mức độ: Theo loại",
+                  optional: "Mức độ: Tùy chọn",
                 }[specificationDisplayPolicy(productType, definition)]}</small>}
                 {definition?.specificationScope && <small className="v2-spec-policy">
                   {definition.specificationScope === "GPU_SILICON" ? "Phạm vi: chip GPU" : "Phạm vi: biến thể bo mạch"}
                 </small>}
               </dt>
-              <dd>{present
-                ? <SpecificationValue value={value} definition={definition} productType={productType} />
-                : <span className="v2-spec-missing">Chưa có dữ liệu</span>}</dd>
+              <dd>
+                {present
+                  ? <SpecificationValue value={value} definition={definition} productType={productType} />
+                  : <span className="v2-spec-missing">Chưa có dữ liệu</span>}
+                <VerificationMetadataDisplay metadata={verification} />
+              </dd>
             </div>
           ))}
         </dl>
@@ -423,6 +470,10 @@ export function SpecificationComparison({
       ? formatSpecificationValue(product.specifications[code], definition)
       : "Chưa có dữ liệu"
   );
+  const comparisonKey = (product: CatalogProduct, code: string, definition?: CatalogAttributeDefinition) => JSON.stringify([
+    valueFor(product, code, definition),
+    verificationFor(product.verificationMetadata, code, hasValue(product.specifications, code)),
+  ]);
   const presentCount = (product: CatalogProduct) => rows.filter((row) => hasValue(product.specifications, row.code)).length;
 
   return <section className="v2-spec-comparison">
@@ -439,13 +490,13 @@ export function SpecificationComparison({
       </div>
     </div>
     <p className="v2-spec-dictionary-note">
-      Các giá trị hiện có trong catalog chưa được xác minh theo nguồn cho từng model; không dùng bảng này làm kết luận tương thích.
+      Trạng thái xác minh được hiển thị riêng cho từng giá trị; không dùng bảng này làm kết luận tương thích.
       {productType === "GPU" && " Chip GPU và biến thể bo mạch có phạm vi thông số khác nhau; không suy rộng giữa hãng hoặc mã model."}
     </p>
     {groups.map(({ group, rows: groupRows }) => {
       const visibleRows = groupRows.filter(({ code, definition }) => {
         if (!hideIdentical) return true;
-        const values = products.map((product) => valueFor(product, code, definition));
+        const values = products.map((product) => comparisonKey(product, code, definition));
         return new Set(values).size > 1;
       });
       return <details className="v2-compare-spec-group" key={group.id} open>
@@ -459,7 +510,7 @@ export function SpecificationComparison({
               <th scope="col" key={product.modelCode}>{product.productName}<small className="v2-mono">{product.modelCode}</small></th>
             ))}</tr></thead>
             <tbody>{visibleRows.map(({ code, definition }) => {
-              const values = products.map((product) => valueFor(product, code, definition));
+              const values = products.map((product) => comparisonKey(product, code, definition));
               const differs = new Set(values).size > 1;
               return <tr className={differs ? "v2-diff-row" : ""} key={code}>
                 <th scope="row">{attributeLabel(definitions, productType, code)}
@@ -467,11 +518,21 @@ export function SpecificationComparison({
                   {definition?.specificationScope && <small className="v2-spec-policy">
                     {definition.specificationScope === "GPU_SILICON" ? "Phạm vi: chip GPU" : "Phạm vi: biến thể bo mạch"}
                   </small>}
+                  {definition && <small className="v2-spec-policy">{{
+                    required: "Mức độ: Bắt buộc",
+                    conditional: "Mức độ: Theo loại",
+                    optional: "Mức độ: Tùy chọn",
+                  }[specificationDisplayPolicy(productType, definition)]}</small>}
                 </th>
-                {products.map((product, index) => <td key={product.modelCode}>
+                {products.map((product) => <td key={product.modelCode}>
                   {hasValue(product.specifications, code)
                     ? <SpecificationValue value={product.specifications[code]} definition={definition} productType={productType} />
-                    : values[index]}
+                    : "Chưa có dữ liệu"}
+                  <VerificationMetadataDisplay metadata={verificationFor(
+                      product.verificationMetadata,
+                    code,
+                    hasValue(product.specifications, code),
+                  )} />
                 </td>)}
               </tr>;
             })}</tbody>

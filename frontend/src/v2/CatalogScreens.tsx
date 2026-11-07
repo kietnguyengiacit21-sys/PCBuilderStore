@@ -177,7 +177,7 @@ function ProductGrid({
 }) {
   if (!products.length) return <EmptyState title="Chưa có sản phẩm phù hợp" message="Thử thay đổi từ khóa hoặc bộ lọc." />;
   return <>
-    <p className="v2-spec-dictionary-note">Thông số hiển thị là dữ liệu hiện có trong catalog; chưa được xác minh theo nguồn cho từng model.</p>
+    <p className="v2-spec-dictionary-note">Trạng thái xác minh theo từng thông số được hiển thị trong chi tiết sản phẩm.</p>
     <div className="v2-product-grid">{products.map((product) => (
       <ProductTile key={product.productId} product={product} definitions={definitions} />
     ))}</div>
@@ -210,12 +210,10 @@ function verifiedQuickViewSpecifications(
 ) {
   return definitions.flatMap((definition) => {
     if (definition.productType !== product.productType) return [];
-    const raw = product.specifications[definition.code];
-    if (typeof raw !== "object" || raw === null || Array.isArray(raw)) return [];
-    const valueRecord = raw as Record<string, unknown>;
-    const status = valueRecord.verificationStatus ?? valueRecord.verification_status ?? valueRecord.status;
-    if (typeof status !== "string" || status.toUpperCase() !== "VERIFIED" || !("value" in valueRecord)) return [];
-    const value = valueRecord.value;
+    const verification = product.verificationMetadata?.[definition.code];
+    if (verification?.verificationStatus !== "VERIFIED_EXACT_MODEL"
+        && verification?.verificationStatus !== "VERIFIED_EXACT_VARIANT") return [];
+    const value = product.specifications[definition.code];
     if (value === null || value === undefined || value === "") return [];
     return [{
       label: attributeLabel(definitions, product.productType, definition.code),
@@ -843,6 +841,7 @@ export function ProductPage() {
           productTypeName={productTypeLabel(product.productType)}
           specifications={product.specifications}
           definitions={definitions}
+          verificationMetadata={product.verificationMetadata}
           showEnglishLabels={false}
         />
       </Card>
@@ -892,7 +891,7 @@ export function ComparePage() {
           <div className="v2-compare-product-art"><ProductArtwork image={product.images.find((image) => image.isPrimary) ?? product.images[0]} productName={product.productName} productType={product.productType} /></div>
           <div className="v2-cross-type-actions"><Link to={`/customer/product?modelCode=${encodeURIComponent(product.modelCode)}`}>Mở chi tiết</Link><SecondaryButton type="button" onClick={() => remove(product.modelCode)}>Bỏ khỏi so sánh</SecondaryButton></div>
           <OfferList offers={product.offers} />
-          <TechnicalSpecifications productType={product.productType} productTypeName={productTypeLabel(product.productType)} specifications={product.specifications} definitions={definitions} showEnglishLabels={false} />
+          <TechnicalSpecifications productType={product.productType} productTypeName={productTypeLabel(product.productType)} specifications={product.specifications} definitions={definitions} verificationMetadata={product.verificationMetadata} showEnglishLabels={false} />
         </Card>)}</div>
       </div>}
       {products.length > 0 && compatibleTypes && <>
@@ -973,7 +972,7 @@ export function ProductManagementPage() {
             <WarrantyDisplay months={offer.warrantyMonths} showMissing />
           </div>)}</div>
           : "Chưa có offer hoạt động."}</td>
-        <td><Badge>{product.status}</Badge><details className="v2-product-inventory-details"><summary>Toàn bộ thông số ({Object.keys(product.specifications).length})</summary><TechnicalSpecifications productType={product.productType} productTypeName={product.productTypeName} specifications={product.specifications} definitions={definitions} /></details></td>
+        <td><Badge>{product.status}</Badge><details className="v2-product-inventory-details"><summary>Toàn bộ thông số ({Object.keys(product.specifications).length})</summary><TechnicalSpecifications productType={product.productType} productTypeName={product.productTypeName} specifications={product.specifications} definitions={definitions} verificationMetadata={product.verificationMetadata} /></details></td>
       </tr>)}</tbody></table></div>}
       {result && result.pagination.totalPages > 1 && <div className="v2-pager">
         <SecondaryButton type="button" disabled={page <= 1 || loading} onClick={() => setPage((value) => value - 1)}>Trước</SecondaryButton>

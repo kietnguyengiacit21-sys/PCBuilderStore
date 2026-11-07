@@ -3,11 +3,13 @@ package com.pc_builder_store.catalog.repository;
 import com.pc_builder_store.catalog.AttributeDefinitionRegistry;
 import com.pc_builder_store.catalog.dto.CatalogAttributeFacet;
 import com.pc_builder_store.catalog.dto.CatalogAttributeDefinition;
+import com.pc_builder_store.catalog.dto.CatalogAttributeVerification;
 import com.pc_builder_store.catalog.dto.CatalogFacets;
 import com.pc_builder_store.catalog.dto.CatalogImage;
 import com.pc_builder_store.catalog.dto.CatalogOffer;
 import com.pc_builder_store.catalog.dto.CatalogOption;
 import com.pc_builder_store.catalog.dto.CatalogProduct;
+import com.pc_builder_store.catalog.dto.CatalogVerificationStatus;
 import com.pc_builder_store.catalog.dto.CatalogQuery;
 import com.pc_builder_store.catalog.exception.CatalogProductNotFoundException;
 import com.pc_builder_store.catalog.dto.CatalogQuery.AttributeFilter;
@@ -18,6 +20,7 @@ import java.math.BigDecimal;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -77,6 +80,30 @@ public class CatalogRepository {
                  AND av."product_id" = p."product_id"
                 WHERE ad."product_type_id" = p."product_type_id"
               ), '{}'::jsonb)::text AS "specificationsJson",
+              COALESCE((
+                SELECT jsonb_object_agg(ad."attribute_code", CASE
+                  WHEN av."product_id" IS NULL
+                    THEN jsonb_build_object('verificationStatus', 'UNKNOWN')
+                  WHEN vm."metadata" ->> 'verificationStatus' IN (
+                    'VERIFIED_EXACT_MODEL', 'VERIFIED_EXACT_VARIANT', 'NEEDS_REVIEW', 'UNKNOWN'
+                  )
+                    THEN jsonb_strip_nulls(jsonb_build_object(
+                      'verificationStatus', vm."metadata" -> 'verificationStatus',
+                      'sourceUrl', vm."metadata" -> 'sourceUrl',
+                      'sourceLocator', vm."metadata" -> 'sourceLocator',
+                      'verificationScope', vm."metadata" -> 'verificationScope'
+                    ))
+                  ELSE jsonb_build_object('verificationStatus', 'NEEDS_REVIEW')
+                END)
+                FROM "product_attribute_definitions" ad
+                LEFT JOIN "product_attribute_values" av
+                  ON av."attribute_definition_id" = ad."attribute_definition_id"
+                 AND av."product_id" = p."product_id"
+                LEFT JOIN LATERAL (
+                  SELECT ad."validation_json" -> 'verificationByModel' -> p."model_code" AS "metadata"
+                ) vm ON TRUE
+                WHERE ad."product_type_id" = p."product_type_id"
+              ), '{}'::jsonb)::text AS "verificationMetadataJson",
               COALESCE((
                 SELECT jsonb_agg(jsonb_build_object(
                   'url', pi."image_url",
@@ -477,8 +504,29 @@ public class CatalogRepository {
                 resultSet.getString("brandName"),
                 mapOffers(readJson(resultSet.getString("offersJson"))),
                 readJson(resultSet.getString("specificationsJson")),
+                mapVerificationMetadata(readJson(resultSet.getString("verificationMetadataJson"))),
                 mapImages(readJson(resultSet.getString("imagesJson"))),
                 resultSet.getBoolean("demoData"));
+    }
+
+    private Map<String, CatalogAttributeVerification> mapVerificationMetadata(JsonNode metadata) {
+        if (metadata == null || !metadata.isObject()) {
+            return Map.of();
+        }
+        Map<String, CatalogAttributeVerification> mapped = new LinkedHashMap<>();
+        metadata.properties().forEach(entry -> {
+            JsonNode value = entry.getValue();
+            mapped.put(entry.getKey(), new CatalogAttributeVerification(
+                    CatalogVerificationStatus.valueOf(value.path("verificationStatus").asText()),
+                    nullableText(value.get("sourceUrl")),
+                    nullableText(value.get("sourceLocator")),
+                    nullableText(value.get("verificationScope"))));
+        });
+        return Collections.unmodifiableMap(mapped);
+    }
+
+    private String nullableText(JsonNode value) {
+        return value != null && value.isTextual() ? value.textValue() : null;
     }
 
     private List<CatalogOffer> mapOffers(JsonNode offers) {

@@ -1696,6 +1696,34 @@
   text-transform: capitalize;
 }
 
+.v2-theme .v2-spec-verification {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 8px;
+  margin-top: 5px;
+  font-size: 11px;
+}
+
+.v2-theme .v2-spec-verification-verified_exact_model,
+.v2-theme .v2-spec-verification-verified_exact_variant {
+  color: #17603d;
+}
+
+.v2-theme .v2-spec-verification-needs_review {
+  color: #8a4b00;
+}
+
+.v2-theme .v2-spec-verification-unknown {
+  color: var(--v2-muted);
+}
+
+.v2-theme .v2-spec-verification a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 .v2-theme .v2-spec-not-applicable {
   color: var(--v2-secondary);
   font-style: italic;

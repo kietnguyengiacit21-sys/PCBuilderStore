@@ -32,10 +32,13 @@ CREATE TEMP TABLE catalog_attribute_definition_stage (
     filterable boolean NOT NULL,
     build_critical boolean NOT NULL,
     subtype text,
+    input_mode text,
+    options text,
+    specification_scope text,
     PRIMARY KEY (product_type, code)
 ) ON COMMIT DROP;
 
-\copy catalog_attribute_definition_stage (product_type, code, label_vi, label_en, data_type, unit, filterable, build_critical, subtype) FROM 'backend-java/src/main/resources/catalog-attribute-definitions.csv' WITH (FORMAT csv, HEADER true, ENCODING 'UTF8')
+\copy catalog_attribute_definition_stage (product_type, code, label_vi, label_en, data_type, unit, filterable, build_critical, subtype, input_mode, options, specification_scope) FROM 'backend-java/src/main/resources/catalog-attribute-definitions.csv' WITH (FORMAT csv, HEADER true, ENCODING 'UTF8')
 
 DO $validate_definitions$
 BEGIN
@@ -45,8 +48,12 @@ BEGIN
            OR data_type NOT IN ('TEXT', 'DECIMAL', 'INTEGER', 'BOOLEAN', 'JSON')
            OR code !~ '^[a-z][a-z0-9_]*$'
            OR (product_type = 'ACCESSORY' AND subtype NOT IN ('MOUSE', 'KEYBOARD', 'MONITOR', 'HEADSET') AND code <> 'accessory_type')
+           OR (NULLIF(input_mode, '') IS NOT NULL AND input_mode NOT IN ('TEXT', 'TEXTAREA', 'NUMBER', 'BOOLEAN', 'JSON', 'JSON_ARRAY', 'SELECT'))
+           OR (NULLIF(specification_scope, '') IS NOT NULL AND specification_scope NOT IN ('GPU_SILICON', 'BOARD_VARIANT'))
+           OR (input_mode = 'SELECT' AND NULLIF(options, '') IS NULL)
+           OR (input_mode IS DISTINCT FROM 'SELECT' AND NULLIF(options, '') IS NOT NULL)
     ) THEN
-        RAISE EXCEPTION 'Catalog attribute dictionary contains an invalid type, code, datatype, or accessory subtype.';
+        RAISE EXCEPTION 'Catalog attribute dictionary contains an invalid type, code, datatype, subtype, input mode, option list, or specification scope.';
     END IF;
     IF EXISTS (
         SELECT 1
@@ -60,9 +67,22 @@ END
 $validate_definitions$;
 
 INSERT INTO product_attribute_definitions
-    (product_type_id, attribute_code, attribute_name, data_type, unit, is_filterable, is_build_critical)
-SELECT pt.product_type_id, staged.code, staged.label_vi, staged.data_type, NULLIF(staged.unit, ''),
-       staged.filterable, staged.build_critical
+    (product_type_id, attribute_code, attribute_name, data_type, unit, is_filterable, is_build_critical, validation_json)
+SELECT pt.product_type_id,
+       staged.code,
+       staged.label_vi,
+       staged.data_type,
+       NULLIF(staged.unit, ''),
+       staged.filterable,
+       staged.build_critical,
+       jsonb_strip_nulls(jsonb_build_object(
+           'englishLabel', NULLIF(staged.label_en, ''),
+           'subtype', NULLIF(staged.subtype, ''),
+           'inputMode', NULLIF(staged.input_mode, ''),
+           'options', CASE WHEN NULLIF(staged.options, '') IS NULL THEN NULL
+                           ELSE to_jsonb(string_to_array(staged.options, '|')) END,
+           'specificationScope', NULLIF(staged.specification_scope, '')
+       ))
   FROM catalog_attribute_definition_stage staged
   JOIN product_types pt ON pt.type_code = staged.product_type
 ON CONFLICT (product_type_id, attribute_code) DO UPDATE SET
@@ -70,7 +90,8 @@ ON CONFLICT (product_type_id, attribute_code) DO UPDATE SET
     data_type = EXCLUDED.data_type,
     unit = EXCLUDED.unit,
     is_filterable = EXCLUDED.is_filterable,
-    is_build_critical = EXCLUDED.is_build_critical;
+    is_build_critical = EXCLUDED.is_build_critical,
+    validation_json = COALESCE(product_attribute_definitions.validation_json, '{}'::jsonb) || EXCLUDED.validation_json;
 
 CREATE TEMP TABLE catalog_verified_attribute_value_stage (
     model_code text NOT NULL,
@@ -87,7 +108,39 @@ CREATE TEMP TABLE catalog_verified_attribute_value_stage (
 \copy catalog_verified_attribute_value_stage (model_code, attribute_code, data_type, value_json, unit, source_url, source_locator, verification_status) FROM 'seed/catalog-verified-attribute-values.csv' WITH (FORMAT csv, HEADER true, ENCODING 'UTF8')
 
 DO $validate_values$
+DECLARE
+    staged_row_count integer;
 BEGIN
+    SELECT COUNT(*) INTO staged_row_count
+      FROM catalog_verified_attribute_value_stage;
+    IF staged_row_count <> 57 THEN
+        RAISE EXCEPTION 'Expected exactly 57 approved verification rows; found %.', staged_row_count;
+    END IF;
+    IF EXISTS (
+        SELECT 1
+          FROM catalog_verified_attribute_value_stage
+         WHERE model_code NOT IN ('DUAL-RTX4060-O8G', 'DUAL-RTX4060TI-O8G', 'DUAL-RTX4070S-O12G')
+    ) OR EXISTS (
+        SELECT expected.model_code
+          FROM (VALUES
+              ('DUAL-RTX4060-O8G'),
+              ('DUAL-RTX4060TI-O8G'),
+              ('DUAL-RTX4070S-O12G')
+          ) AS expected(model_code)
+        EXCEPT
+        SELECT model_code
+          FROM catalog_verified_attribute_value_stage
+    ) THEN
+        RAISE EXCEPTION 'Approved verification rows must contain exactly the three authorized ASUS GPU models.';
+    END IF;
+    IF EXISTS (
+        SELECT model_code
+          FROM catalog_verified_attribute_value_stage
+         GROUP BY model_code
+        HAVING COUNT(*) <> 19
+    ) THEN
+        RAISE EXCEPTION 'Expected exactly 19 approved verification rows per authorized model.';
+    END IF;
     IF EXISTS (
         SELECT 1
           FROM catalog_verified_attribute_value_stage
@@ -100,13 +153,12 @@ BEGIN
             OR (data_type = 'INTEGER' AND (value_json #>> '{}')::numeric <> trunc((value_json #>> '{}')::numeric))
             OR (data_type = 'BOOLEAN' AND jsonb_typeof(value_json) <> 'boolean')
     ) THEN
-        RAISE EXCEPTION 'Only sourced, exact-model verified attribute values with matching JSON types are accepted.';
+        RAISE EXCEPTION 'Only sourced, exact-model/exact-variant verified attribute values with matching JSON types are accepted.';
     END IF;
     IF EXISTS (
         SELECT 1
           FROM catalog_verified_attribute_value_stage staged
           LEFT JOIN products p ON p.model_code = staged.model_code
-          LEFT JOIN product_types pt ON pt.product_type_id = p.product_type_id
           LEFT JOIN product_attribute_definitions ad
             ON ad.product_type_id = p.product_type_id
            AND ad.attribute_code = staged.attribute_code
@@ -156,6 +208,32 @@ SELECT p.product_id,
     ON ad.product_type_id = p.product_type_id
    AND ad.attribute_code = staged.attribute_code
 ON CONFLICT (product_id, attribute_definition_id) DO NOTHING;
+
+WITH approved_verification AS (
+    SELECT ad.attribute_definition_id,
+           jsonb_object_agg(staged.model_code, jsonb_build_object(
+               'verificationStatus', staged.verification_status,
+               'sourceUrl', staged.source_url,
+               'sourceLocator', staged.source_locator,
+               'verificationScope', regexp_replace(staged.verification_status, '^VERIFIED_', '')
+           )) AS verification_by_model
+      FROM catalog_verified_attribute_value_stage staged
+      JOIN products p ON p.model_code = staged.model_code
+      JOIN product_attribute_definitions ad
+        ON ad.product_type_id = p.product_type_id
+       AND ad.attribute_code = staged.attribute_code
+     GROUP BY ad.attribute_definition_id
+)
+UPDATE product_attribute_definitions ad
+   SET validation_json = jsonb_set(
+       COALESCE(ad.validation_json, '{}'::jsonb),
+       '{verificationByModel}',
+       COALESCE(ad.validation_json -> 'verificationByModel', '{}'::jsonb)
+           || approved_verification.verification_by_model,
+       TRUE
+   )
+  FROM approved_verification
+ WHERE ad.attribute_definition_id = approved_verification.attribute_definition_id;
 
 SELECT 'attribute_definitions' AS result, COUNT(*) AS count
   FROM product_attribute_definitions;
