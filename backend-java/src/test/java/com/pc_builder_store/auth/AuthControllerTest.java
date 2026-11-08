@@ -56,12 +56,34 @@ class AuthControllerTest {
                         "CUSTOMER",
                         "IT",
                         "INACTIVE"));
+        when(authUserRepository.loadUserByUsername("sales@example.test"))
+                .thenReturn(new AuthUserPrincipal(
+                        "16",
+                        "Test Sales",
+                        "sales@example.test",
+                        passwordEncoder.encode(PASSWORD),
+                        "SALES",
+                        null,
+                        "ACTIVE"));
+        when(authUserRepository.loadUserByUsername("admin@example.test"))
+                .thenReturn(new AuthUserPrincipal(
+                        "17",
+                        "Test Admin",
+                        "admin@example.test",
+                        passwordEncoder.encode(PASSWORD),
+                        "ADMIN",
+                        null,
+                        "ACTIVE"));
         when(authUserRepository.loadUserByUsername("unknown@example.test"))
                 .thenThrow(new UsernameNotFoundException("Invalid email or password."));
     }
 
     @Test
     void csrfProtectsLoginAndSessionAuthenticatesMeUntilLogout() throws Exception {
+        mockMvc.perform(get("/api/auth/me"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.authenticated").value(false));
+
         mockMvc.perform(post("/api/auth/login")
                         .contentType("application/json")
                         .content("""
@@ -86,8 +108,9 @@ class AuthControllerTest {
         MockHttpSession session = (MockHttpSession) login.getRequest().getSession(false);
         mockMvc.perform(get("/api/auth/me").session(session))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.email").value(EMAIL))
-                .andExpect(jsonPath("$.customerSegment").value("IT"));
+                .andExpect(jsonPath("$.authenticated").value(true))
+                .andExpect(jsonPath("$.user.email").value(EMAIL))
+                .andExpect(jsonPath("$.user.customerSegment").value("IT"));
 
         mockMvc.perform(post("/api/auth/logout")
                         .session(session)
@@ -96,7 +119,8 @@ class AuthControllerTest {
                 .andExpect(status().isOk());
 
         mockMvc.perform(get("/api/auth/me").session(session))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.authenticated").value(false));
     }
 
     @Test
@@ -104,6 +128,27 @@ class AuthControllerTest {
         assertLoginRejected("customer@example.test", "wrong-password");
         assertLoginRejected("unknown@example.test", PASSWORD);
         assertLoginRejected("inactive@example.test", PASSWORD);
+    }
+
+    @Test
+    void sharedLoginAuthenticatesEachBackendAssignedRole() throws Exception {
+        assertRoleLogin("customer@example.test", "CUSTOMER");
+        assertRoleLogin("sales@example.test", "SALES");
+        assertRoleLogin("admin@example.test", "ADMIN");
+    }
+
+    private void assertRoleLogin(String email, String role) throws Exception {
+        CsrfFixture csrf = csrfFixture();
+        mockMvc.perform(post("/api/auth/login")
+                        .cookie(csrf.cookie())
+                        .header("X-XSRF-TOKEN", csrf.token())
+                        .contentType("application/json")
+                        .content("""
+                                {"email":"%s","password":"%s"}
+                                """.formatted(email, PASSWORD)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.roleCode").value(role))
+                .andExpect(jsonPath("$.passwordHash").doesNotExist());
     }
 
     private void assertLoginRejected(String email, String password) throws Exception {

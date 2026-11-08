@@ -384,7 +384,7 @@ class PostgresCatalogIntegrationIT {
     }
 
     @Test
-    void detailMapsNumericIdsMoneyTypedSpecificationsOffersImagesAndDemoData() throws Exception {
+    void detailMapsNumericIdsWithoutExposingInternalOfferCodesOrDemoMetadata() throws Exception {
         JsonNode response = getJson("/api/catalog/products/" + encode(productOne));
         JsonNode product = response.path("data");
 
@@ -399,7 +399,9 @@ class PostgresCatalogIntegrationIT {
         assertEquals(10, product.path("offers").get(0).path("stockQuantity").intValue());
         assertEquals(3, product.path("offers").get(0).path("reservedQuantity").intValue());
         assertEquals(7, product.path("offers").get(0).path("availableQuantity").intValue());
-        assertTrue(product.path("offers").get(0).path("isDemo").booleanValue());
+        assertTrue(product.path("offers").get(0).path("offerId").isTextual());
+        assertTrue(product.path("offers").get(0).path("offerCode").isMissingNode());
+        assertTrue(product.path("offers").get(0).path("isDemo").isMissingNode());
         assertEquals("DDR5", product.path("specifications").path("it_text").asString());
         BigDecimal actualDecimal = product.path("specifications")
                 .path("it_decimal").decimalValue();
@@ -410,8 +412,8 @@ class PostgresCatalogIntegrationIT {
         assertEquals(2, product.path("images").size());
         assertEquals("https://example.test/phase3a.png", product.path("images").get(0).path("url").asString());
         assertEquals("http://example.test/phase3a-http.png", product.path("images").get(1).path("url").asString());
-        assertTrue(product.path("demoData").booleanValue());
-        assertTrue(response.path("notice").asString().contains("DEMO-"));
+        assertTrue(product.path("demoData").isMissingNode());
+        assertTrue(response.path("notice").isMissingNode());
     }
 
     @Test
@@ -442,7 +444,7 @@ class PostgresCatalogIntegrationIT {
 
         HttpClient anonymousClient = HttpClient.newHttpClient();
         HttpResponse<String> anonymousMe = get(anonymousClient, "/api/auth/me");
-        assertEquals(401, anonymousMe.statusCode(), anonymousMe.body());
+        assertEquals(200, anonymousMe.statusCode(), anonymousMe.body());
 
         HttpResponse<String> definitionsResponse = get(
                 anonymousClient, "/api/catalog/attribute-definitions");

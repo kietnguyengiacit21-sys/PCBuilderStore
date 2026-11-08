@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import type { CatalogImage, CatalogProduct } from "../catalog-api";
 import { ChevronIcon, CloseIcon, IconButton } from "./components";
+import { availableProductImages, preferredProductImage, uniqueProductImages } from "./product-images";
 
 const typeLabels: Record<string, string> = {
   ACCESSORY: "Phụ kiện",
@@ -113,11 +114,13 @@ export function ProductArtwork({
   productName,
   productType,
   className = "",
+  onImageError,
 }: {
   image?: CatalogImage;
   productName: string;
   productType: string;
   className?: string;
+  onImageError?: (url: string) => void;
 }) {
   const [failedUrl, setFailedUrl] = useState("");
   const imageUrl = image?.url ?? "";
@@ -130,7 +133,10 @@ export function ProductArtwork({
         <img
           src={imageUrl}
           alt={image?.altText ?? productName}
-          onError={() => setFailedUrl(imageUrl)}
+          onError={() => {
+            setFailedUrl(imageUrl);
+            onImageError?.(imageUrl);
+          }}
         />
       ) : (
         <div
@@ -205,11 +211,13 @@ function GalleryThumbnails({
   selectedIndex,
   product,
   onSelect,
+  onImageError,
 }: {
   images: CatalogImage[];
   selectedIndex: number;
   product: CatalogProduct;
   onSelect: (index: number) => void;
+  onImageError: (url: string) => void;
 }) {
   const trackRef = useRef<HTMLDivElement>(null);
   const [canGoBack, setCanGoBack] = useState(false);
@@ -251,7 +259,7 @@ function GalleryThumbnails({
             aria-current={selectedIndex === index ? "true" : undefined}
             onClick={() => onSelect(index)}
           >
-            <ProductArtwork image={image} productName={product.productName} productType={product.productType} />
+            <ProductArtwork image={image} productName={product.productName} productType={product.productType} onImageError={onImageError} />
           </button>
         ))}
       </div>
@@ -263,23 +271,28 @@ function GalleryThumbnails({
 }
 
 export function ProductImageGallery({ product }: { product: CatalogProduct }) {
-  const images = product.images.reduce<CatalogImage[]>((uniqueImages, image) => {
-    const existingIndex = uniqueImages.findIndex((item) => item.url === image.url);
-    if (existingIndex < 0) uniqueImages.push(image);
-    else if (image.isPrimary && !uniqueImages[existingIndex].isPrimary) uniqueImages[existingIndex] = image;
-    return uniqueImages;
-  }, []);
-  const [selectedIndex, setSelectedIndex] = useState(() => {
-    const primaryIndex = images.findIndex((image) => image.isPrimary);
-    return primaryIndex >= 0 ? primaryIndex : 0;
-  });
+  const images = uniqueProductImages(product.images.filter((image) => image.mediaType !== "VIDEO"));
+  const [failedUrls, setFailedUrls] = useState<ReadonlySet<string>>(() => new Set());
+  const availableImages = availableProductImages(images, failedUrls);
+  const [selectedUrl, setSelectedUrl] = useState(() => preferredProductImage(images)?.url ?? "");
+  const currentImage = availableImages.find((image) => image.url === selectedUrl) ?? preferredProductImage(availableImages);
+  const selectedIndex = currentImage ? availableImages.findIndex((image) => image.url === currentImage.url) : 0;
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const lightboxRef = useRef<HTMLDialogElement>(null);
   const mainImageButtonRef = useRef<HTMLButtonElement>(null);
-  const currentImage = images[selectedIndex];
 
   const selectImage = (index: number) => {
-    if (images.length) setSelectedIndex((index + images.length) % images.length);
+    if (availableImages.length) {
+      setSelectedUrl(availableImages[(index + availableImages.length) % availableImages.length].url);
+    }
+  };
+  const handleImageError = (url: string) => {
+    setFailedUrls((previous) => new Set(previous).add(url));
+    if (selectedUrl === url) {
+      const remainingImages = availableImages.filter((image) => image.url !== url);
+      setSelectedUrl(preferredProductImage(remainingImages)?.url ?? "");
+      if (remainingImages.length === 0) setLightboxOpen(false);
+    }
   };
   const showPrevious = () => selectImage(selectedIndex - 1);
   const showNext = () => selectImage(selectedIndex + 1);
@@ -312,7 +325,7 @@ export function ProductImageGallery({ product }: { product: CatalogProduct }) {
       window.removeEventListener("keydown", handleKeyDown);
       document.body.style.overflow = previousOverflow;
     };
-  }, [lightboxOpen, selectedIndex, images.length]);
+  }, [lightboxOpen, selectedIndex, availableImages.length]);
 
   const closeLightbox = () => {
     setLightboxOpen(false);
@@ -326,20 +339,23 @@ export function ProductImageGallery({ product }: { product: CatalogProduct }) {
           ref={mainImageButtonRef}
           type="button"
           className="v2-gallery-image-button"
-          onClick={() => setLightboxOpen(true)}
-          aria-label={images.length > 1
-            ? `Phóng to ảnh ${selectedIndex + 1} trên ${images.length}`
-            : images.length === 1 ? `Phóng to ảnh sản phẩm ${product.productName}` : `Minh họa ${product.productName}`}
+          disabled={availableImages.length === 0}
+          onClick={() => {
+            if (availableImages.length) setLightboxOpen(true);
+          }}
+          aria-label={availableImages.length > 1
+            ? `Phóng to ảnh ${selectedIndex + 1} trên ${availableImages.length}`
+            : availableImages.length === 1 ? `Phóng to ảnh sản phẩm ${product.productName}` : `Minh họa ${product.productName}`}
         >
-          <ProductArtwork image={currentImage} productName={product.productName} productType={product.productType} />
+          <ProductArtwork image={currentImage} productName={product.productName} productType={product.productType} onImageError={handleImageError} />
         </button>
-        {images.length > 1 && <>
+        {availableImages.length > 1 && <>
           <IconButton className="v2-gallery-arrow is-previous" label="Ảnh trước" onClick={showPrevious}><ChevronIcon direction="previous" /></IconButton>
           <IconButton className="v2-gallery-arrow is-next" label="Ảnh tiếp theo" onClick={showNext}><ChevronIcon direction="next" /></IconButton>
-          <span className="v2-gallery-count" aria-live="polite">{selectedIndex + 1} / {images.length}</span>
+          <span className="v2-gallery-count" aria-live="polite">{selectedIndex + 1} / {availableImages.length}</span>
         </>}
       </div>
-      {images.length > 1 && <GalleryThumbnails images={images} selectedIndex={selectedIndex} product={product} onSelect={selectImage} />}
+      {availableImages.length > 1 && <GalleryThumbnails images={availableImages} selectedIndex={selectedIndex} product={product} onSelect={selectImage} onImageError={handleImageError} />}
       <dialog
         ref={lightboxRef}
         className="v2-gallery-lightbox"
@@ -355,18 +371,18 @@ export function ProductImageGallery({ product }: { product: CatalogProduct }) {
           if (event.target === event.currentTarget) closeLightbox();
         }}
       >
-        <div className="v2-lightbox-content">
+        {lightboxOpen && <div className="v2-lightbox-content">
           <div className="v2-lightbox-toolbar">
-            <span className="v2-mono">{images.length > 1 ? `${selectedIndex + 1} / ${images.length}` : product.productName}</span>
+            <span className="v2-mono">{availableImages.length > 1 ? `${selectedIndex + 1} / ${availableImages.length}` : product.productName}</span>
             <IconButton className="v2-lightbox-close" label="Đóng thư viện ảnh" onClick={closeLightbox}><CloseIcon /></IconButton>
           </div>
           <div className="v2-lightbox-stage">
-            {images.length > 1 && <IconButton label="Ảnh trước" onClick={showPrevious}><ChevronIcon direction="previous" /></IconButton>}
-            <ProductArtwork image={currentImage} productName={product.productName} productType={product.productType} />
-            {images.length > 1 && <IconButton label="Ảnh tiếp theo" onClick={showNext}><ChevronIcon direction="next" /></IconButton>}
+            {availableImages.length > 1 && <IconButton label="Ảnh trước" onClick={showPrevious}><ChevronIcon direction="previous" /></IconButton>}
+            {currentImage && <ProductArtwork image={currentImage} productName={product.productName} productType={product.productType} onImageError={handleImageError} />}
+            {availableImages.length > 1 && <IconButton label="Ảnh tiếp theo" onClick={showNext}><ChevronIcon direction="next" /></IconButton>}
           </div>
-          {images.length > 1 && <GalleryThumbnails images={images} selectedIndex={selectedIndex} product={product} onSelect={selectImage} />}
-        </div>
+          {availableImages.length > 1 && <GalleryThumbnails images={availableImages} selectedIndex={selectedIndex} product={product} onSelect={selectImage} onImageError={handleImageError} />}
+        </div>}
       </dialog>
     </section>
   );

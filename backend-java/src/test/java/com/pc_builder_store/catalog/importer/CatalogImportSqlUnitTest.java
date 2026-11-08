@@ -141,6 +141,8 @@ class CatalogImportSqlUnitTest {
         assertTrue(sql.contains("'sourceUrl', CAST(? AS text)"));
         assertTrue(sql.contains("'sourceLocator', CAST(? AS text)"));
         assertTrue(sql.contains("'verificationScope', CAST(? AS text)"));
+        assertTrue(sql.contains("'reviewNote', CAST(? AS text)"));
+        assertTrue(sql.contains("'reviewDate', CAST(? AS text)"));
         assertTrue(sql.contains("jsonb_strip_nulls(jsonb_build_object("));
         assertTrue(sql.contains("COALESCE(\"validation_json\", '{}'::jsonb)"));
         assertTrue(sql.contains("COALESCE(\"validation_json\" -> 'verificationByModel', '{}'::jsonb)"));

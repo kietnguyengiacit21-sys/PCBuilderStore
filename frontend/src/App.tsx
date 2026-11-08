@@ -23,6 +23,8 @@ export default function App() {
       <ComparisonProvider>
         <Routes>
           <Route path="/" element={<Navigate to="/customer/home" replace />} />
+          <Route path="/customer/login" element={<Navigate to="/login" replace />} />
+          <Route path="/admin/login" element={<Navigate to="/login" replace />} />
           <Route path="/system/health" element={<HealthPage />} />
           {import.meta.env.DEV && (
             <>

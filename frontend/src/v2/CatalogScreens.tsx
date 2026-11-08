@@ -5,15 +5,21 @@ import {
   fetchCatalogFacets,
   fetchCatalogProduct,
   fetchCatalogProducts,
+  fetchProductUpgrades,
+  customerVisibleOffers,
+  canPurchaseOffer,
 } from "../catalog-api";
 import type {
   CatalogFacets,
   CatalogProduct,
   CatalogProductFilters,
   CatalogProductPage,
+  PublicUpgradeConfiguration,
 } from "../catalog-api";
+import { addCartItem, fetchCart, updateCartItemConfiguration } from "../cart-api";
 import { money } from "../demo/demo-store";
 import { useCatalogAttributeDefinitions } from "./catalog-metadata";
+import { pcReferenceDescription } from "./pc-configuration";
 import {
   OfferList,
   ProductOfferPanel,
@@ -84,6 +90,21 @@ function conditionLabel(condition: string) {
   return conditionLabels[condition] ?? condition;
 }
 
+function customerProductText(value: string | null): string | null {
+  return value && !value.toLowerCase().includes("catalog") ? value : null;
+}
+
+function productDescription(product: CatalogProduct): string | null {
+  if (product.modelCode !== "PBC-PC-GAME-002") return customerProductText(product.description);
+  return pcReferenceDescription(product.specifications, product.bomComponents);
+}
+
+function productSummary(product: CatalogProduct): string | null {
+  return product.modelCode === "PBC-PC-GAME-002"
+    ? productDescription(product)
+    : customerProductText(product.shortDescription);
+}
+
 function useFacets() {
   const [facets, setFacets] = useState<CatalogFacets>();
   const [error, setError] = useState<string>();
@@ -125,6 +146,11 @@ function useProducts(filters: CatalogProductFilters) {
   return { result, error, loading };
 }
 
+function productCoverImage(product: CatalogProduct) {
+  const images = product.images.filter((image) => image.mediaType !== "VIDEO");
+  return images.find((image) => image.isPrimary) ?? images[0];
+}
+
 function ProductTile({
   product,
   definitions,
@@ -134,8 +160,9 @@ function ProductTile({
 }) {
   const { items } = useComparison();
   const compared = items.some((item) => item.modelCode === product.modelCode);
-  const offer = product.offers[0];
-  const image = product.images.find((item) => item.isPrimary) ?? product.images[0];
+  const offers = customerVisibleOffers(product.offers);
+  const offer = offers[0];
+  const image = productCoverImage(product);
   return (
     <Card className={`v2-product-card${compared ? " is-comparison-selected" : ""}`}>
       <div className="v2-product-image-wrap">
@@ -155,18 +182,21 @@ function ProductTile({
         </Link>
         <p className="v2-mono">{product.modelCode}</p>
         {product.productType === "PC"
-          ? <PCConfigurationSummary specifications={product.specifications} />
+          ? <PCConfigurationSummary specifications={product.specifications} verificationMetadata={product.verificationMetadata} />
           : <SpecificationHighlights productType={product.productType} specifications={product.specifications} definitions={definitions} />}
         {offer ? (
           <div className="v2-product-offer">
+            {offer.saleBadge && <Badge tone="success">{offer.saleBadge}</Badge>}
             <strong>{money(offer.price, offer.currency)}</strong>
+            {Number(offer.basePrice ?? offer.price) > Number(offer.price)
+              && <span className="v2-promotion-original-price">{money(offer.basePrice ?? offer.price, offer.currency)}</span>}
+            {offer.promotionDisplayCopy && <span>{offer.promotionDisplayCopy}</span>}
             <span>Tình trạng: {conditionLabel(offer.condition)}</span>
-            <span>{offer.isDemo ? "Tồn kho minh họa" : "Số lượng khả dụng"}: {offer.availableQuantity}</span>
+            <span>Số lượng khả dụng: {offer.availableQuantity}</span>
             <WarrantyDisplay months={offer.warrantyMonths} showMissing />
-            {product.offers.length > 1 && <span>{product.offers.length} ưu đãi đang hoạt động · xem chi tiết</span>}
-            {offer.isDemo && <Badge tone="gold">Giá minh họa</Badge>}
+            {offers.length > 1 && <span>{offers.length} ưu đãi đang hoạt động · xem chi tiết</span>}
           </div>
-        ) : <p className="v2-muted">Chưa có ưu đãi đang hoạt động.</p>}
+        ) : <p className="v2-muted">Giá bán và tình trạng hàng chưa được cập nhật.</p>}
       </div>
     </Card>
   );
@@ -237,8 +267,9 @@ function HomepageProductTile({
 }) {
   const { items } = useComparison();
   const compared = items.some((item) => item.modelCode === product.modelCode);
-  const offer = product.offers[0];
-  const image = product.images.find((item) => item.isPrimary) ?? product.images[0];
+  const offers = customerVisibleOffers(product.offers);
+  const offer = offers[0];
+  const image = productCoverImage(product);
   const openPreview = (anchor: HTMLElement, touch = false) => {
     onQuickView(product, anchor, touch);
   };
@@ -265,14 +296,17 @@ function HomepageProductTile({
           <p className="v2-eyebrow">{product.brandName ?? "Chưa có thương hiệu"} · {productTypeLabel(product.productType)}</p>
           <Link className="v2-product-name" to={productLink}>{product.productName}</Link>
           <p className="v2-mono">{product.modelCode}</p>
-          {product.productType === "PC" && <PCConfigurationSummary specifications={product.specifications} limit={3} />}
+          {product.productType === "PC" && <PCConfigurationSummary specifications={product.specifications} verificationMetadata={product.verificationMetadata} limit={3} />}
           {offer ? (
             <div className="v2-product-offer">
+              {offer.saleBadge && <Badge tone="success">{offer.saleBadge}</Badge>}
               <strong>{money(offer.price, offer.currency)}</strong>
+              {Number(offer.basePrice ?? offer.price) > Number(offer.price)
+                && <span className="v2-promotion-original-price">{money(offer.basePrice ?? offer.price, offer.currency)}</span>}
               <Badge tone={offer.condition === "NEW" ? "success" : "warning"}>{conditionLabel(offer.condition)}</Badge>
               {offer.warrantyMonths !== null && <WarrantyDisplay months={offer.warrantyMonths} />}
             </div>
-          ) : <p className="v2-muted">Chưa có ưu đãi đang bán.</p>}
+          ) : <p className="v2-muted">Giá bán và tình trạng hàng chưa được cập nhật.</p>}
           <button
             type="button"
             className="v2-home-quick-view-trigger"
@@ -304,7 +338,8 @@ function ProductQuickView({
 }) {
   const panelRef = useRef<HTMLElement>(null);
   const [position, setPosition] = useState({ left: 12, top: 12 });
-  const offer = active.product.offers[0];
+  const offer = customerVisibleOffers(active.product.offers)[0];
+  const summary = productSummary(active.product);
   const verifiedSpecs = verifiedQuickViewSpecifications(active.product, definitions);
   const productLink = `/customer/product?modelCode=${encodeURIComponent(active.product.modelCode)}`;
 
@@ -383,19 +418,22 @@ function ProductQuickView({
         <h2>{active.product.productName}</h2>
         {offer ? (
           <div className="v2-home-quick-view-price">
+            {offer.saleBadge && <Badge tone="success">{offer.saleBadge}</Badge>}
             <strong>{money(offer.price, offer.currency)}</strong>
+            {Number(offer.basePrice ?? offer.price) > Number(offer.price)
+              && <span className="v2-promotion-original-price">{money(offer.basePrice ?? offer.price, offer.currency)}</span>}
             <span>{conditionLabel(offer.condition)}</span>
           </div>
-        ) : <p className="v2-muted">Chưa có ưu đãi đang bán.</p>}
+        ) : <p className="v2-muted">Giá bán và tình trạng hàng chưa được cập nhật.</p>}
         {offer?.warrantyMonths !== null && offer?.warrantyMonths !== undefined && <WarrantyDisplay months={offer.warrantyMonths} />}
-        {active.product.shortDescription?.trim() && <p className="v2-home-quick-view-summary">{active.product.shortDescription}</p>}
+        {summary?.trim() && <p className="v2-home-quick-view-summary">{summary}</p>}
         {verifiedSpecs.length > 0 && (
           <dl className="v2-home-quick-view-specs">
             {verifiedSpecs.map((item) => <div key={item.label}><dt>{item.label}</dt><dd>{item.value}</dd></div>)}
           </dl>
         )}
         {active.product.productType === "PC"
-          ? <PCConfigurationSummary specifications={active.product.specifications} limit={3} />
+          ? <PCConfigurationSummary specifications={active.product.specifications} verificationMetadata={active.product.verificationMetadata} limit={3} />
           : null}
         <Link className="v2-button v2-button-primary v2-home-quick-view-link" to={productLink} onClick={onClose}>Xem chi tiết sản phẩm <span aria-hidden="true">→</span></Link>
       </section>
@@ -487,7 +525,7 @@ export function HomePage() {
     {
       eyebrow: "Máy tính bộ",
       title: <>Chọn PC theo<br /><span>nhu cầu của bạn</span></>,
-      description: "Khám phá các mẫu máy tính bộ đang có trong catalog.",
+      description: "Khám phá các mẫu máy tính bộ phù hợp với nhu cầu của bạn.",
       category: "PC",
     },
     {
@@ -499,7 +537,7 @@ export function HomePage() {
     {
       eyebrow: "Nền tảng xử lý",
       title: <>Khám phá các<br /><span>bộ vi xử lý</span></>,
-      description: "Tìm hiểu sản phẩm CPU theo dữ liệu catalog.",
+      description: "Tìm hiểu các bộ vi xử lý và thông số kỹ thuật.",
       category: "CPU",
     },
   ] as const;
@@ -540,8 +578,8 @@ export function HomePage() {
               <span className="v2-pc-category-mark" aria-hidden="true">{category.key === "ai" ? "AI" : category.key === "gaming" ? "G" : "PC"}</span>
               <span className="v2-pc-category-copy"><strong>{category.title}</strong><small>{category.description}</small>
                 {result && result.pagination.total > 0 && <small>{result.pagination.total} sản phẩm</small>}
-                {category.key === "ai" && (!category.category || (result && result.pagination.total === 0)) && <small className="v2-pc-empty-note">Chưa có PC AI được phân loại trong catalog.</small>}
-                {category.key !== "ai" && !category.category && <small className="v2-pc-empty-note">Chưa có danh mục tương ứng trong catalog.</small>}
+                {category.key === "ai" && (!category.category || (result && result.pagination.total === 0)) && <small className="v2-pc-empty-note">Chưa có mẫu PC AI phù hợp để hiển thị.</small>}
+                {category.key !== "ai" && !category.category && <small className="v2-pc-empty-note">Chưa có sản phẩm phù hợp trong nhóm này.</small>}
                 {category.category && result && result.pagination.total === 0 && <small className="v2-pc-empty-note">Danh mục chưa có sản phẩm phù hợp.</small>}
               </span>
               <span className="v2-pc-category-arrow" aria-hidden="true">→</span>
@@ -569,7 +607,7 @@ export function HomePage() {
         </div>
       </section>}
       {sectionProducts["type:PC"]?.data.length ? (
-        <HomeProductSection title="PC nổi bật" eyebrow="Máy tính bộ trong catalog" to="/customer/parts?type=PC" products={sectionProducts["type:PC"].data} onQuickView={showQuickView} onQuickViewClose={scheduleQuickViewClose} />
+        <HomeProductSection title="PC nổi bật" eyebrow="Máy tính bộ" to="/customer/parts?type=PC" products={sectionProducts["type:PC"].data} onQuickView={showQuickView} onQuickViewClose={scheduleQuickViewClose} />
       ) : null}
       {categoryMatches.map((category) => {
         const result = sectionProducts[`pc:${category.key}`];
@@ -580,7 +618,7 @@ export function HomePage() {
         const type = section.types.find((candidate) => facets?.productTypes.some((item) => item.value === candidate));
         const result = type ? sectionProducts[`type:${type}`] : undefined;
         if (!type || !result?.data.length) return null;
-        return <HomeProductSection key={type} title={section.title} eyebrow="Linh kiện trong catalog" to={`/customer/parts?type=${encodeURIComponent(type)}`} products={result.data} onQuickView={showQuickView} onQuickViewClose={scheduleQuickViewClose} />;
+        return <HomeProductSection key={type} title={section.title} eyebrow="Linh kiện" to={`/customer/parts?type=${encodeURIComponent(type)}`} products={result.data} onQuickView={showQuickView} onQuickViewClose={scheduleQuickViewClose} />;
       })}
       {sectionsLoading && <LoadingState message="Đang tải sản phẩm theo danh mục…" />}
       {Object.entries(sectionErrors).map(([type, message]) => (
@@ -589,8 +627,8 @@ export function HomePage() {
       {definitionsError && <p className="v2-inline-error" role="alert">Không tải được định nghĩa thông số: {definitionsError}</p>}
       {quickView && <ProductQuickView active={quickView} definitions={definitions} onClose={() => setQuickView(undefined)} onPointerEnter={keepQuickViewOpen} onPointerLeave={scheduleQuickViewClose} />}
       <section className="v2-build-callout">
-        <div><Badge tone="gold">Coming Soon · B01–B08</Badge><h2>Build-PC</h2><p>Trình xây dựng cấu hình chưa được triển khai.</p></div>
-        <SecondaryButton type="button" disabled>Coming Soon</SecondaryButton>
+        <div><Badge tone="gold">Chưa khả dụng</Badge><h2>Tự cấu hình PC</h2><p>Tính năng cấu hình PC hiện chưa khả dụng.</p></div>
+        <SecondaryButton type="button" disabled>Chưa khả dụng</SecondaryButton>
       </section>
     </div>
   );
@@ -633,9 +671,7 @@ export function PartsPage() {
     type: searchParams.get("type") ?? "",
     category: searchParams.get("category") ?? "",
     brand: searchParams.get("brand") ?? "",
-    minPrice: searchParams.get("minPrice") ?? "",
-    maxPrice: searchParams.get("maxPrice") ?? "",
-    sort: (searchParams.get("sort") === "price" ? "price" : "name") as "name" | "price",
+    sort: "name" as const,
     order: (searchParams.get("order") === "desc" ? "desc" : "asc") as "asc" | "desc",
     page: Number(searchParams.get("page") || 1),
     attributes: {} as Record<string, string>,
@@ -650,8 +686,6 @@ export function PartsPage() {
     type: filters.type || undefined,
     category: filters.category || undefined,
     brand: filters.brand || undefined,
-    minPrice: filters.minPrice || undefined,
-    maxPrice: filters.maxPrice || undefined,
     sort: filters.sort,
     order: filters.order,
     attributes: Object.entries(filters.attributes).filter(([, value]) => value).map(([code, value]) => ({ code, value })),
@@ -682,10 +716,6 @@ export function PartsPage() {
     ] as const).map(([key, label, options]) => (
       <label className="v2-field" key={key}>{label}<select className="v2-form-input" value={filters[key]} onChange={(event) => update(key, event.target.value)}><option value="">Tất cả</option>{options.map((option) => <option key={option.value} value={option.value}>{key === "type" ? productTypeLabel(option.value) : key === "category" ? categoryLabel(option.value, option.label) : option.label}</option>)}</select></label>
     ))}
-    <div className="v2-price-fields">
-      <label className="v2-field">Giá từ<input className="v2-form-input" inputMode="decimal" value={filters.minPrice} onChange={(event) => update("minPrice", event.target.value)} /></label>
-      <label className="v2-field">Đến<input className="v2-form-input" inputMode="decimal" value={filters.maxPrice} onChange={(event) => update("maxPrice", event.target.value)} /></label>
-    </div>
     {selectedAttributes.map((attribute) => (
       <label className="v2-field" key={attribute.code}>{attribute.label}<select className="v2-form-input" value={filters.attributes[attribute.code] ?? ""} onChange={(event) => setFilters((current) => ({ ...current, page: 1, attributes: { ...current.attributes, [attribute.code]: event.target.value } }))}><option value="">Tất cả</option>{attribute.values.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
     ))}
@@ -703,13 +733,12 @@ export function PartsPage() {
             <p>{result ? `${result.pagination.total} sản phẩm` : "Đang tải kết quả"}</p>
             <SecondaryButton className="v2-filter-mobile-trigger" type="button" onClick={() => setFilterOpen(true)}>Bộ lọc</SecondaryButton>
             <label className="v2-inline-field">Sắp xếp<select className="v2-form-input" value={`${filters.sort}-${filters.order}`} onChange={(event) => {
-              const [sort, order] = event.target.value.split("-");
-              setFilters((current) => ({ ...current, sort: sort as "name" | "price", order: order as "asc" | "desc", page: 1 }));
-            }}><option value="name-asc">Tên A–Z</option><option value="name-desc">Tên Z–A</option><option value="price-asc">Giá thấp trước</option><option value="price-desc">Giá cao trước</option></select></label>
+              const [, order] = event.target.value.split("-");
+              setFilters((current) => ({ ...current, order: order as "asc" | "desc", page: 1 }));
+            }}><option value="name-asc">Tên A–Z</option><option value="name-desc">Tên Z–A</option></select></label>
           </div>
-          {result?.notice && <p className="v2-demo-banner">{result.notice}</p>}
           {loading && <LoadingState message="Đang tải sản phẩm…" />}
-          {error && <ErrorState title="Không thể tải catalog" message={error} />}
+          {error && <ErrorState title="Không thể tải danh sách sản phẩm" message={error} />}
           {result && <ProductGrid products={result.data} definitions={definitions} />}
           {result && result.pagination.totalPages > 1 && <div className="v2-pager">
             <SecondaryButton type="button" disabled={filters.page <= 1 || loading} onClick={() => update("page", filters.page - 1)}>Trước</SecondaryButton>
@@ -725,15 +754,23 @@ export function PartsPage() {
 
 export function ProductPage() {
   const [params] = useSearchParams();
+  const navigate = useNavigate();
   const modelCode = params.get("modelCode")?.trim() ?? "";
   const { codes, toggle } = useComparison();
   const [product, setProduct] = useState<CatalogProduct>();
   const [loading, setLoading] = useState(Boolean(modelCode));
   const [error, setError] = useState<string>();
-  const [notice, setNotice] = useState("");
   const [actionMessage, setActionMessage] = useState("");
+  const [addingToCart, setAddingToCart] = useState(false);
   const [quantity, setQuantity] = useState("1");
-  const [selectedOfferCode, setSelectedOfferCode] = useState("");
+  const [selectedOfferId, setSelectedOfferId] = useState("");
+  const [upgradeConfiguration, setUpgradeConfiguration] = useState<PublicUpgradeConfiguration>();
+  const [upgradeChoices, setUpgradeChoices] = useState<Record<string, { optionId: string; quantity: number }>>({});
+  const [selectedBundles, setSelectedBundles] = useState<Record<string, string[]>>({});
+  const [selectedRelatedOfferIds, setSelectedRelatedOfferIds] = useState<string[]>([]);
+  const [upgradeLoading, setUpgradeLoading] = useState(false);
+  const [upgradeError, setUpgradeError] = useState("");
+  const [relatedRestoreError, setRelatedRestoreError] = useState("");
   const { definitions, error: definitionsError } = useCatalogAttributeDefinitions();
   useEffect(() => {
     if (!modelCode) {
@@ -747,8 +784,7 @@ export function ProductPage() {
     void fetchCatalogProduct(modelCode, controller.signal).then(
       (response) => {
         setProduct(response.data);
-        setNotice(response.notice);
-        setSelectedOfferCode(response.data.offers[0]?.offerCode ?? "");
+        setSelectedOfferId(customerVisibleOffers(response.data.offers)[0]?.offerId ?? "");
       },
       (reason: unknown) => {
         if (!controller.signal.aborted) setError(reason instanceof Error ? reason.message : "Không thể tải sản phẩm.");
@@ -758,16 +794,144 @@ export function ProductPage() {
     });
     return () => controller.abort();
   }, [modelCode]);
+  useEffect(() => {
+    if (!product || product.productType !== "PC" || !selectedOfferId) {
+      setUpgradeConfiguration(undefined);
+      setUpgradeChoices({});
+      setSelectedBundles({});
+      setSelectedRelatedOfferIds([]);
+      return;
+    }
+    const controller = new AbortController();
+    setUpgradeLoading(true);
+    setUpgradeError("");
+    setRelatedRestoreError("");
+    void fetchProductUpgrades(product.modelCode, selectedOfferId, controller.signal).then(
+      (configuration) => {
+        setUpgradeConfiguration(configuration);
+        const defaults = configuration.groups.flatMap((group) => {
+          const option = group.options.find((item) => item.defaultOption) ?? group.options[0];
+          return option ? [[group.groupId, {
+            optionId: option.optionId,
+            quantity: option.minimumQuantity,
+          }] as const] : [];
+        });
+        setUpgradeChoices(Object.fromEntries(defaults));
+        setSelectedBundles({});
+        setSelectedRelatedOfferIds([]);
+        if (configuration.relatedProducts.length > 0) {
+          void fetchCart().then(
+            (cart) => {
+              if (!controller.signal.aborted) {
+                const cartOfferIds = new Set(cart.items.map((item) => item.offerId));
+                setSelectedRelatedOfferIds(configuration.relatedProducts
+                  .filter((item) => cartOfferIds.has(item.offerId))
+                  .map((item) => item.offerId));
+              }
+            },
+            (reason: unknown) => {
+              if (!controller.signal.aborted) {
+                setRelatedRestoreError(reason instanceof Error
+                  ? reason.message
+                  : "Không thể khôi phục lựa chọn sản phẩm liên quan từ giỏ hàng.");
+              }
+            },
+          );
+        }
+      },
+      (reason: unknown) => {
+        if (!controller.signal.aborted) {
+          setUpgradeError(reason instanceof Error ? reason.message : "Không thể tải lựa chọn nâng cấp.");
+        }
+      },
+    ).finally(() => {
+      if (!controller.signal.aborted) setUpgradeLoading(false);
+    });
+    return () => controller.abort();
+  }, [product, selectedOfferId]);
   if (!modelCode) return <div className="v2-page"><EmptyState title="Chưa chọn sản phẩm" message="Mở chi tiết từ danh mục sản phẩm." action={<Link to="/customer/parts">Tìm sản phẩm</Link>} /></div>;
   if (loading) return <div className="v2-page"><LoadingState message="Đang tải chi tiết sản phẩm…" /></div>;
   if (error) return <div className="v2-page"><ErrorState title="Không thể tải sản phẩm" message={error} /></div>;
   if (!product) return null;
-  const offer = product.offers.find((item) => item.offerCode === selectedOfferCode) ?? product.offers[0];
+  const offers = customerVisibleOffers(product.offers);
+  const offer = offers.find((item) => item.offerId === selectedOfferId) ?? offers[0];
+  const description = productDescription(product);
+  const shortDescription = customerProductText(product.shortDescription);
   const isCompared = codes.includes(product.modelCode);
+  const selectedUpgradeDelta = (upgradeConfiguration?.groups ?? []).reduce((total, group) => {
+    const choice = upgradeChoices[group.groupId];
+    return total + (group.options.find((item) => item.optionId === choice?.optionId)?.priceDifference ?? 0);
+  }, 0);
+  const selectedBundleValue = (upgradeConfiguration?.bundles ?? []).reduce((total, bundle) => {
+    if (!(bundle.bundleId in selectedBundles)) return total;
+    const selectedIds = new Set(selectedBundles[bundle.bundleId] ?? []);
+    const items = bundle.items.filter((item) =>
+      item.required || item.defaultSelected || selectedIds.has(item.offerId));
+    const itemSubtotal = items.reduce((sum, item) => sum + item.price, 0);
+    const discount = bundle.discountType === "PERCENTAGE"
+      ? itemSubtotal * bundle.discountValue / 100
+      : Math.min(itemSubtotal, bundle.discountValue);
+    return total + itemSubtotal - discount;
+  }, 0);
+  const selectedRelatedSubtotal = (upgradeConfiguration?.relatedProducts ?? [])
+    .filter((item) => selectedRelatedOfferIds.includes(item.offerId))
+    .reduce((total, item) => total + item.price, 0);
+  const configuredProductPrice = offer
+    ? Math.max(0, Number(offer.price) + selectedUpgradeDelta)
+      + selectedBundleValue + selectedRelatedSubtotal
+    : 0;
+  const addSelectedOffer = async (goToCheckout = false) => {
+    if (!canPurchaseOffer(offer, Number(quantity))) {
+      setActionMessage("Sản phẩm hiện không đủ điều kiện hoặc không còn đủ hàng để đặt.");
+      return;
+    }
+    const requestedQuantity = Number(quantity);
+    if (!Number.isSafeInteger(requestedQuantity) || requestedQuantity < 1) {
+      setActionMessage("Nhập số lượng hợp lệ.");
+      return;
+    }
+    if (!offer) {
+      setActionMessage("Sản phẩm hiện chưa có lựa chọn mua phù hợp.");
+      return;
+    }
+    const selectedRelatedProducts = (upgradeConfiguration?.relatedProducts ?? [])
+      .filter((item) => selectedRelatedOfferIds.includes(item.offerId));
+    if (selectedRelatedProducts.some((item) => item.availableQuantity < requestedQuantity)) {
+      setActionMessage("Một sản phẩm liên quan đã hết hàng hoặc không đủ số lượng.");
+      return;
+    }
+    setAddingToCart(true);
+    try {
+      await addCartItem(offer.offerId, requestedQuantity);
+      if (product.productType === "PC" && offer.condition === "NEW") {
+        await updateCartItemConfiguration(
+          offer.offerId,
+          Object.entries(upgradeChoices).map(([groupId, choice]) => ({
+            groupId,
+            optionId: choice.optionId,
+            quantity: choice.quantity,
+          })),
+          Object.entries(selectedBundles)
+            .filter(([, offerIds]) => offerIds.length > 0)
+            .map(([bundleId, offerIds]) => ({ bundleId, offerIds })),
+        );
+      }
+      for (const related of selectedRelatedProducts) {
+        await addCartItem(related.offerId, requestedQuantity);
+      }
+      setActionMessage(selectedRelatedProducts.length > 0
+        ? "Đã thêm PC và sản phẩm liên quan vào giỏ hàng."
+        : "Đã thêm vào giỏ hàng.");
+      if (goToCheckout) navigate("/customer/checkout");
+    } catch (reason) {
+      setActionMessage(reason instanceof Error ? reason.message : "Không thể thêm sản phẩm vào giỏ.");
+    } finally {
+      setAddingToCart(false);
+    }
+  };
   return (
     <div className="v2-page">
       <nav className="v2-breadcrumb"><Link to="/customer/home">Trang chủ</Link><span>/</span><Link to="/customer/parts">Linh kiện</Link><span>/</span><span>{product.productName}</span></nav>
-      {notice && <p className="v2-demo-banner">{notice}</p>}
       {definitionsError && <p className="v2-inline-error" role="alert">Không tải được định nghĩa thông số: {definitionsError}</p>}
       <div className="v2-product-detail">
         <ProductImageGallery key={product.productId} product={product} />
@@ -775,13 +939,118 @@ export function ProductPage() {
           <p className="v2-eyebrow">{product.brandName ?? "Chưa có thương hiệu"} · {productTypeLabel(product.productType)}</p>
           <h1>{product.productName}</h1>
           <p className="v2-mono">Mã model: {product.modelCode}</p>
-          {product.shortDescription && <p>{product.shortDescription}</p>}
-          {product.description && <p>{product.description}</p>}
+          {shortDescription && product.modelCode !== "PBC-PC-GAME-002" && <p>{shortDescription}</p>}
+          {description && <p>{description}</p>}
           <ProductOfferPanel
-            offers={product.offers}
-            selectedOfferCode={offer?.offerCode}
-            onSelect={(nextOffer) => setSelectedOfferCode(nextOffer.offerCode)}
+            offers={offers}
+            selectedOfferId={offer?.offerId}
+            onSelect={(nextOffer) => setSelectedOfferId(nextOffer.offerId)}
           />
+          {product.productType === "PC" && offer?.condition === "NEW" && (
+            <section className="v2-pc-upgrade-choices" aria-label="Nâng cấp và gói sản phẩm">
+              {upgradeLoading && <LoadingState message="Đang tải nâng cấp và gói sản phẩm…" />}
+              {upgradeError && <p className="v2-inline-error" role="alert">{upgradeError}</p>}
+              {relatedRestoreError && <p className="v2-inline-error" role="alert">{relatedRestoreError}</p>}
+              {upgradeConfiguration?.groups.map((group) => (
+                <div className="v2-pc-upgrade-group" key={group.groupId}>
+                  <label className="v2-field">
+                    <span>{group.displayName}{group.required ? " · Bắt buộc" : ""}</span>
+                    <select className="v2-form-input"
+                      value={upgradeChoices[group.groupId]?.optionId ?? ""}
+                      onChange={(event) => {
+                        const selected = group.options.find((item) => item.optionId === event.target.value);
+                        if (!selected) return;
+                        setUpgradeChoices((current) => ({
+                          ...current,
+                          [group.groupId]: {
+                            optionId: selected.optionId,
+                            quantity: Math.max(selected.minimumQuantity,
+                              Math.min(selected.maximumQuantity,
+                                current[group.groupId]?.quantity ?? selected.minimumQuantity)),
+                          },
+                        }));
+                      }}>
+                      {group.options.map((option) => (
+                        <option key={option.optionId} value={option.optionId}
+                          disabled={option.availableQuantity < Number(quantity)}>
+                          {option.displayName} · {option.modelCode} · {money(option.price, offer.currency)}
+                          {option.priceDifference > 0
+                            ? ` (+${money(option.priceDifference, offer.currency)})`
+                            : option.priceDifference < 0
+                              ? ` (${money(option.priceDifference, offer.currency)})` : ""}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  {group.description && <p className="v2-muted">{group.description}</p>}
+                </div>
+              ))}
+              {upgradeConfiguration?.bundles.map((bundle) => {
+                const bundleSelected = bundle.bundleId in selectedBundles;
+                const chosen = new Set(selectedBundles[bundle.bundleId] ?? []);
+                return <Card key={bundle.bundleId} title={bundle.name}
+                  description={bundle.description ?? undefined}>
+                  <label className="v2-checkbox-row">
+                    <input type="checkbox" checked={bundleSelected}
+                      onChange={(event) => setSelectedBundles((current) => {
+                        const next = { ...current };
+                        if (event.target.checked) {
+                          next[bundle.bundleId] = bundle.items
+                            .filter((item) => item.required || item.defaultSelected)
+                            .map((item) => item.offerId);
+                        } else delete next[bundle.bundleId];
+                        return next;
+                      })} />
+                    Thêm gói này vào PC
+                  </label>
+                  {bundleSelected && bundle.items.map((item) => (
+                    <label className="v2-checkbox-row" key={item.offerId}>
+                      <input type="checkbox"
+                        checked={item.required || item.defaultSelected || chosen.has(item.offerId)}
+                        disabled={item.required || item.defaultSelected
+                          || item.availableQuantity < Number(quantity)}
+                        onChange={(event) => setSelectedBundles((current) => {
+                          const next = new Set(current[bundle.bundleId] ?? []);
+                          if (event.target.checked) next.add(item.offerId);
+                          else next.delete(item.offerId);
+                          return { ...current, [bundle.bundleId]: [...next] };
+                        })} />
+                      {item.productName} · {money(item.price, item.currency)}
+                      {item.required && " · Bắt buộc"}
+                    </label>
+                  ))}
+                  {bundle.discountValue > 0 && <p className="v2-muted">
+                    Ưu đãi gói: {bundle.discountType === "PERCENTAGE"
+                      ? `${bundle.discountValue}%`
+                      : money(bundle.discountValue, offer.currency)}
+                  </p>}
+                </Card>;
+              })}
+              {(upgradeConfiguration?.relatedProducts.length ?? 0) > 0 && (
+                <div className="v2-pc-upgrade-group">
+                  <h3>Sản phẩm liên quan (tùy chọn)</h3>
+                  {upgradeConfiguration?.relatedProducts.map((item) => {
+                    const selected = selectedRelatedOfferIds.includes(item.offerId);
+                    return <label className="v2-checkbox-row" key={item.offerId}>
+                      <input type="checkbox" checked={selected}
+                        disabled={!selected && item.availableQuantity < Number(quantity)}
+                        onChange={(event) => setSelectedRelatedOfferIds((current) =>
+                          event.target.checked
+                            ? [...current, item.offerId]
+                            : current.filter((offerId) => offerId !== item.offerId))} />
+                      {item.productName} · {money(item.price, item.currency)}
+                      {item.availableQuantity < Number(quantity) && " · Không đủ hàng"}
+                    </label>;
+                  })}
+                  <p className="v2-muted">Sản phẩm đã chọn được thêm riêng vào giỏ hàng theo giá hiện tại.</p>
+                </div>
+              )}
+              {upgradeConfiguration && <p className="v2-pc-configured-price">
+                Tổng dự kiến: <strong>{money(configuredProductPrice, offer.currency)}</strong>
+                <span> · Giá cuối cùng được máy chủ xác nhận trong giỏ hàng.</span>
+              </p>}
+            </section>
+          )}
           <div className="v2-product-quantity">
             <label htmlFor="product-quantity">Số lượng</label>
             <div className="v2-quantity-control">
@@ -819,18 +1088,18 @@ export function ProductPage() {
             </div>
           </div>
           <div className="v2-action-row">
-            <SecondaryButton type="button" disabled={!offer} onClick={() => setActionMessage("Chức năng thêm vào giỏ sẽ có trong giai đoạn thương mại.")}>
+            <SecondaryButton type="button" disabled={addingToCart || upgradeLoading || Boolean(upgradeError) || !canPurchaseOffer(offer, Number(quantity))} onClick={() => void addSelectedOffer()}>
               <svg aria-hidden="true" viewBox="0 0 24 24" fill="none">
                 <path d="M3 4h2l2.2 10.1a2 2 0 0 0 2 1.6h8.4a2 2 0 0 0 1.9-1.4L21 8H6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                 <circle cx="10" cy="20" r="1.5" fill="currentColor" />
                 <circle cx="18" cy="20" r="1.5" fill="currentColor" />
               </svg>
-              Thêm vào giỏ
+              {addingToCart ? "Đang thêm…" : "Thêm vào giỏ"}
             </SecondaryButton>
-            <PrimaryButton type="button" disabled={!offer} onClick={() => setActionMessage("Chức năng mua ngay sẽ có trong giai đoạn thương mại.")}>
-              Mua ngay
+            <PrimaryButton type="button" disabled={addingToCart || upgradeLoading || Boolean(upgradeError) || !canPurchaseOffer(offer, Number(quantity))} onClick={() => void addSelectedOffer(true)}>
+              {addingToCart ? "Đang thêm…" : "Mua ngay"}
             </PrimaryButton>
-            <SecondaryButton type="button" aria-pressed={isCompared} className={isCompared ? "is-selected" : ""} onClick={() => toggle(product, offer?.offerCode)}>
+            <SecondaryButton type="button" aria-pressed={isCompared} className={isCompared ? "is-selected" : ""} onClick={() => toggle(product)}>
               <svg aria-hidden="true" viewBox="0 0 24 24" fill="none">
                 <path d="M8 4H4v16h4M16 4h4v16h-4M8 8h8M8 12h8M8 16h8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
@@ -840,7 +1109,31 @@ export function ProductPage() {
           {actionMessage && <p className="v2-muted" role="status">{actionMessage}</p>}
         </section>
       </div>
-      {product.productType === "PC" && <PCConfigurationDetails specifications={product.specifications} />}
+      {product.productType === "PC" && <PCConfigurationDetails
+        specifications={product.specifications}
+        bomComponents={product.bomComponents}
+      />}
+      {Array.isArray(product.contentSections) && product.contentSections.length > 0 && <div className="v2-product-content-sections">
+        {product.contentSections.map((section, index) => {
+          if (typeof section !== "object" || section === null || Array.isArray(section)) return null;
+          const item = section as Record<string, unknown>;
+          const title = typeof item.title === "string" ? item.title : "";
+          const body = typeof item.body === "string" ? item.body
+            : typeof item.text === "string" ? item.text : "";
+          if (!title && !body) return null;
+          return <Card key={`${title}-${index}`} title={title || "Thông tin sản phẩm"}>
+            {body && <p>{body}</p>}
+          </Card>;
+        })}
+      </div>}
+      {product.images.some((image) => image.mediaType === "VIDEO") && <Card title="Video sản phẩm">
+        <div className="v2-form-grid">{product.images.filter((image) => image.mediaType === "VIDEO").map((video) => (
+          <div key={video.url}>
+            <video controls preload="metadata" src={video.url} aria-label={video.caption ?? product.productName} />
+            {video.caption && <p>{video.caption}</p>}
+          </div>
+        ))}</div>
+      </Card>}
       <Card title="Thông số kỹ thuật" className="v2-product-specifications-card">
         <TechnicalSpecifications
           productType={product.productType}
@@ -848,6 +1141,7 @@ export function ProductPage() {
           specifications={product.specifications}
           definitions={definitions}
           verificationMetadata={product.verificationMetadata}
+          specificationQuality={product.specificationQuality}
           showEnglishLabels={false}
           showInternalMetadata={false}
         />
@@ -886,7 +1180,6 @@ export function ComparePage() {
   return (
     <div className="v2-page">
       <div className="v2-page-title"><div><p className="v2-eyebrow">Danh mục sản phẩm</p><h1>So sánh sản phẩm</h1></div><div className="v2-compare-page-actions"><Badge tone="primary">{codes.length}/4 sản phẩm</Badge><Link className="v2-button v2-button-secondary" to="/customer/parts">Thêm sản phẩm</Link></div></div>
-      <p className="v2-demo-banner">Giá và tồn kho trong catalog có thể là dữ liệu minh họa. Không có điểm số hiệu năng hoặc kết luận tương thích được suy đoán.</p>
       {definitionsError && <p className="v2-inline-error" role="alert">Không tải được định nghĩa thông số: {definitionsError}</p>}
       {codes.length === 0 && <EmptyState title="Chưa có sản phẩm để so sánh" message="Thêm sản phẩm vào danh sách so sánh từ trang tìm linh kiện." action={<Link to="/customer/parts">Tìm sản phẩm</Link>} />}
       {loading && <LoadingState message="Đang tải thông tin so sánh…" />}
@@ -895,7 +1188,7 @@ export function ComparePage() {
         <h2>Không thể so sánh trực tiếp các loại sản phẩm đã chọn</h2>
         <p>Chỉ các model cùng loại sản phẩm được đặt vào một bảng thông số. Các lựa chọn khác được hiển thị riêng để tránh so sánh những trường không tương đương.</p>
         <div className="v2-cross-type-products">{products.map((product) => <Card key={product.modelCode} title={product.productName} description={`${productTypeLabel(product.productType)} · ${product.modelCode}`}>
-          <div className="v2-compare-product-art"><ProductArtwork image={product.images.find((image) => image.isPrimary) ?? product.images[0]} productName={product.productName} productType={product.productType} /></div>
+          <div className="v2-compare-product-art"><ProductArtwork image={productCoverImage(product)} productName={product.productName} productType={product.productType} /></div>
           <div className="v2-cross-type-actions"><Link to={`/customer/product?modelCode=${encodeURIComponent(product.modelCode)}`}>Mở chi tiết</Link><SecondaryButton type="button" onClick={() => remove(product.modelCode)}>Bỏ khỏi so sánh</SecondaryButton></div>
           <OfferList offers={product.offers} />
           <TechnicalSpecifications productType={product.productType} productTypeName={productTypeLabel(product.productType)} specifications={product.specifications} definitions={definitions} verificationMetadata={product.verificationMetadata} showEnglishLabels={false} showInternalMetadata={false} />
@@ -904,7 +1197,7 @@ export function ComparePage() {
       {products.length > 0 && compatibleTypes && <>
         <div className="v2-table-wrap"><table className="v2-table v2-compare-table">
           <thead><tr><th scope="col">Thông tin</th>{products.map((product) => <th key={product.modelCode} scope="col">
-            <div className="v2-compare-product-art"><ProductArtwork image={product.images.find((image) => image.isPrimary) ?? product.images[0]} productName={product.productName} productType={product.productType} /></div>
+            <div className="v2-compare-product-art"><ProductArtwork image={productCoverImage(product)} productName={product.productName} productType={product.productType} /></div>
             <Link to={`/customer/product?modelCode=${encodeURIComponent(product.modelCode)}`}>{product.productName}</Link>
             <span className="v2-mono">{product.modelCode}</span>
             <SecondaryButton type="button" onClick={() => remove(product.modelCode)}>Bỏ sản phẩm</SecondaryButton>
@@ -913,12 +1206,11 @@ export function ComparePage() {
             <tr><th scope="row">Thương hiệu</th>{products.map((product) => <td key={product.modelCode}>{product.brandName ?? "—"}</td>)}</tr>
             <tr><th scope="row">Danh mục</th>{products.map((product) => <td key={product.modelCode}>{productTypeLabel(product.productType)}</td>)}</tr>
             <tr><th scope="row">Ưu đãi · điều kiện · tồn · bảo hành</th>{products.map((product) => <td key={product.modelCode}>
-              {product.offers.length ? <div className="v2-compare-offers">{product.offers.map((offer) => <div key={offer.offerCode}>
+              {customerVisibleOffers(product.offers).length ? <div className="v2-compare-offers">{customerVisibleOffers(product.offers).map((offer) => <div key={offer.offerId}>
                 <Badge>{conditionLabel(offer.condition)}</Badge><strong>{money(offer.price, offer.currency)}</strong>
-                <span>{offer.isDemo ? "Tồn kho minh họa" : "Số lượng khả dụng"}: {offer.availableQuantity}</span>
+                <span>Số lượng khả dụng: {offer.availableQuantity}</span>
                 <WarrantyDisplay months={offer.warrantyMonths} showMissing />
-                <small className="v2-mono">{offer.offerCode}</small>
-              </div>)}</div> : "Chưa có offer hoạt động"}
+              </div>)}</div> : "Giá bán và tình trạng hàng chưa được cập nhật."}
             </td>)}</tr>
           </tbody>
         </table></div>
@@ -967,15 +1259,14 @@ export function ProductManagementPage() {
       </div>
       {loading && <LoadingState message="Đang tải danh mục…" />}{error && <ErrorState title="Không thể tải sản phẩm" message={error} />}{facetError && <ErrorState title="Không thể tải facets" message={facetError} />}
       {definitionsError && <p className="v2-inline-error" role="alert">Không tải được định nghĩa thông số: {definitionsError}</p>}
-      {result?.notice && <p className="v2-demo-banner">{result.notice}</p>}
       {result && <div className="v2-table-wrap"><table className="v2-table"><thead><tr><th>Model / mã</th><th>Loại / danh mục / thương hiệu</th><th>Thông số chính</th><th>Ưu đãi · điều kiện · tồn · bảo hành</th><th>Trạng thái / chi tiết</th></tr></thead><tbody>{result.data.map((product) => <tr key={product.productId}>
         <td>{product.productName}<small className="v2-table-subtext v2-mono">{product.modelCode}</small></td>
         <td>{product.productTypeName}<small className="v2-table-subtext">{product.categoryName} · {product.brandName ?? "Chưa có thương hiệu"}</small></td>
         <td><SpecificationHighlights productType={product.productType} specifications={product.specifications} definitions={definitions} limit={4} /></td>
         <td>{product.offers.length
-          ? <div className="v2-admin-offer-summaries">{product.offers.map((offer) => <div key={offer.offerCode}>
+          ? <div className="v2-admin-offer-summaries">{product.offers.map((offer) => <div key={offer.offerId}>
             <Badge>{offer.condition}</Badge><strong>{money(offer.price, offer.currency)}</strong>
-            <span>{offer.isDemo ? "Tồn minh họa" : "Tồn"}: {offer.availableQuantity}</span>
+            <span>Tồn khả dụng: {offer.availableQuantity}</span>
             <WarrantyDisplay months={offer.warrantyMonths} showMissing />
           </div>)}</div>
           : "Chưa có offer hoạt động."}</td>

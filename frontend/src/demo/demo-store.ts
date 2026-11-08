@@ -11,11 +11,10 @@ export interface DemoCartItem {
   price: string;
   currency: string;
   quantity: number;
-  offerCode?: string;
+  offerId?: string;
   condition?: string;
   availableQuantity?: number;
   warrantyMonths?: number | null;
-  isDemo?: boolean;
   productType?: string;
   specifications?: Record<string, unknown>;
 }
@@ -65,24 +64,40 @@ export function saveCart(items: DemoCartItem[]): void {
   writeList(cartKey, items.filter((item) => item.quantity > 0));
 }
 
-export function addProductToCart(product: CatalogProduct, offer: CatalogOffer = product.offers[0]): void {
-  if (!offer) throw new Error("This product has no active offer to add to the demo cart.");
+export function addProductToCart(
+  product: CatalogProduct,
+  offer: CatalogOffer = product.offers[0],
+  quantity = 1,
+): void {
+  if (!offer || !/^[0-9]{1,20}$/.test(offer.offerId)) {
+    throw new Error("This product has no valid active offer to add to the cart.");
+  }
+  if (!Number.isSafeInteger(quantity) || quantity < 1) {
+    throw new Error("Cart quantity must be a positive whole number.");
+  }
   const cart = getCart();
-  const existing = cart.find((item) => item.modelCode === product.modelCode && item.offerCode === offer.offerCode);
+  const existing = cart.find((item) => item.modelCode === product.modelCode && item.offerId === offer.offerId);
+  const totalQuantity = (existing?.quantity ?? 0) + quantity;
+  if (!Number.isSafeInteger(offer.availableQuantity) || offer.availableQuantity < totalQuantity) {
+    throw new Error("There is not enough available stock for this offer.");
+  }
+  if (!Number.isFinite(Number(offer.price)) || Number(offer.price) < 0
+      || !/^[A-Z]{3}$/.test(offer.currency)) {
+    throw new Error("This offer has invalid stored price or currency information.");
+  }
   if (existing) {
-    existing.quantity += 1;
+    existing.quantity += quantity;
   } else {
     cart.push({
       modelCode: product.modelCode,
       productName: product.productName,
       price: String(offer.price),
       currency: offer.currency,
-      quantity: 1,
-      offerCode: offer.offerCode,
+      quantity,
+      offerId: offer.offerId,
       condition: offer.condition,
       availableQuantity: offer.availableQuantity,
       warrantyMonths: offer.warrantyMonths,
-      isDemo: offer.isDemo,
       productType: product.productType,
       specifications: { ...product.specifications },
     });

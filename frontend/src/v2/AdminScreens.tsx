@@ -8,23 +8,32 @@ import {
   fetchCatalogProducts,
   updateGpuCatalogSpecifications,
 } from "../catalog-api";
+import {
+  decideOrderCancellation,
+  fetchAdminOrder,
+  fetchAdminOrders,
+  retryFailedOrderRefund,
+  updateOrderShipping,
+  updateOrderStatus,
+} from "../orders-api";
 import type {
   AdminCatalogAttributeDefinition,
   CatalogFacets,
   CatalogProduct,
 } from "../catalog-api";
+import type { OrderDetail, OrderStatus, OrderSummary } from "../orders-api";
 import type { CatalogProductPage } from "../catalog-api";
+import { fetchStaffAccounts, updateStaffAccountRole } from "../staff-accounts-api";
+import type { StaffAccount } from "../staff-accounts-api";
 import {
   getDemoCustomers,
-  getOrders,
   money,
-  resetDemoData,
-  saveOrders,
 } from "../demo/demo-store";
-import type { DemoCustomer, DemoOrder } from "../demo/demo-store";
+import type { DemoCustomer } from "../demo/demo-store";
 import {
   Badge,
   Card,
+  ConfirmationModal,
   DataTable,
   EmptyState,
   ErrorState,
@@ -32,6 +41,7 @@ import {
   LoadingState,
   PrimaryButton,
   SecondaryButton,
+  Toast,
 } from "./components";
 import { RoleGate } from "./CustomerScreens";
 import { FacetManagementPage } from "./CatalogScreens";
@@ -42,15 +52,49 @@ import {
   TechnicalSpecifications,
 } from "./product-information";
 import { specificationDisplayPolicy } from "./specification-metadata";
+import { useAuth } from "./auth";
 
-const demoLabel = "DỮ LIỆU DEMO — CHƯA ĐƯỢC LƯU VÀO DATABASE";
 const draftKey = "pcbs.v2.demo.product-draft.v1";
+const demoLabel = "DỮ LIỆU DEMO — CHƯA ĐƯỢC LƯU VÀO DATABASE";
+const orderStatusText: Record<OrderStatus, string> = {
+  PENDING_CONFIRMATION: "Chờ xác nhận",
+  CONFIRMED: "Đã xác nhận",
+  PROCESSING: "Đang xử lý",
+  READY_TO_SHIP: "Sẵn sàng giao",
+  SHIPPING: "Đang giao",
+  DELIVERED: "Đã giao",
+  CANCELLATION_REQUESTED: "Yêu cầu hủy",
+  CANCELLED: "Đã hủy",
+};
+const nextOrderStatuses: Partial<Record<OrderStatus, OrderStatus[]>> = {
+  PENDING_CONFIRMATION: ["CONFIRMED", "PROCESSING", "READY_TO_SHIP", "SHIPPING", "CANCELLATION_REQUESTED", "CANCELLED"],
+  CONFIRMED: ["PENDING_CONFIRMATION", "PROCESSING", "READY_TO_SHIP", "SHIPPING", "CANCELLATION_REQUESTED", "CANCELLED"],
+  PROCESSING: ["PENDING_CONFIRMATION", "CONFIRMED", "READY_TO_SHIP", "SHIPPING", "CANCELLATION_REQUESTED", "CANCELLED"],
+  READY_TO_SHIP: ["PENDING_CONFIRMATION", "CONFIRMED", "PROCESSING", "SHIPPING", "CANCELLATION_REQUESTED", "CANCELLED"],
+  SHIPPING: ["DELIVERED"],
+};
+
+function formatOrderDate(value: string): string {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? value : date.toLocaleString("vi-VN");
+}
+
+function formatOrderMoney(value: number, currencyCode: string | null, verified: boolean): string {
+  if (!verified || !currencyCode || !/^[A-Z]{3}$/.test(currencyCode)) return "Chưa xác minh";
+  try {
+    return new Intl.NumberFormat("vi-VN", { style: "currency", currency: currencyCode }).format(value);
+  } catch {
+    return "Chưa xác minh";
+  }
+}
 
 export function DashboardPage() {
   const [result, setResult] = useState<CatalogProductPage>();
+  const [orders, setOrders] = useState<OrderSummary[]>([]);
   const [error, setError] = useState("");
+  const [orderError, setOrderError] = useState("");
   const [loading, setLoading] = useState(true);
-  const orders = getOrders();
+  const { user } = useAuth();
   useEffect(() => {
     const controller = new AbortController();
     void fetchCatalogProducts({ page: 1, limit: 1 }, controller.signal).then(
@@ -59,23 +103,33 @@ export function DashboardPage() {
     ).finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
   }, []);
+  useEffect(() => {
+    if (user?.roleCode !== "ADMIN") return;
+    let active = true;
+    void fetchAdminOrders().then((items) => {
+      if (active) setOrders(items);
+    }).catch((reason: unknown) => {
+      if (active) setOrderError(reason instanceof Error ? reason.message : "Không thể tải đơn hàng.");
+    });
+    return () => { active = false; };
+  }, [user?.roleCode]);
   return <RoleGate audience="staff"><div className="v2-page">
-    <div className="v2-page-title"><div><p className="v2-eyebrow">Admin / Sales</p><h1>Tổng quan điều hành</h1></div><Badge tone="gold">Chỉ số đơn hàng là demo</Badge></div>
-    <p className="v2-demo-banner">{demoLabel}. Không phản ánh doanh thu hoặc đơn hàng thực tế.</p>
+    <div className="v2-page-title"><div><p className="v2-eyebrow">Admin / Sales</p><h1>Tổng quan điều hành</h1></div></div>
     {loading && <LoadingState message="Đang tải số lượng catalog…" />}{error && <ErrorState title="Catalog không khả dụng" message={error} />}
     <div className="v2-metric-grid">
       <Card><p className="v2-metric-label">Sản phẩm trong catalog</p><strong className="v2-metric-value">{result?.pagination.total ?? "—"}</strong><span>Đếm từ API trực tiếp</span></Card>
-      <Card><p className="v2-metric-label">Đơn demo cục bộ</p><strong className="v2-metric-value">{orders.length}</strong><span>Không lưu vào database</span></Card>
-      <Card><p className="v2-metric-label">Giá trị đơn demo</p><strong className="v2-metric-value">{money(orders.reduce((sum, order) => sum + Number(order.total), 0))}</strong><span>Không phải doanh thu</span></Card>
+      {user?.roleCode === "ADMIN" && <Card><p className="v2-metric-label">Đơn hàng trong hệ thống</p><strong className="v2-metric-value">{orders.length}</strong><span>Giới hạn tối đa 200 đơn mới nhất</span></Card>}
+      {user?.roleCode === "ADMIN" && <Card><p className="v2-metric-label">Đơn đang chờ xử lý</p><strong className="v2-metric-value">{orders.filter((order) => !["DELIVERED", "CANCELLED"].includes(order.status)).length}</strong><span>Trạng thái do Admin cập nhật thủ công</span></Card>}
     </div>
-    <Card title="Đơn demo gần đây" action={<Link to="/admin/orders">Quản lý đơn →</Link>}>
-      {orders.length ? <DataTable<DemoOrder> columns={[
-        { key: "code", header: "Mã đơn", render: (order) => <span className="v2-mono">{order.orderCode}</span> },
+    {user?.roleCode === "ADMIN" && <Card title="Đơn hàng gần đây" action={<Link to="/admin/orders">Quản lý đơn →</Link>}>
+      {orderError && <ErrorState title="Không thể tải đơn hàng" message={orderError} />}
+      {orders.length ? <DataTable<OrderSummary> columns={[
+        { key: "code", header: "Mã đơn", render: (order) => <span className="v2-mono">{order.orderNumber}</span> },
         { key: "customer", header: "Khách hàng", render: (order) => order.customerName },
-        { key: "status", header: "Trạng thái", render: (order) => <Badge>{order.status}</Badge> },
-        { key: "total", header: "Tổng demo", render: (order) => money(order.total) },
-      ]} rows={orders.slice(0, 5)} getRowKey={(order) => order.orderCode} /> : <EmptyState title="Chưa có đơn demo" message="Đơn demo được tạo ở checkout sẽ hiển thị tại đây." />}
-    </Card>
+        { key: "status", header: "Trạng thái", render: (order) => <Badge>{orderStatusText[order.status]}</Badge> },
+        { key: "payment", header: "Thanh toán", render: (order) => order.paymentStatus || "—" },
+      ]} rows={orders.slice(0, 5)} getRowKey={(order) => order.orderNumber} /> : !orderError && <EmptyState title="Chưa có đơn hàng" message="Đơn hàng trong hệ thống sẽ hiển thị tại đây." />}
+    </Card>}
     <div className="v2-quick-links">{[["Sản phẩm", "/admin/products"], ["Tạo / sửa bản nháp", "/admin/product-edit"], ["CSV preview", "/admin/csv-import"], ["Danh mục", "/admin/categories"], ["Thương hiệu", "/admin/brands"], ["Nhân viên", "/admin/staff"]].map(([label, path]) => <Link className="v2-category-card" key={path} to={path}>{label} →</Link>)}</div>
   </div></RoleGate>;
 }
@@ -574,27 +628,245 @@ export function CsvImportPage() {
 }
 
 export function OrdersManagementPage() {
-  const [orders, setOrders] = useState(getOrders);
+  const [orders, setOrders] = useState<OrderSummary[]>([]);
   const [query, setQuery] = useState("");
-  const filtered = useMemo(() => orders.filter((order) => `${order.orderCode} ${order.customerName} ${order.phone}`.toLowerCase().includes(query.toLowerCase())), [orders, query]);
-  return <RoleGate audience="staff"><div className="v2-page">
-    <div className="v2-page-title"><div><p className="v2-eyebrow">Bán hàng · demo</p><h1>Quản lý đơn hàng</h1></div><Badge tone="gold">Không có API đơn hàng</Badge></div>
-    <p className="v2-demo-banner">{demoLabel}. Không phản ánh đơn hàng thực tế.</p>
-    <Card title="Đơn demo" action={<input className="v2-form-input v2-management-search" placeholder="Tìm mã đơn, tên, điện thoại" value={query} onChange={(event) => setQuery(event.target.value)} />}>
-      {filtered.length ? <DataTable<DemoOrder> columns={[
-        { key: "code", header: "Mã đơn", render: (order) => <span className="v2-mono">{order.orderCode}</span> },
-        { key: "customer", header: "Khách hàng", render: (order) => <>{order.customerName}<small className="v2-table-subtext">{order.phone}</small></> },
-        { key: "date", header: "Ngày tạo", render: (order) => new Date(order.createdAt).toLocaleString("vi-VN") },
-        { key: "total", header: "Tổng", render: (order) => money(order.total) },
-        { key: "status", header: "Trạng thái demo", render: (order) => <select className="v2-form-input" value={order.status} onChange={(event) => {
-          const next = orders.map((item) => item.orderCode === order.orderCode ? { ...item, status: event.target.value as DemoOrder["status"] } : item);
-          saveOrders(next); setOrders(next);
-        }}><option value="DEMO_RECEIVED">DEMO_RECEIVED</option><option value="DEMO_PROCESSING">DEMO_PROCESSING</option></select> },
-      ]} rows={filtered} getRowKey={(order) => order.orderCode} /> : <EmptyState title="Không tìm thấy đơn demo" message="Checkout cục bộ chưa tạo đơn nào khớp." />}
-      <SecondaryButton type="button" onClick={() => {
-        resetDemoData(); setOrders([]);
-      }}>Xóa dữ liệu demo cục bộ</SecondaryButton>
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [selected, setSelected] = useState<OrderDetail | null>(null);
+  const [selectedStatus, setSelectedStatus] = useState<OrderStatus | "">("");
+  const [note, setNote] = useState("");
+  const [carrier, setCarrier] = useState("");
+  const [trackingNumber, setTrackingNumber] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [pendingConfirmation, setPendingConfirmation] = useState<
+    "cancelOrder" | "approveCancellation" | "retryRefund" | null
+  >(null);
+
+  const reload = async (search = query) => {
+    setLoading(true);
+    setError("");
+    try {
+      setOrders(await fetchAdminOrders({ q: search.trim() }));
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Không thể tải đơn hàng.");
+    } finally {
+      setLoading(false);
+    }
+  };
+  useEffect(() => { void reload(""); }, []);
+
+  const openOrder = async (orderNumber: string) => {
+    setError("");
+    try {
+      const detail = await fetchAdminOrder(orderNumber);
+      setSelected(detail);
+      setSelectedStatus("");
+      setNote("");
+      setCarrier(detail.order.shippingCarrier);
+      setTrackingNumber(detail.order.trackingNumber);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Không thể tải chi tiết đơn hàng.");
+    }
+  };
+
+  const applyDetail = (detail: OrderDetail) => {
+    setSelected(detail);
+    setOrders((current) => current.map((item) =>
+      item.orderNumber === detail.order.orderNumber ? detail.order : item));
+    setSelectedStatus("");
+    setNote("");
+  };
+
+  const saveStatus = async (): Promise<boolean> => {
+    if (!selected || !selectedStatus) return false;
+    setBusy(true);
+    setError("");
+    try {
+      applyDetail(await updateOrderStatus(selected.order.orderNumber, selectedStatus, note));
+      return true;
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Không thể cập nhật trạng thái.");
+      return false;
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const decideCancellation = async (approve: boolean): Promise<boolean> => {
+    if (!selected) return false;
+    setBusy(true);
+    setError("");
+    try {
+      applyDetail(await decideOrderCancellation(selected.order.orderNumber, approve, note));
+      return true;
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Không thể xử lý yêu cầu hủy.");
+      return false;
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const retryRefund = async (): Promise<boolean> => {
+    if (!selected) return false;
+    setBusy(true);
+    setError("");
+    try {
+      applyDetail(await retryFailedOrderRefund(
+        selected.order.orderNumber, crypto.randomUUID(), note));
+      return true;
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Không thể thử lại hoàn tiền.");
+      return false;
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const confirmPendingAction = async () => {
+    if (!pendingConfirmation) return;
+    if (pendingConfirmation === "cancelOrder") await saveStatus();
+    else if (pendingConfirmation === "approveCancellation") await decideCancellation(true);
+    else await retryRefund();
+    setPendingConfirmation(null);
+  };
+
+  const saveShipping = async () => {
+    if (!selected) return;
+    setBusy(true);
+    setError("");
+    try {
+      const detail = await updateOrderShipping(
+        selected.order.orderNumber, carrier, trackingNumber, note);
+      applyDetail(detail);
+      setCarrier(detail.order.shippingCarrier);
+      setTrackingNumber(detail.order.trackingNumber);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Không thể cập nhật thông tin vận chuyển.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return <RoleGate audience="admin"><div className="v2-page">
+    <div className="v2-page-title"><div><p className="v2-eyebrow">Admin · vận hành đơn hàng</p><h1>Quản lý đơn hàng</h1></div><Badge>Trạng thái do Admin kiểm soát</Badge></div>
+    {error && <ErrorState title="Thao tác đơn hàng không thành công" message={error} />}
+    <Card title="Đơn hàng" action={<form className="v2-search-form" onSubmit={(event) => {
+      event.preventDefault();
+      void reload(query);
+    }}>
+      <input className="v2-form-input v2-management-search" placeholder="Tìm mã đơn, tên, email, điện thoại"
+        value={query} onChange={(event) => setQuery(event.target.value)} />
+      <PrimaryButton type="submit" disabled={loading}>Tìm kiếm</PrimaryButton>
+    </form>}>
+      {loading && <LoadingState message="Đang tải đơn hàng…" />}
+      {!loading && orders.length === 0 && !error && <EmptyState title="Chưa có đơn hàng" message="Không có đơn hàng phù hợp trong dữ liệu đã lưu." />}
+      {!loading && orders.length > 0 && <div className="v2-table-wrap"><table className="v2-table">
+        <thead><tr><th>Mã đơn</th><th>Khách hàng</th><th>Trạng thái</th><th>Thanh toán</th><th>Ngày đặt</th><th></th></tr></thead>
+        <tbody>{orders.map((order) => <tr key={order.orderNumber}>
+          <td className="v2-mono">{order.orderNumber}</td>
+          <td>{order.customerName}<small className="v2-table-subtext">{order.customerEmail}</small></td>
+          <td>{orderStatusText[order.status]}</td><td>{order.paymentStatus || "—"}</td>
+          <td>{formatOrderDate(order.placedAt)}</td>
+          <td><SecondaryButton type="button" onClick={() => void openOrder(order.orderNumber)}>Mở</SecondaryButton></td>
+        </tr>)}</tbody>
+      </table></div>}
     </Card>
+    {selected && <Card title={`Đơn ${selected.order.orderNumber}`}>
+      <dl className="v2-profile-grid">
+        <div><dt>Khách hàng</dt><dd>{selected.order.customerName} · {selected.order.customerEmail}</dd></div>
+        <div><dt>Điện thoại</dt><dd>{selected.order.customerPhone || "—"}</dd></div>
+        <div><dt>Trạng thái hiện tại</dt><dd>{orderStatusText[selected.order.status]}</dd></div>
+        <div><dt>Thanh toán (độc lập)</dt><dd>{selected.order.paymentStatus || "—"} · {selected.order.paymentMethod || "—"}</dd></div>
+        <div><dt>Địa chỉ giao hàng</dt><dd>{selected.shippingAddress}{selected.shippingRegion ? `, ${selected.shippingRegion}` : ""}{selected.shippingPostalCode ? ` ${selected.shippingPostalCode}` : ""}</dd></div>
+        <div><dt>Tổng đơn</dt><dd>{formatOrderMoney(selected.order.total, selected.order.currencyCode, selected.order.showFinancials)}</dd></div>
+      </dl>
+      <h3>Sản phẩm</h3>
+      {selected.items.length > 0 ? <div className="v2-table-wrap"><table className="v2-table">
+        <thead><tr><th>Tên</th><th>Số lượng</th><th>Đơn giá</th><th>Thành tiền</th></tr></thead>
+        <tbody>{selected.items.map((item, index) => <tr key={`${item.productName}-${index}`}>
+          <td>{item.productName}<small className="v2-table-subtext">{item.condition}</small></td>
+          <td>{item.quantity}</td>
+          <td>{formatOrderMoney(item.unitPrice, item.currencyCode, selected.order.showFinancials)}</td>
+          <td>{formatOrderMoney(item.lineTotal, item.currencyCode, selected.order.showFinancials)}</td>
+        </tr>)}</tbody>
+      </table></div> : <p className="v2-muted">Không có dòng sản phẩm đã xác minh để hiển thị.</p>}
+      {!selected.order.showFinancials && <p className="v2-muted">Không thể hiển thị giá trị đơn do thiếu mặt hàng hoặc tiền tệ không nhất quán.</p>}
+
+      {selected.refundRetryAvailable && <div className="v2-action-row">
+        <p>Hoàn tiền lần trước thất bại.</p>
+        <SecondaryButton type="button" disabled={busy} onClick={() => setPendingConfirmation("retryRefund")}>
+          Thử lại hoàn tiền
+        </SecondaryButton>
+      </div>}
+
+      {selected.order.status === "CANCELLATION_REQUESTED" ? <div className="v2-action-row">
+        <PrimaryButton type="button" disabled={busy} onClick={() => setPendingConfirmation("approveCancellation")}>Phê duyệt hủy</PrimaryButton>
+        <SecondaryButton type="button" disabled={busy} onClick={() => void decideCancellation(false)}>Từ chối yêu cầu</SecondaryButton>
+      </div> : (nextOrderStatuses[selected.order.status]?.length ?? 0) > 0 && <div className="v2-action-row">
+        <FormField label="Trạng thái tiếp theo" htmlFor="order-next-status">
+          <select id="order-next-status" className="v2-form-input" value={selectedStatus}
+            onChange={(event) => setSelectedStatus(event.target.value as OrderStatus | "")}>
+            <option value="">Chọn trạng thái</option>
+            {nextOrderStatuses[selected.order.status]?.map((status) => <option key={status} value={status}>{orderStatusText[status]}</option>)}
+          </select>
+        </FormField>
+        <PrimaryButton type="button" disabled={busy || !selectedStatus} onClick={() => {
+          if (selectedStatus === "CANCELLED") setPendingConfirmation("cancelOrder");
+          else void saveStatus();
+        }}>Lưu trạng thái</PrimaryButton>
+      </div>}
+      <FormField label="Ghi chú thay đổi" htmlFor="order-admin-note">
+        <textarea id="order-admin-note" className="v2-form-input" rows={2} maxLength={2000}
+          value={note} onChange={(event) => setNote(event.target.value)} />
+      </FormField>
+      {["READY_TO_SHIP", "SHIPPING", "DELIVERED"].includes(selected.order.status) && <div>
+        <h3>Thông tin vận chuyển nhập thủ công</h3>
+        <div className="v2-form-grid">
+          <FormField label="Đơn vị vận chuyển" htmlFor="order-carrier">
+            <input id="order-carrier" className="v2-form-input" maxLength={100} value={carrier}
+              onChange={(event) => setCarrier(event.target.value)} />
+          </FormField>
+          <FormField label="Mã vận đơn" htmlFor="order-tracking">
+            <input id="order-tracking" className="v2-form-input" maxLength={180} value={trackingNumber}
+              onChange={(event) => setTrackingNumber(event.target.value)} />
+          </FormField>
+        </div>
+        <SecondaryButton type="button" disabled={busy} onClick={() => void saveShipping()}>Lưu thông tin vận chuyển</SecondaryButton>
+      </div>}
+      <h3>Lịch sử trạng thái</h3>
+      {selected.statusHistory.length ? <ol className="v2-status-history">{selected.statusHistory.map((entry, index) => <li key={`${entry.createdAt}-${index}`}>
+        <strong>{entry.action}</strong> · {entry.previousStatus ?? "—"} → {entry.newStatus}
+        <small className="v2-table-subtext">{formatOrderDate(entry.createdAt)} · {entry.actorName} ({entry.actorRole})</small>
+        {entry.note && <p>{entry.note}</p>}
+      </li>)}</ol> : <p className="v2-muted">Chưa có bản ghi lịch sử.</p>}
+    </Card>}
+    <ConfirmationModal
+      open={pendingConfirmation !== null}
+      onClose={() => { if (!busy) setPendingConfirmation(null); }}
+      onConfirm={() => void confirmPendingAction()}
+      busy={busy}
+      title={pendingConfirmation === "retryRefund"
+        ? "Xác nhận thử lại hoàn tiền"
+        : pendingConfirmation === "approveCancellation"
+          ? "Xác nhận phê duyệt hủy đơn"
+          : "Xác nhận hủy đơn hàng"}
+      message={pendingConfirmation === "retryRefund"
+        ? "Bạn có chắc chắn muốn thử lại khoản hoàn tiền bị lỗi? Khoản hoàn tiền đã hoàn tất sẽ không thể thực hiện lại."
+        : pendingConfirmation === "approveCancellation"
+          ? "Bạn có chắc chắn muốn phê duyệt yêu cầu hủy đơn hàng này?"
+          : "Bạn có chắc chắn muốn hủy đơn hàng này? Nếu đã thanh toán, hệ thống sẽ xử lý hoàn tiền mô phỏng."}
+      details={selected ? [
+        { label: "Mã đơn hàng", value: selected.order.orderNumber },
+        { label: "Trạng thái hiện tại", value: orderStatusText[selected.order.status] },
+        { label: "Thanh toán", value: selected.order.paymentStatus || "Chưa ghi nhận" },
+      ] : []}
+      confirmLabel={pendingConfirmation === "retryRefund"
+        ? "Xác nhận thử lại"
+        : pendingConfirmation === "approveCancellation"
+          ? "Xác nhận phê duyệt"
+          : "Xác nhận hủy đơn"}
+    />
   </div></RoleGate>;
 }
 
@@ -621,23 +893,122 @@ export function CustomerLookupPage() {
   </div></RoleGate>;
 }
 
-const demoAccounts = [
-  { role: "ADMIN", name: "Admin Demo", email: "admin@pcbuilder.test" },
-  { role: "SALES", name: "Sales Demo", email: "sales@pcbuilder.test" },
-  { role: "CUSTOMER", name: "Nguyễn Văn An", email: "customer@pcbuilder.test" },
-];
-
 export function StaffRolesPage() {
-  return <RoleGate audience="staff"><div className="v2-page">
-    <div className="v2-page-title"><div><p className="v2-eyebrow">Vai trò hệ thống</p><h1>Nhân viên và vai trò</h1></div><Badge tone="gold">Danh sách mẫu</Badge></div>
-    <p className="v2-demo-banner">{demoLabel}. Danh sách nhận diện ba tài khoản mẫu theo seed cục bộ; trạng thái database chưa được xác minh. Không có API quản lý nhân viên.</p>
-    <Card title="Các vai trò hiện có"><div className="v2-role-grid">{["ADMIN", "SALES", "CUSTOMER"].map((role) => <div className="v2-role-card" key={role}><Badge tone="primary">{role}</Badge><p>Vai trò ứng dụng được định nghĩa bởi schema.</p></div>)}</div></Card>
-    <Card title="Danh tính tài khoản demo"><DataTable columns={[
-      { key: "name", header: "Tên", render: (account) => account.name },
-      { key: "email", header: "Email", render: (account) => account.email },
-      { key: "role", header: "Vai trò", render: (account) => <Badge>{account.role}</Badge> },
-    ]} rows={demoAccounts} getRowKey={(account) => account.email} /></Card>
-    <p className="v2-muted">Không hiển thị mật khẩu; không có chức năng tạo hoặc sửa tài khoản nhân viên.</p>
+  const [accounts, setAccounts] = useState<StaffAccount[]>([]);
+  const [query, setQuery] = useState("");
+  const [appliedQuery, setAppliedQuery] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [savingUserId, setSavingUserId] = useState("");
+  const [error, setError] = useState("");
+  const [toast, setToast] = useState<{ message: string; tone: "success" | "error" } | null>(null);
+  const [pendingAccount, setPendingAccount] = useState<StaffAccount | null>(null);
+
+  const refresh = async (search: string, showLoading = true) => {
+    if (showLoading) setLoading(true);
+    setError("");
+    try {
+      setAccounts(await fetchStaffAccounts(search));
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Không thể tải danh sách tài khoản.");
+    } finally {
+      if (showLoading) setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void refresh("");
+  }, []);
+
+  const search = (event: FormEvent) => {
+    event.preventDefault();
+    const nextQuery = query.trim();
+    setAppliedQuery(nextQuery);
+    void refresh(nextQuery);
+  };
+
+  const changeRole = async () => {
+    if (!pendingAccount) return;
+    const account = pendingAccount;
+    const nextRole = account.roleCode === "CUSTOMER" ? "SALES" : "CUSTOMER";
+    setSavingUserId(account.userId);
+    setError("");
+    setToast(null);
+    try {
+      const updatedAccount = await updateStaffAccountRole(account.userId, nextRole);
+      setAccounts((current) => current.map((item) =>
+        item.userId === updatedAccount.userId ? updatedAccount : item));
+      setPendingAccount(null);
+      setToast({ message: `Đã cập nhật vai trò cho ${updatedAccount.fullName}.`, tone: "success" });
+      void refresh(appliedQuery, false);
+    } catch (reason) {
+      setPendingAccount(null);
+      setToast({
+        message: reason instanceof Error ? reason.message : "Không thể cập nhật vai trò tài khoản.",
+        tone: "error",
+      });
+    } finally {
+      setSavingUserId("");
+    }
+  };
+
+  return <RoleGate audience="admin"><div className="v2-page">
+    <div className="v2-page-title"><div><p className="v2-eyebrow">Quản lý quyền truy cập</p><h1>Nhân viên và vai trò</h1></div></div>
+    {error && <p className="v2-inline-error" role="alert">{error}</p>}
+    {toast && <Toast message={toast.message} tone={toast.tone} onDismiss={() => setToast(null)} />}
+    <Card title="Tài khoản hiện có">
+      <form className="v2-search-form" onSubmit={search}>
+        <input className="v2-form-input v2-management-search" value={query}
+          onChange={(event) => setQuery(event.target.value)} maxLength={120}
+          placeholder="Tìm theo tên hoặc email" aria-label="Tìm theo tên hoặc email" />
+        <PrimaryButton type="submit" disabled={loading}>Tìm kiếm</PrimaryButton>
+      </form>
+      {loading && <LoadingState message="Đang tải tài khoản…" />}
+      {!loading && accounts.length === 0 && !error && <EmptyState title="Không tìm thấy tài khoản" message="Thử tìm theo tên hoặc email khác." />}
+      {!loading && accounts.length > 0 && <div className="v2-table-wrap">
+        <table className="v2-table">
+          <thead><tr><th>Họ tên</th><th>Email</th><th>Vai trò</th><th>Trạng thái tài khoản</th><th>Thao tác</th></tr></thead>
+          <tbody>{accounts.map((account) => {
+            const canChange = account.roleCode === "CUSTOMER" || account.roleCode === "SALES";
+            return <tr key={account.userId}>
+              <td>{account.fullName}</td>
+              <td>{account.email}</td>
+              <td><Badge>{account.roleCode}</Badge></td>
+              <td>{account.accountStatus}</td>
+              <td>{canChange
+                ? <SecondaryButton type="button" disabled={loading || savingUserId === account.userId}
+                    onClick={() => { setToast(null); setPendingAccount(account); }}>
+                    {savingUserId === account.userId
+                      ? "Đang lưu…"
+                      : account.roleCode === "CUSTOMER" ? "Cấp quyền SALES" : "Thu hồi quyền SALES"}
+                  </SecondaryButton>
+                : <span className="v2-muted">Không thể thay đổi</span>}</td>
+            </tr>;
+          })}</tbody>
+        </table>
+      </div>}
+    </Card>
+    <ConfirmationModal
+      open={pendingAccount !== null}
+      onClose={() => {
+        if (!pendingAccount || savingUserId !== pendingAccount.userId) setPendingAccount(null);
+      }}
+      onConfirm={() => void changeRole()}
+      busy={pendingAccount !== null && savingUserId === pendingAccount.userId}
+      title={pendingAccount?.roleCode === "CUSTOMER"
+        ? "Xác nhận cấp quyền nhân viên"
+        : "Xác nhận thu hồi quyền nhân viên"}
+      message={pendingAccount?.roleCode === "CUSTOMER"
+        ? `Bạn có chắc chắn muốn cấp quyền Nhân viên bán hàng cho ${pendingAccount.fullName}?`
+        : `Bạn có chắc chắn muốn thu hồi quyền Nhân viên bán hàng của ${pendingAccount?.fullName ?? ""}?`}
+      details={pendingAccount ? [
+        { label: "Email tài khoản", value: pendingAccount.email },
+        { label: "Vai trò hiện tại", value: pendingAccount.roleCode === "CUSTOMER" ? "CUSTOMER · Khách hàng" : "SALES · Nhân viên bán hàng" },
+        { label: "Vai trò mới", value: pendingAccount.roleCode === "CUSTOMER" ? "SALES · Nhân viên bán hàng" : "CUSTOMER · Khách hàng" },
+      ] : []}
+      confirmLabel={pendingAccount?.roleCode === "CUSTOMER"
+        ? "Xác nhận cấp quyền"
+        : "Xác nhận thu hồi quyền"}
+    />
   </div></RoleGate>;
 }
 

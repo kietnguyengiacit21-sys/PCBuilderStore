@@ -3,6 +3,7 @@ import {
   fetchCatalogFacets,
   fetchCatalogProduct,
   fetchCatalogProducts,
+  customerVisibleOffers,
 } from "./catalog-api";
 import type {
   CatalogFacets,
@@ -18,10 +19,18 @@ import {
   groupComparisonSpecifications,
   groupSpecifications,
 } from "./product-specifications";
+import { pcReferenceDescription } from "./v2/pc-configuration";
 
-const demoNotice =
-  "Giá và tồn kho có nhãn DEMO chỉ là dữ liệu minh họa, không phải thông tin bán hàng hoặc tồn kho thực tế.";
 const compareStorageKey = "pc-builder-store.compare-models";
+
+function productSummary(product: CatalogProduct): string | null {
+  if (product.modelCode === "PBC-PC-GAME-002") {
+    return pcReferenceDescription(product.specifications, product.bomComponents);
+  }
+  return product.shortDescription?.toLowerCase().includes("catalog")
+    ? null
+    : product.shortDescription;
+}
 
 function readCompareCodes(): string[] {
   try {
@@ -66,7 +75,7 @@ function ProductCard({
   compared: boolean;
   onCompare: (product: CatalogProduct) => void;
 }) {
-  const offer = product.offers[0];
+  const offer = customerVisibleOffers(product.offers)[0];
   const image = product.images.find((item) => item.isPrimary) ?? product.images[0];
   const highlights = getProductHighlights(product.productType, product.specifications);
   return (
@@ -93,8 +102,8 @@ function ProductCard({
           {product.productName}
         </a>
         <p className="mt-1 font-tech-code-sm text-tech-code-sm text-on-surface-variant">{product.modelCode}</p>
-        {product.shortDescription && (
-          <p className="mt-3 line-clamp-2 text-body-sm text-on-surface-variant">{product.shortDescription}</p>
+        {productSummary(product) && (
+          <p className="mt-3 line-clamp-2 text-body-sm text-on-surface-variant">{productSummary(product)}</p>
         )}
         {highlights.length > 0 && (
           <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2">
@@ -111,8 +120,7 @@ function ProductCard({
             <>
               <p className="font-headline-md text-primary">{money(offer.price, offer.currency)}</p>
               <p className="mt-1 text-body-sm text-on-surface-variant">
-                {offer.isDemo ? "Tồn kho minh họa" : "Số lượng khả dụng"}: {offer.availableQuantity}
-                {offer.isDemo && <span className="ml-1 font-tech-code-sm text-secondary">DEMO</span>}
+                {offer.availableQuantity > 0 ? "Số lượng khả dụng" : "Hết hàng"}: {offer.availableQuantity}
               </p>
               {offer.warrantyMonths !== null && (
                 <p className="text-body-sm text-on-surface-variant">Bảo hành: {offer.warrantyMonths} tháng</p>
@@ -209,10 +217,12 @@ function useCatalogProducts(filters: CatalogProductFilters) {
 
 function useCompareList() {
   const [codes, setCodes] = useState(readCompareCodes);
+  const [notice, setNotice] = useState("");
   const update = (next: string[]) => {
     const unique = [...new Set(next)].slice(0, 4);
     writeCompareCodes(unique);
     setCodes(unique);
+    setNotice("");
   };
   const toggle = (product: CatalogProduct) => {
     if (codes.includes(product.modelCode)) {
@@ -220,10 +230,10 @@ function useCompareList() {
     } else if (codes.length < 4) {
       update([...codes, product.modelCode]);
     } else {
-      window.alert("Bạn chỉ có thể so sánh tối đa 4 sản phẩm.");
+      setNotice("Bạn chỉ có thể so sánh tối đa 4 sản phẩm.");
     }
   };
-  return { codes, toggle, update };
+  return { codes, toggle, update, notice, dismissNotice: () => setNotice("") };
 }
 
 function CatalogSearchForm({
@@ -306,7 +316,6 @@ function HomeCatalog({ onCompare, compareCodes }: { onCompare: (product: Catalog
           </div>
           <a className="text-body-sm text-primary hover:underline" href="/customer/parts">Xem tất cả linh kiện</a>
         </div>
-        <p className="rounded border border-secondary/30 bg-secondary/5 p-space-md text-body-sm text-on-surface-variant">{demoNotice}</p>
         {loading && <p className="p-space-md text-on-surface-variant" role="status">Đang tải sản phẩm…</p>}
         {error && <ErrorState message={error} />}
         {result && <ProductGrid products={result.data} compareCodes={compareCodes} onCompare={onCompare} />}
@@ -418,7 +427,6 @@ function PartsCatalog({
         </h1>
         <p className="mt-2 text-body-sm text-on-surface-variant">Tìm theo tên sản phẩm hoặc model, rồi lọc theo danh mục, thương hiệu và thông số.</p>
       </section>
-      <p className="mb-space-lg rounded border border-secondary/30 bg-secondary/5 p-space-md text-body-sm text-on-surface-variant">{demoNotice}</p>
       <div className="grid gap-gutter-desktop lg:grid-cols-12">
         <aside className="space-y-space-md rounded border border-surface-container-high bg-surface-container-low p-space-md lg:col-span-3" aria-label="Bộ lọc sản phẩm">
           <h2 className="font-headline-sm">Bộ lọc</h2>
@@ -536,7 +544,7 @@ function ProductDetail({ modelCode, onCompare, compareCodes }: {
   if (loading) return <p className="p-space-xl text-center" role="status">Đang tải sản phẩm…</p>;
   if (error) return <div className="mx-auto max-w-7xl px-margin py-space-xl"><ErrorState message={error} /></div>;
   if (!product) return null;
-  const offer = product.offers[0];
+  const offer = customerVisibleOffers(product.offers)[0];
   const image = product.images.find((item) => item.isPrimary) ?? product.images[0];
   const specificationGroups = groupSpecifications(product.productType, product.specifications);
   return (
@@ -547,7 +555,6 @@ function ProductDetail({ modelCode, onCompare, compareCodes }: {
         <a className="hover:text-primary" href="/customer/parts">Linh kiện</a>
         <span className="px-2">/</span>{product.productName}
       </nav>
-      <p className="mb-space-md rounded border border-secondary/30 bg-secondary/5 p-space-md text-body-sm text-on-surface-variant">{demoNotice}</p>
       <div className="grid gap-space-xl lg:grid-cols-2">
         <div className="flex min-h-80 items-center justify-center rounded border border-surface-container-high bg-surface-container-low p-space-xl">
           {image ? (
@@ -560,15 +567,15 @@ function ProductDetail({ modelCode, onCompare, compareCodes }: {
           <p className="font-tech-code-sm uppercase tracking-widest text-primary">{product.brandName} · {product.productTypeName}</p>
           <h1 className="font-headline-xl text-on-surface">{product.productName}</h1>
           <p className="font-tech-code-sm text-on-surface-variant">Mã model: {product.modelCode}</p>
-          {product.shortDescription && <p className="text-body-md text-on-surface-variant">{product.shortDescription}</p>}
-          {product.description && <p className="text-body-sm text-on-surface-variant">{product.description}</p>}
+          {productSummary(product) && <p className="text-body-md text-on-surface-variant">{productSummary(product)}</p>}
+          {product.description && !product.description.toLowerCase().includes("catalog")
+            && <p className="text-body-sm text-on-surface-variant">{product.description}</p>}
           {offer ? (
             <div className="rounded border border-surface-container-high bg-surface-container-low p-space-md">
               <p className="font-headline-lg text-primary">{money(offer.price, offer.currency)}</p>
-              {offer.isDemo && <p className="mt-1 font-tech-code-sm text-secondary">Giá và tồn kho minh họa (DEMO)</p>}
               <p className="mt-2 text-body-sm text-on-surface-variant">Tình trạng: {offer.condition}</p>
               <p className="text-body-sm text-on-surface-variant">
-                {offer.isDemo ? "Tồn kho minh họa" : "Số lượng khả dụng"}: {offer.availableQuantity}
+                {offer.availableQuantity > 0 ? "Số lượng khả dụng" : "Hết hàng"}: {offer.availableQuantity}
               </p>
               {offer.warrantyMonths !== null && <p className="text-body-sm text-on-surface-variant">Bảo hành: {offer.warrantyMonths} tháng</p>}
             </div>
@@ -638,7 +645,6 @@ function ProductComparison({ codes, onRemove }: { codes: string[]; onRemove: (co
   return (
     <div className="mx-auto w-full max-w-7xl px-margin py-space-xl lg:px-margin-desktop">
       <h1 className="font-headline-xl text-on-surface">So sánh sản phẩm</h1>
-      <p className="my-space-md rounded border border-secondary/30 bg-secondary/5 p-space-md text-body-sm text-on-surface-variant">{demoNotice}</p>
       {codes.length === 0 && <p className="rounded bg-surface-container-low p-space-xl text-on-surface-variant">Chưa có sản phẩm để so sánh. Hãy thêm sản phẩm từ danh sách.</p>}
       {loading && <p role="status">Đang tải sản phẩm so sánh…</p>}
       {error && <ErrorState message={error} />}
@@ -662,8 +668,11 @@ function ProductComparison({ codes, onRemove }: { codes: string[]; onRemove: (co
                 ["Thương hiệu", (product: CatalogProduct) => product.brandName ?? "—"],
                 ["Loại sản phẩm", (product: CatalogProduct) => product.productTypeName],
                 ["Danh mục", (product: CatalogProduct) => product.categoryName],
-                ["Giá tham khảo", (product: CatalogProduct) => money(product.offers[0]?.price, product.offers[0]?.currency)],
-                ["Tồn kho", (product: CatalogProduct) => product.offers[0] ? `${product.offers[0].isDemo ? "Minh họa: " : ""}${product.offers[0].availableQuantity}` : "—"],
+                ["Giá", (product: CatalogProduct) => money(customerVisibleOffers(product.offers)[0]?.price, customerVisibleOffers(product.offers)[0]?.currency)],
+                ["Tồn kho", (product: CatalogProduct) => {
+                  const offer = customerVisibleOffers(product.offers)[0];
+                  return offer ? String(offer.availableQuantity) : "—";
+                }],
               ].map(([label, getter]) => (
                 <tr key={String(label)} className="border-b border-surface-container-high">
                   <th className="bg-surface-container-low p-space-md text-on-surface-variant">{String(label)}</th>
@@ -719,19 +728,22 @@ export default function CatalogPage({ path }: { path: string }) {
 
   const query = new URLSearchParams(search);
   const modelCode = query.get("modelCode") ?? "";
-  if (path === "/customer/home") {
-    return <HomeCatalog onCompare={comparison.toggle} compareCodes={comparison.codes} />;
-  }
-  if (path === "/customer/parts") {
-    return <PartsCatalog onCompare={comparison.toggle} compareCodes={comparison.codes} search={search} />;
-  }
-  if (path === "/customer/product") {
-    return modelCode
-      ? <ProductDetail key={modelCode} modelCode={modelCode} onCompare={comparison.toggle} compareCodes={comparison.codes} />
-      : <div className="mx-auto max-w-7xl px-margin py-space-xl"><ErrorState message="Thiếu mã model sản phẩm trong đường dẫn." /></div>;
-  }
-  if (path === "/customer/compare") {
-    return <ProductComparison codes={comparison.codes} onRemove={comparison.update} />;
-  }
-  return null;
+  const content = path === "/customer/home"
+    ? <HomeCatalog onCompare={comparison.toggle} compareCodes={comparison.codes} />
+    : path === "/customer/parts"
+      ? <PartsCatalog onCompare={comparison.toggle} compareCodes={comparison.codes} search={search} />
+      : path === "/customer/product"
+        ? modelCode
+          ? <ProductDetail key={modelCode} modelCode={modelCode} onCompare={comparison.toggle} compareCodes={comparison.codes} />
+          : <div className="mx-auto max-w-7xl px-margin py-space-xl"><ErrorState message="Thiếu mã model sản phẩm trong đường dẫn." /></div>
+        : path === "/customer/compare"
+          ? <ProductComparison codes={comparison.codes} onRemove={comparison.update} />
+          : null;
+  return <>
+    {comparison.notice && <div className="fixed right-4 top-4 z-50 flex max-w-sm items-center gap-4 rounded-xl border border-primary/20 bg-white px-4 py-3 text-body-sm text-on-surface shadow-xl" role="status">
+      <span>{comparison.notice}</span>
+      <button className="shrink-0 font-semibold text-primary" type="button" onClick={comparison.dismissNotice}>Đóng</button>
+    </div>}
+    {content}
+  </>;
 }

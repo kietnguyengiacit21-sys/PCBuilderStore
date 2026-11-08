@@ -1,0 +1,9 @@
+BEGIN;
+
+ALTER TABLE "product_bundle_items"
+    ADD COLUMN IF NOT EXISTS "is_enabled" BOOLEAN NOT NULL DEFAULT TRUE;
+
+ALTER TABLE "product_relationships"
+    ADD COLUMN IF NOT EXISTS "display_order" INTEGER NOT NULL DEFAULT 0;
+
+COMMIT;

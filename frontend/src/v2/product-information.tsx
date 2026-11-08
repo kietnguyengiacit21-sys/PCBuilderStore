@@ -1,10 +1,13 @@
 import type {
   CatalogAttributeDefinition,
+  CatalogAttributeQuality,
   CatalogAttributeVerification,
+  CatalogBomComponent,
   CatalogOffer,
   CatalogProduct,
   CatalogVerificationStatus,
 } from "../catalog-api";
+import { customerVisibleOffers } from "../catalog-api";
 import type { ReactNode } from "react";
 import { Badge, Card } from "./components";
 import { money } from "../demo/demo-store";
@@ -29,6 +32,15 @@ export function formatWarranty(months: number | null | undefined): string | null
   return `${months} tháng`;
 }
 
+export function hasVerifiedPCConfiguration(
+  verificationMetadata?: Record<string, CatalogAttributeVerification>,
+): boolean {
+  return ["bom_status", "component_details", "configuration_summary"].every((code) => {
+    const status = verificationMetadata?.[code]?.verificationStatus;
+    return status === "VERIFIED_EXACT_MODEL" || status === "VERIFIED_EXACT_VARIANT";
+  });
+}
+
 export function WarrantyDisplay({
   months,
   showMissing = false,
@@ -44,6 +56,29 @@ export function WarrantyDisplay({
 function humanizeCode(code: string): string {
   return code.split("_").filter(Boolean).map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join(" ");
 }
+
+const localizedUnits: Record<string, string> = {
+  channels: "kênh",
+  components: "linh kiện",
+  cores: "nhân",
+  count: "cái",
+  cycles: "chu kỳ",
+  displays: "màn hình",
+  drives: "ổ",
+  fans: "quạt",
+  headers: "đầu cắm",
+  heatsinks: "tản nhiệt",
+  hours: "giờ",
+  keys: "phím",
+  modules: "thanh",
+  pipes: "ống",
+  ports: "cổng",
+  profiles: "hồ sơ",
+  slots: "khe",
+  threads: "luồng",
+  units: "đơn vị",
+  years: "năm",
+};
 
 function formatStructuredListItem(value: unknown): string {
   if (typeof value !== "object" || value === null || Array.isArray(value)) {
@@ -84,15 +119,16 @@ export function formatSpecificationValue(
       && "status" in value && value.status === "NOT_APPLICABLE") {
     return "Không áp dụng";
   }
-  if (definition?.code === "system_dimensions_mm") {
-    return formatSystemDimensions(value) ?? "Dữ liệu kích thước không hợp lệ";
+    if (definition?.code === "system_dimensions_mm") {
+      return formatSystemDimensions(value) ?? "Dữ liệu kích thước không hợp lệ";
   }
   if (definition?.dataType === "BOOLEAN" && typeof value === "boolean") {
     return value ? "Có" : "Không";
   }
   if (typeof value === "number") {
     const number = new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 6 }).format(value);
-    return definition?.unit ? `${number} ${definition.unit}` : number;
+    const unit = definition?.unit ? localizedUnits[definition.unit] ?? definition.unit : undefined;
+    return unit ? `${number} ${unit}` : number;
   }
   if (Array.isArray(value)) {
     return value.map((item) => formatSpecificationValue(item)).join(", ");
@@ -125,10 +161,22 @@ function SpecificationValue({
   if (definition?.code === "system_dimensions_mm") {
     return formatSystemDimensions(value) ?? <span>Dữ liệu kích thước không hợp lệ</span>;
   }
-  if (!Array.isArray(value)) return formatSpecificationValue(value, definition);
-  return <div className="v2-spec-array-value">
-    <ul>{value.map((item, index) => <li key={`${index}:${String(item)}`}>{formatStructuredListItem(item)}</li>)}</ul>
-  </div>;
+  if (Array.isArray(value)) {
+    return <div className="v2-spec-array-value">
+      <ul>{value.map((item, index) => <li key={`${index}:${String(item)}`}>{formatStructuredListItem(item)}</li>)}</ul>
+    </div>;
+  }
+  if (typeof value === "object" && value !== null) {
+    const entries = Object.entries(value as Record<string, unknown>)
+      .filter(([, nested]) => nested !== null && nested !== undefined && nested !== "");
+    return <dl className="v2-spec-json-value">
+      {entries.map(([key, nested]) => <div key={key}>
+        <dt>{humanizeCode(key)}</dt>
+        <dd><SpecificationValue value={nested} /></dd>
+      </div>)}
+    </dl>;
+  }
+  return formatSpecificationValue(value, definition);
 }
 
 const verificationLabels: Record<CatalogVerificationStatus, string> = {
@@ -190,7 +238,7 @@ export function attributeLabel(
     "PSU:wattage": "Công suất định mức",
     "RAM:capacity_gb": "Dung lượng",
     "RAM:memory_type": "Thế hệ bộ nhớ",
-    "RAM:speed_mhz": "Tốc độ theo đơn vị lưu trong catalog",
+    "RAM:speed_mhz": "Tốc độ dữ liệu",
     "STORAGE:capacity_gb": "Dung lượng",
     "STORAGE:form_factor": "Kích thước ổ",
     "STORAGE:interface": "Giao tiếp",
@@ -367,6 +415,7 @@ export function TechnicalSpecifications({
   specifications,
   definitions,
   verificationMetadata,
+  specificationQuality,
   showEnglishLabels = true,
   showInternalMetadata = true,
 }: {
@@ -375,11 +424,12 @@ export function TechnicalSpecifications({
   specifications: Record<string, unknown>;
   definitions: CatalogAttributeDefinition[];
   verificationMetadata?: Record<string, CatalogAttributeVerification>;
+  specificationQuality?: Record<string, CatalogAttributeQuality>;
   showEnglishLabels?: boolean;
   showInternalMetadata?: boolean;
 }) {
   const isPCConfigurationField = (code: string) => productType === "PC"
-    && ["configuration_items", "configuration_summary", "bom_status"].includes(code);
+    && ["component_details", "configuration_items", "configuration_summary", "bom_status"].includes(code);
   const applicable = orderedSpecificationDefinitions(productType, definitions, specifications)
     .filter((definition) => !isPCConfigurationField(definition.code));
   const knownCodes = new Set(applicable.map((definition) => definition.code));
@@ -395,6 +445,7 @@ export function TechnicalSpecifications({
       verification: showInternalMetadata
         ? verificationFor(verificationMetadata, definition.code, hasValue(specifications, definition.code))
         : undefined,
+      quality: specificationQuality?.[definition.code],
     })),
     ...additionalCodes.map((code) => ({
       code,
@@ -404,12 +455,14 @@ export function TechnicalSpecifications({
       verification: showInternalMetadata
         ? verificationFor(verificationMetadata, code, hasValue(specifications, code))
         : undefined,
+      quality: specificationQuality?.[code],
     })),
   ];
   const rows = showInternalMetadata ? allRows : allRows.filter((row) => row.present);
 
   if (rows.length === 0) {
-    return <p>Chưa có thông số kỹ thuật được cung cấp cho model này.</p>;
+    if (productType === "PC" && parsePCConfiguration(specifications.configuration_items)?.length) return null;
+    return <p>Hiện chưa có thông số kỹ thuật được công khai cho model này.</p>;
   }
 
   const groups = new Map<string, { group: SpecificationGroup; rows: typeof rows }>();
@@ -439,7 +492,7 @@ export function TechnicalSpecifications({
           {showInternalMetadata && <span>{populated}/{groupRows.length} trường có dữ liệu</span>}
         </summary>
         <dl className="v2-spec-grid">
-          {groupRows.map(({ code, definition, value, present, verification }) => (
+          {groupRows.map(({ code, definition, value, present, verification, quality }) => (
             <div key={code}>
               <dt>{attributeLabel(definitions, productType, code)}
                 {showInternalMetadata && showEnglishLabels && definition && <small className="v2-spec-english-label">{attributeEnglishLabel(definitions, productType, code)}</small>}
@@ -456,6 +509,7 @@ export function TechnicalSpecifications({
                 {present
                   ? <SpecificationValue value={value} definition={definition} />
                   : <span className="v2-spec-missing">Chưa có dữ liệu</span>}
+                {present && quality && <small className="v2-spec-quality-label">{quality.displayLabel}</small>}
                 {showInternalMetadata && verification && <VerificationMetadataDisplay metadata={verification} />}
               </dd>
             </div>
@@ -484,7 +538,7 @@ export function SpecificationComparison({
   }
   const productType = products[0].productType;
   const isPCConfigurationField = (code: string) => productType === "PC"
-    && ["configuration_items", "configuration_summary", "bom_status"].includes(code);
+    && ["component_details", "configuration_items", "configuration_summary", "bom_status"].includes(code);
   const applicableCodes = new Set(products.flatMap((product) =>
     orderedSpecificationDefinitions(productType, definitions, product.specifications)
       .map((definition) => definition.code)
@@ -572,6 +626,8 @@ export function SpecificationComparison({
                   {hasValue(product.specifications, code)
                     ? <SpecificationValue value={product.specifications[code]} definition={definition} />
                     : "Chưa có dữ liệu"}
+                  {hasValue(product.specifications, code) && product.specificationQuality?.[code]
+                    && <small className="v2-spec-quality-label">{product.specificationQuality[code].displayLabel}</small>}
                   {showInternalMetadata && <VerificationMetadataDisplay metadata={verificationFor(
                       product.verificationMetadata,
                     code,
@@ -591,9 +647,54 @@ interface StructuredConfigurationComponent {
   componentType: string;
   modelCode: string;
   productName?: string;
+  quantity?: number;
+  componentWarrantyMonths?: number;
+  keySpecifications?: Record<string, unknown>;
 }
 
 const componentTypeOrder = ["CPU", "GPU", "MOTHERBOARD", "RAM", "STORAGE", "PSU", "COOLER", "CASE", "ACCESSORY", "OTHER"];
+const componentSpecificationLabels: Record<string, string> = {
+  boost_GHz: "Xung tăng tối đa",
+  capacity_GB: "Dung lượng",
+  CAS: "Độ trễ CAS",
+  chipset: "Chipset",
+  cores: "Số nhân",
+  data_rate_MT_s: "Tốc độ dữ liệu",
+  efficiency: "Hiệu suất",
+  form_factor: "Chuẩn kích thước",
+  height_mm: "Chiều cao",
+  max_GPU_length_mm: "Chiều dài GPU tối đa",
+  memory_bus_bit: "Độ rộng bus bộ nhớ",
+  memory_type: "Loại bộ nhớ",
+  modularity: "Thiết kế cáp nguồn",
+  processor_units: "Số đơn vị xử lý",
+  read_MB_s: "Tốc độ đọc tuần tự",
+  socket: "Socket",
+  sockets: "Socket hỗ trợ",
+  threads: "Số luồng",
+  type: "Loại tản nhiệt",
+  VRAM_GB: "Bộ nhớ đồ họa",
+  wattage_W: "Công suất định mức",
+  write_MB_s: "Tốc độ ghi tuần tự",
+};
+const componentSpecificationUnits: Record<string, string> = {
+  boost_GHz: "GHz",
+  capacity_GB: "GB",
+  data_rate_MT_s: "MT/s",
+  height_mm: "mm",
+  max_GPU_length_mm: "mm",
+  memory_bus_bit: "bit",
+  read_MB_s: "MB/s",
+  VRAM_GB: "GB",
+  wattage_W: "W",
+  write_MB_s: "MB/s",
+};
+
+function formatPCComponentSpecification(code: string, value: unknown): string {
+  const formatted = typeof value === "boolean" ? (value ? "Có" : "Không") : formatSpecificationValue(value);
+  const unit = componentSpecificationUnits[code];
+  return `${componentSpecificationLabels[code] ?? humanizeCode(code)}: ${formatted}${unit && typeof value === "number" ? ` ${unit}` : ""}`;
+}
 
 function structuredConfiguration(value: unknown): StructuredConfigurationComponent[] | undefined {
   return parsePCConfiguration(value);
@@ -601,8 +702,10 @@ function structuredConfiguration(value: unknown): StructuredConfigurationCompone
 
 export function PCConfigurationComparison({ products }: { products: CatalogProduct[] }) {
   if (!products.length || products.some((product) => product.productType !== "PC")) return null;
+  if (products.some((product) => !hasVerifiedPCConfiguration(product.verificationMetadata))) return null;
   const configurations = products.map((product) =>
-    structuredConfiguration(product.specifications.configuration_items));
+    structuredConfiguration(product.specifications.component_details)
+      ?? structuredConfiguration(product.specifications.configuration_items));
   if (!configurations.some((configuration) => configuration !== undefined)) return null;
   const componentTypes = [...new Set(configurations.flatMap((configuration) =>
     configuration?.map((component) => component.componentType) ?? []))]
@@ -639,13 +742,16 @@ export function PCConfigurationComparison({ products }: { products: CatalogProdu
 
 export function PCConfigurationSummary({
   specifications,
+  verificationMetadata,
   limit = 4,
 }: {
   specifications: Record<string, unknown>;
+  verificationMetadata?: Record<string, CatalogAttributeVerification>;
   limit?: number;
 }) {
+  if (!hasVerifiedPCConfiguration(verificationMetadata)) return null;
   const entries = pcConfigurationSummaryEntries(
-    specifications.configuration_items,
+    specifications.component_details ?? specifications.configuration_items,
     specifications.configuration_summary,
   );
   if (entries.length === 0) return null;
@@ -665,36 +771,71 @@ export function PCConfigurationSummary({
 
 export function PCConfigurationDetails({
   specifications,
+  bomComponents,
 }: {
   specifications: Record<string, unknown>;
+  bomComponents?: CatalogBomComponent[];
 }) {
-  const components = parsePCConfiguration(specifications.configuration_items);
+  const specificationComponents = parsePCConfiguration(specifications.component_details)
+    ?? parsePCConfiguration(specifications.configuration_items)
+    ?? [];
+  const components = bomComponents?.length
+    ? bomComponents.map((component) => {
+      const details = specificationComponents.find((entry) => entry.modelCode === component.modelCode);
+      return {
+        componentType: component.productType || details?.componentType || component.displayCategory,
+        modelCode: component.modelCode,
+        productName: component.productName || details?.productName,
+        quantity: component.quantity,
+        componentWarrantyMonths: component.warrantyMonths ?? undefined,
+        keySpecifications: details?.keySpecifications,
+      };
+    })
+    : specificationComponents;
+  const summaryEntries = bomComponents?.length
+    ? bomComponents.map(
+      (component) => `${pcComponentTypeLabel(component.productType)}: ${component.productName}`,
+    )
+    : pcConfigurationSummaryEntries(undefined, specifications.configuration_summary);
   const status = pcConfigurationStatusLabel(specifications.bom_status);
+  const hasComponents = components.length > 0;
+  if (!hasComponents && summaryEntries.length === 0) return null;
   return <section className="v2-pc-configuration-details" aria-labelledby="pc-configuration-title">
     <div className="v2-pc-configuration-details-heading">
       <div>
-        <p className="v2-eyebrow">Thông tin được ghi nhận</p>
+        {hasComponents && <p className="v2-eyebrow">Cấu hình tham khảo</p>}
         <h2 id="pc-configuration-title">Cấu hình linh kiện</h2>
       </div>
-      {status && <span className="v2-pc-configuration-status">{status}</span>}
+      {hasComponents && status && <span className="v2-pc-configuration-status">{status}</span>}
     </div>
-    <p className="v2-pc-configuration-note">
-      Danh sách thành phần theo thứ tự dữ liệu catalog; chưa phải kết quả kiểm tra tương thích.
-    </p>
-    {components?.length ? <div className="v2-table-wrap">
+    {hasComponents ? <div className="v2-table-wrap">
       <table className="v2-table v2-pc-configuration-table">
         <thead><tr>
           <th scope="col">Loại linh kiện</th>
           <th scope="col">Tên sản phẩm</th>
           <th scope="col">Mã model</th>
+          <th scope="col">Số lượng</th>
+          <th scope="col">Bảo hành tham khảo</th>
+          <th scope="col">Thông số chính</th>
         </tr></thead>
         <tbody>{components.map((component, index) => <tr key={`${index}:${component.componentType}:${component.modelCode}`}>
           <td>{pcComponentTypeLabel(component.componentType)}</td>
           <td>{component.productName ?? "Chưa có tên sản phẩm"}</td>
           <td className="v2-mono">{component.modelCode}</td>
+          <td>{component.quantity ?? "—"}</td>
+          <td>{formatWarranty(component.componentWarrantyMonths) ?? "—"}</td>
+          <td>{component.keySpecifications
+            ? Object.entries(component.keySpecifications)
+              .map(([key, value]) => formatPCComponentSpecification(key, value))
+              .join(" · ")
+            : "—"}</td>
         </tr>)}</tbody>
       </table>
-    </div> : <p className="v2-pc-configuration-empty">Chưa có danh sách linh kiện có cấu trúc.</p>}
+    </div> : <p className="v2-pc-configuration-empty">Cấu hình linh kiện hiện chưa có dữ liệu công khai.</p>}
+    {summaryEntries.length > 0 && <div className="v2-pc-configuration-summary-detail">
+      <h3>Tóm tắt cấu hình tham khảo</h3>
+      <ul>{summaryEntries.map((entry, index) => <li key={`${index}:${entry}`}>{entry}</li>)}</ul>
+    </div>}
   </section>;
 }
 
@@ -711,7 +852,7 @@ export function SpecificationHighlights({
 }) {
   const priorities = specificationHighlightPriority(productType)
     .filter((code) => productType !== "PC"
-      || !["configuration_items", "configuration_summary", "bom_status"].includes(code));
+      || !["component_details", "configuration_items", "configuration_summary", "bom_status"].includes(code));
   const entries = priorities
     .filter((code) => hasValue(specifications, code))
     .map((code) => [code, specifications[code]] as const)
@@ -781,13 +922,11 @@ export function OfferInformation({
       {onSelect && <span className="v2-offer-radio" aria-hidden="true">{selected ? "●" : "○"}</span>}
     </div>
     <dl className="v2-offer-details">
-      <div><dt>Mã offer</dt><dd className="v2-mono">{offer.offerCode}</dd></div>
       <div><dt>Giá</dt><dd>{money(offer.price, offer.currency)}</dd></div>
-      <div><dt>Tồn khả dụng{offer.isDemo ? " · minh họa" : ""}</dt><dd>{offer.availableQuantity}</dd></div>
-      <div><dt>Trạng thái</dt><dd>{offerStatusLabel(offer.status)}</dd></div>
+      <div><dt>Tình trạng</dt><dd>{offer.availableQuantity > 0 ? offerStatusLabel(offer.status) : "Hết hàng"}</dd></div>
+      <div><dt>Số lượng khả dụng</dt><dd>{offer.availableQuantity}</dd></div>
       <div><dt>Bảo hành</dt><dd><WarrantyDisplay months={offer.warrantyMonths} showMissing /></dd></div>
     </dl>
-    {offer.isDemo && <p className="v2-muted">Giá và tồn kho của offer này là dữ liệu minh họa.</p>}
   </>;
 
   if (onSelect) {
@@ -800,66 +939,78 @@ export function OfferInformation({
 
 export function OfferList({
   offers,
-  selectedOfferCode,
+  selectedOfferId,
   onSelect,
 }: {
   offers: CatalogOffer[];
-  selectedOfferCode?: string;
+  selectedOfferId?: string;
   onSelect?: (offer: CatalogOffer) => void;
 }) {
-  if (offers.length === 0) return <p>Chưa có ưu đãi đang hoạt động.</p>;
-  return <div className="v2-offer-list">{offers.map((offer) => <OfferInformation
-    key={offer.offerCode}
+  const visibleOffers = customerVisibleOffers(offers);
+  if (visibleOffers.length === 0) return <p>Thông tin giá bán chưa được cập nhật.</p>;
+  return <div className="v2-offer-list">{visibleOffers.map((offer) => <OfferInformation
+    key={offer.offerId}
     offer={offer}
-    selected={offer.offerCode === selectedOfferCode}
+    selected={offer.offerId === selectedOfferId}
     onSelect={onSelect ? () => onSelect(offer) : undefined}
   />)}</div>;
 }
 
 export function ProductOfferPanel({
   offers,
-  selectedOfferCode,
+  selectedOfferId,
   onSelect,
 }: {
   offers: CatalogOffer[];
-  selectedOfferCode?: string;
+  selectedOfferId?: string;
   onSelect: (offer: CatalogOffer) => void;
 }) {
-  const selectedOffer = offers.find((offer) => offer.offerCode === selectedOfferCode) ?? offers[0];
+  const visibleOffers = customerVisibleOffers(offers);
+  const selectedOffer = visibleOffers.find((offer) => offer.offerId === selectedOfferId) ?? visibleOffers[0];
   return <section className="v2-product-commercial" aria-label="Thông tin giá và ưu đãi">
     {selectedOffer ? <>
       <div className="v2-current-offer">
         <div className="v2-current-offer-price">
           <span className="v2-current-offer-label">Giá bán hiện tại</span>
-          {selectedOffer.isDemo && <Badge tone="gold">Giá minh họa</Badge>}
+          {Number(selectedOffer.basePrice ?? selectedOffer.price) > Number(selectedOffer.price)
+            && <span className="v2-promotion-original-price">{money(selectedOffer.basePrice ?? selectedOffer.price, selectedOffer.currency)}</span>}
           <strong>{money(selectedOffer.price, selectedOffer.currency)}</strong>
         </div>
         <div className="v2-current-offer-facts">
           <Badge tone="primary">{conditionDisplayName(selectedOffer)}</Badge>
-          <span>{selectedOffer.isDemo ? "Tồn kho minh họa" : "Số lượng khả dụng"}: <strong>{selectedOffer.availableQuantity}</strong></span>
+          {selectedOffer.saleBadge && <Badge tone="success">{selectedOffer.saleBadge}</Badge>}
+          <span>Số lượng khả dụng: <strong>{selectedOffer.availableQuantity}</strong></span>
           {formatWarranty(selectedOffer.warrantyMonths) && <span><strong>Bảo hành:</strong> {formatWarranty(selectedOffer.warrantyMonths)}</span>}
         </div>
+        {selectedOffer.promotionDisplayCopy && <p className="v2-current-offer-description">{selectedOffer.promotionDisplayCopy}</p>}
         {conditionDescription(selectedOffer) && <p className="v2-current-offer-description">{conditionDescription(selectedOffer)}</p>}
-        <p className="v2-current-offer-code">Mã ưu đãi: <span className="v2-mono">{selectedOffer.offerCode}</span></p>
+        {selectedOffer.gifts?.some((gift) => gift.active && gift.availableQuantity >= gift.quantity)
+          && <div className="v2-current-offer-description">
+            <strong>Quà tặng:</strong>
+            <ul>{selectedOffer.gifts.filter((gift) => gift.active && gift.availableQuantity >= gift.quantity).map((gift) =>
+              <li key={`${gift.promotionId}-${gift.offerId}`}>
+                {gift.productName} × {gift.quantity}
+                {gift.selectionRequired ? " · Cần chọn trong giỏ hàng" : " · Tùy chọn"}
+              </li>)}</ul>
+          </div>}
       </div>
-      {offers.length > 1 && <div className="v2-offer-selector" role="group" aria-label="Chọn tình trạng sản phẩm">
-        {offers.map((offer) => {
-          const selected = offer.offerCode === selectedOffer.offerCode;
+      {visibleOffers.length > 1 && <div className="v2-offer-selector" role="group" aria-label="Chọn tình trạng sản phẩm">
+        {visibleOffers.map((offer) => {
+          const selected = offer.offerId === selectedOffer.offerId;
           return <button
-            key={offer.offerCode}
+            key={offer.offerId}
             type="button"
             className={`v2-offer-selector-option${selected ? " is-selected" : ""}`}
             onClick={() => onSelect(offer)}
             aria-pressed={selected}
           >
             <span className="v2-offer-selector-condition">{conditionDisplayName(offer)}</span>
-            <span className="v2-offer-selector-code">Mã ưu đãi: {offer.offerCode}</span>
             {conditionDescription(offer) && <span className="v2-offer-selector-description">{conditionDescription(offer)}</span>}
             {selected && <span className="v2-offer-selector-selected">Đang chọn</span>}
           </button>;
         })}
       </div>}
-    </> : <p className="v2-muted">Chưa có ưu đãi đang hoạt động.</p>}
+    </> : <p className="v2-muted">Giá bán và tình trạng hàng chưa được cập nhật.</p>}
   </section>;
 }
 

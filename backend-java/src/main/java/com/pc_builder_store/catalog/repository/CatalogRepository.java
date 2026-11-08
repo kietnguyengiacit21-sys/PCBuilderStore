@@ -4,6 +4,8 @@ import com.pc_builder_store.catalog.AttributeDefinitionRegistry;
 import com.pc_builder_store.catalog.CatalogInternalLedger;
 import com.pc_builder_store.catalog.dto.CatalogAttributeFacet;
 import com.pc_builder_store.catalog.dto.CatalogAttributeDefinition;
+import com.pc_builder_store.catalog.dto.CatalogAttributeQuality;
+import com.pc_builder_store.catalog.dto.CatalogBomComponent;
 import com.pc_builder_store.catalog.dto.CatalogAttributeVerification;
 import com.pc_builder_store.catalog.dto.CatalogFacets;
 import com.pc_builder_store.catalog.dto.CatalogImage;
@@ -53,7 +55,7 @@ public class CatalogRepository {
               b."brand_name" AS "brandName",
               COALESCE((
                 SELECT jsonb_agg(jsonb_build_object(
-                  'offerCode', po."offer_code",
+                  'offerId', po."offer_id"::text,
                   'condition', po."condition_code",
                   'price', po."price",
                   'currency', po."currency_code",
@@ -61,8 +63,7 @@ public class CatalogRepository {
                   'reservedQuantity', po."reserved_quantity",
                   'availableQuantity', po."stock_quantity" - po."reserved_quantity",
                   'warrantyMonths', po."warranty_months",
-                  'status', po."offer_status",
-                  'isDemo', po."offer_code" LIKE 'DEMO-%'
+                  'status', po."offer_status"
                 ) ORDER BY po."price", po."offer_code")
                 FROM "product_offers" po
                 WHERE po."product_id" = p."product_id" AND po."offer_status" = 'ACTIVE'
@@ -105,16 +106,97 @@ public class CatalogRepository {
                 ) vm ON TRUE
                 WHERE ad."product_type_id" = p."product_type_id"
               ), '{}'::jsonb)::text AS "verificationMetadataJson",
+                            COALESCE((
+                                SELECT jsonb_object_agg(
+                                    ad."attribute_code",
+                                    ad."validation_json" -> 'catalogValueQualityByModel' -> p."model_code"
+                                )
+                                FROM "product_attribute_definitions" ad
+                                JOIN "product_attribute_values" av
+                                    ON av."attribute_definition_id" = ad."attribute_definition_id"
+                                 AND av."product_id" = p."product_id"
+                                WHERE ad."product_type_id" = p."product_type_id"
+                                    AND ad."validation_json" -> 'catalogValueQualityByModel' -> p."model_code" IS NOT NULL
+                            ), '{}'::jsonb)::text AS "specificationQualityJson",
               COALESCE((
                 SELECT jsonb_agg(jsonb_build_object(
                   'url', pi."image_url",
                   'altText', pi."alt_text",
-                  'isPrimary', pi."is_primary"
+                  'isPrimary', pi."is_primary",
+                  'caption', pi."caption",
+                  'mediaType', pi."media_type"
                 ) ORDER BY pi."sort_order", pi."image_id")
                 FROM "product_images" pi
                 WHERE pi."product_id" = p."product_id"
-                  AND (pi."image_url" COLLATE "C") ~ '^https?://[^[:space:]]+$'
+                  AND ((pi."image_url" COLLATE "C") ~ '^https?://[^[:space:]]+$'
+                    OR (pi."image_url" COLLATE "C") ~
+                       '^/api/catalog/media/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}[.](jpg|png|webp|mp4|webm)$')
               ), '[]'::jsonb)::text AS "imagesJson",
+              CASE WHEN p."product_type_id" = (
+                  SELECT productType."product_type_id" FROM "product_types" productType
+                  WHERE productType."type_code" = 'PC')
+                THEN CASE WHEN EXISTS (
+                    SELECT 1 FROM "product_bom_components" storedBom
+                    WHERE storedBom."parent_product_id" = p."product_id")
+                  THEN COALESCE((
+                    SELECT jsonb_agg(jsonb_build_object(
+                      'componentProductId', component."product_id"::text,
+                      'modelCode', component."model_code",
+                      'productName', component."product_name",
+                      'productType', componentType."type_code",
+                      'quantity', bom."quantity",
+                      'warrantyMonths', bom."component_warranty_months",
+                      'displayCategory', bom."display_category",
+                      'displayOrder', bom."display_order"
+                    ) ORDER BY bom."display_order", component."product_name")
+                    FROM "product_bom_components" bom
+                    JOIN "products" component ON component."product_id" = bom."component_product_id"
+                    JOIN "product_types" componentType
+                      ON componentType."product_type_id" = component."product_type_id"
+                    WHERE bom."parent_product_id" = p."product_id"
+                      AND bom."customer_visible" = TRUE
+                  ), '[]'::jsonb)
+                  ELSE COALESCE((
+                    SELECT jsonb_agg(jsonb_build_object(
+                      'componentProductId', component."product_id"::text,
+                      'modelCode', component."model_code",
+                      'productName', component."product_name",
+                      'productType', componentType."type_code",
+                      'quantity', CASE
+                        WHEN bomDetail."item" ->> 'quantity' ~ '^[1-9][0-9]{0,2}$'
+                          THEN (bomDetail."item" ->> 'quantity')::integer
+                        ELSE 1
+                      END,
+                      'warrantyMonths', CASE
+                        WHEN bomDetail."item" ->> 'component_warranty_months' ~ '^(0|[1-9][0-9]{0,2})$'
+                          THEN (bomDetail."item" ->> 'component_warranty_months')::integer
+                        ELSE NULL
+                      END,
+                      'displayCategory', COALESCE(
+                        componentType."type_name", bomDetail."item" ->> 'component_type'),
+                      'displayOrder', bomDetail."ordinality" - 1
+                    ) ORDER BY bomDetail."ordinality")
+                    FROM "product_attribute_values" attributeValue
+                    JOIN "product_attribute_definitions" attributeDefinition
+                      ON attributeDefinition."attribute_definition_id" =
+                         attributeValue."attribute_definition_id"
+                    CROSS JOIN LATERAL jsonb_array_elements(CASE
+                      WHEN jsonb_typeof(attributeValue."value_json") = 'array'
+                        THEN attributeValue."value_json"
+                      ELSE '[]'::jsonb
+                    END) WITH ORDINALITY AS bomDetail("item", "ordinality")
+                    JOIN "products" component
+                      ON component."model_code" = bomDetail."item" ->> 'model_code'
+                    JOIN "product_types" componentType
+                      ON componentType."product_type_id" = component."product_type_id"
+                    WHERE attributeValue."product_id" = p."product_id"
+                      AND attributeDefinition."product_type_id" = p."product_type_id"
+                      AND attributeDefinition."attribute_code" = 'component_details'
+                  ), '[]'::jsonb)
+                END
+                ELSE '[]'::jsonb
+              END::text AS "bomComponentsJson",
+              p."content_sections"::text AS "contentSectionsJson",
               EXISTS (
                 SELECT 1
                 FROM "product_offers" demo_offer
@@ -530,8 +612,49 @@ public class CatalogRepository {
                 mapOffers(readJson(resultSet.getString("offersJson"))),
                 readJson(resultSet.getString("specificationsJson")),
                 mapVerificationMetadata(readJson(resultSet.getString("verificationMetadataJson"))),
+                mapSpecificationQuality(readJson(resultSet.getString("specificationQualityJson"))),
                 mapImages(readJson(resultSet.getString("imagesJson"))),
-                resultSet.getBoolean("demoData"));
+                resultSet.getBoolean("demoData"),
+                mapBomComponents(readJson(resultSet.getString("bomComponentsJson"))),
+                readJsonArray(resultSet.getString("contentSectionsJson")));
+    }
+
+    private List<CatalogBomComponent> mapBomComponents(JsonNode components) {
+        List<CatalogBomComponent> mapped = new ArrayList<>();
+        if (components != null && components.isArray()) {
+            for (JsonNode component : components) {
+                mapped.add(new CatalogBomComponent(
+                        text(component, "componentProductId"),
+                        text(component, "modelCode"),
+                        text(component, "productName"),
+                        text(component, "productType"),
+                        component.path("quantity").intValue(),
+                        nullableInteger(component.path("warrantyMonths")),
+                        text(component, "displayCategory"),
+                        component.path("displayOrder").intValue()));
+            }
+        }
+        return List.copyOf(mapped);
+    }
+
+    private Integer nullableInteger(JsonNode value) {
+        return value == null || value.isNull() ? null : value.intValue();
+    }
+
+    private Map<String, CatalogAttributeQuality> mapSpecificationQuality(JsonNode metadata) {
+        if (metadata == null || !metadata.isObject()) {
+            return Map.of();
+        }
+        Map<String, CatalogAttributeQuality> mapped = new LinkedHashMap<>();
+        metadata.properties().forEach(entry -> {
+            JsonNode value = entry.getValue();
+            String quality = nullableText(value.get("valueQuality"));
+            String label = nullableText(value.get("displayLabel"));
+            if (quality != null && label != null) {
+                mapped.put(entry.getKey(), new CatalogAttributeQuality(quality, label));
+            }
+        });
+        return Collections.unmodifiableMap(mapped);
     }
 
     private Map<String, CatalogAttributeVerification> mapVerificationMetadata(JsonNode metadata) {
@@ -558,7 +681,7 @@ public class CatalogRepository {
         List<CatalogOffer> mapped = new ArrayList<>();
         for (JsonNode offer : offers) {
             mapped.add(new CatalogOffer(
-                    text(offer, "offerCode"),
+                    text(offer, "offerId"),
                     text(offer, "condition"),
                     offer.path("price").decimalValue(),
                     text(offer, "currency"),
@@ -566,8 +689,7 @@ public class CatalogRepository {
                     offer.path("reservedQuantity").longValue(),
                     offer.path("availableQuantity").longValue(),
                     nullableLong(offer.path("warrantyMonths")),
-                    text(offer, "status"),
-                    offer.path("isDemo").booleanValue()));
+                    text(offer, "status")));
         }
         return List.copyOf(mapped);
     }
@@ -580,13 +702,19 @@ public class CatalogRepository {
                 mapped.add(new CatalogImage(
                         url,
                         image.path("altText").isNull() ? null : text(image, "altText"),
-                        image.path("isPrimary").booleanValue()));
+                        image.path("isPrimary").booleanValue(),
+                        image.path("caption").isNull() ? null : text(image, "caption"),
+                        image.path("mediaType").isNull() ? "IMAGE" : text(image, "mediaType")));
             }
         }
         return List.copyOf(mapped);
     }
 
     private boolean isValidImageUrl(String value) {
+        if (value != null && value.matches(
+                "/api/catalog/media/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}[.](jpg|png|webp|mp4|webm)")) {
+            return true;
+        }
         try {
             URI uri = new URI(value);
             return ("http".equalsIgnoreCase(uri.getScheme())
@@ -610,11 +738,18 @@ public class CatalogRepository {
     }
 
     private JsonNode readJson(String json) {
+        if (json == null) {
+            return objectMapper.createObjectNode();
+        }
         try {
             return objectMapper.readTree(json);
         } catch (JacksonException exception) {
             throw new IllegalStateException("Catalog JSON data could not be read.", exception);
         }
+    }
+
+    private JsonNode readJsonArray(String json) {
+        return json == null ? objectMapper.createArrayNode() : readJson(json);
     }
 
     private String writeJson(JsonNode value) {

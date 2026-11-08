@@ -1,14 +1,19 @@
 package com.pc_builder_store.auth;
 
 import com.pc_builder_store.common.ApiErrorResponse;
+import com.pc_builder_store.cart.CartException;
+import com.pc_builder_store.cart.CartService;
+import com.pc_builder_store.cart.GuestCartTokenService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContext;
@@ -24,19 +29,26 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/auth")
+@ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 public class AuthController {
 
     private final AuthenticationManager authenticationManager;
     private final SecurityContextRepository securityContextRepository;
     private final SessionAuthenticationStrategy sessionAuthenticationStrategy;
+    private final CartService cartService;
+    private final GuestCartTokenService guestCartTokens;
 
     public AuthController(
             AuthenticationManager authenticationManager,
             SecurityContextRepository securityContextRepository,
-            SessionAuthenticationStrategy sessionAuthenticationStrategy) {
+            SessionAuthenticationStrategy sessionAuthenticationStrategy,
+            CartService cartService,
+            GuestCartTokenService guestCartTokens) {
         this.authenticationManager = authenticationManager;
         this.securityContextRepository = securityContextRepository;
         this.sessionAuthenticationStrategy = sessionAuthenticationStrategy;
+        this.cartService = cartService;
+        this.guestCartTokens = guestCartTokens;
     }
 
     @GetMapping("/csrf")
@@ -61,6 +73,23 @@ public class AuthController {
             throw exception;
         }
 
+        AuthUserPrincipal user = (AuthUserPrincipal) authentication.getPrincipal();
+        if ("CUSTOMER".equals(user.roleCode())) {
+            String guestToken = guestCartTokens.tokenFrom(servletRequest);
+            if (guestToken != null) {
+                try {
+                    cartService.mergeGuestCart(guestToken, user);
+                    servletResponse.addHeader(
+                            org.springframework.http.HttpHeaders.SET_COOKIE,
+                            guestCartTokens.clearCookie().toString());
+                } catch (CartException exception) {
+                    return ResponseEntity.status(exception.status())
+                            .body(ApiErrorResponse.of(
+                                    "GUEST_CART_MERGE_FAILED", exception.getMessage()));
+                }
+            }
+        }
+
         sessionAuthenticationStrategy.onAuthentication(
                 authentication, servletRequest, servletResponse);
         SecurityContext context = SecurityContextHolder.createEmptyContext();
@@ -68,12 +97,17 @@ public class AuthController {
         SecurityContextHolder.setContext(context);
         securityContextRepository.saveContext(context, servletRequest, servletResponse);
 
-        AuthUserPrincipal user = (AuthUserPrincipal) authentication.getPrincipal();
         return ResponseEntity.ok(AuthUserResponse.from(user));
     }
 
     @GetMapping("/me")
-    public AuthUserResponse me(Authentication authentication) {
-        return AuthUserResponse.from((AuthUserPrincipal) authentication.getPrincipal());
+    public ResponseEntity<AuthSessionResponse> me(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()
+                || authentication instanceof AnonymousAuthenticationToken) {
+            return ResponseEntity.ok(new AuthSessionResponse(false, null));
+        }
+        return ResponseEntity.ok(new AuthSessionResponse(
+                true,
+                AuthUserResponse.from((AuthUserPrincipal) authentication.getPrincipal())));
     }
 }

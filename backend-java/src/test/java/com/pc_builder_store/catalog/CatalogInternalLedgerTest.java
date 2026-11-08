@@ -1,5 +1,6 @@
 package com.pc_builder_store.catalog;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -22,6 +23,19 @@ class CatalogInternalLedgerTest {
         assertFalse(ledger.isPubliclyVisible("CPU", "DUAL-RTX4060-O8G", "gpu_chip"));
         assertTrue(ledger.publicModelCodes("gpu_chip", "GPU")
                 .contains("DUAL-RTX4060-O8G"));
+    }
+
+    @Test
+    void publiclyAllowsConfiguredPcComponentListsWithoutAllowingInternalWorkflowFields() {
+        CatalogInternalLedger ledger = new CatalogInternalLedger(new ClassPathResource(
+                "catalog-internal/catalog-attribute-internal-ledger.csv"));
+
+        assertTrue(ledger.isPubliclyVisible("PC", "PBC-PC-CREATOR-008", "configuration_items"));
+        assertTrue(ledger.isPubliclyVisible("PC", "PBC-PC-GAME-006", "configuration_items"));
+        assertEquals(10, ledger.publicModelCodes("configuration_items", "PC").size());
+        assertTrue(ledger.isPubliclyVisible("PC", "PBC-PC-CREATOR-008", "configuration_summary"));
+        assertFalse(ledger.isPubliclyVisible("PC", "PBC-PC-CREATOR-008", "bom_status"));
+        assertFalse(ledger.isPubliclyVisible("PC", "PBC-PC-CREATOR-008", "system_dimensions_mm"));
     }
 
     @Test

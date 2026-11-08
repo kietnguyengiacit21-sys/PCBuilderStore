@@ -34,5 +34,15 @@ record CatalogCsvEvidence(
         String verificationStatus,
         String sourceUrl,
         String sourceLocator,
-        String verificationScope) {
+        String verificationScope,
+        String reviewNote,
+        String reviewDate) {
+
+    CatalogCsvEvidence(
+            String verificationStatus,
+            String sourceUrl,
+            String sourceLocator,
+            String verificationScope) {
+        this(verificationStatus, sourceUrl, sourceLocator, verificationScope, null, null);
+    }
 }

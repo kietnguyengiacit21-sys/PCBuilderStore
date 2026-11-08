@@ -82,24 +82,32 @@ class CatalogControllerTest {
                 new CatalogAttributeDefinition(
                         "GPU", "unlisted_attribute", "Unlisted", "TEXT", null, false,
                         "Unlisted internal label", "GPU", "SELECT", List.of("private option"),
-                        "BOARD_VARIANT")));
+                        "BOARD_VARIANT"),
+                new CatalogAttributeDefinition(
+                        "PC", "configuration_items", "Cấu hình linh kiện", "JSON", null, false,
+                        "Configuration items", "PC", "JSON", List.of(), "BOARD_VARIANT"),
+                new CatalogAttributeDefinition(
+                        "PC", "configuration_summary", "Tóm tắt cấu hình", "JSON", null, false,
+                        "Configuration summary", "PC", "JSON", List.of(), "BOARD_VARIANT")));
 
         mockMvc.perform(get("/api/catalog/attribute-definitions"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.length()").value(1))
+                .andExpect(jsonPath("$.data.length()").value(4))
                 .andExpect(jsonPath("$.data[0].productType").value("GPU"))
                 .andExpect(jsonPath("$.data[0].code").value("gpu_chip"))
                 .andExpect(jsonPath("$.data[0].label").value("GPU Chip"))
                 .andExpect(jsonPath("$.data[0].dataType").value("TEXT"))
                 .andExpect(jsonPath("$.data[0].unit").doesNotExist())
-                .andExpect(jsonPath("$.data[0].subtype").doesNotExist())
+                .andExpect(jsonPath("$.data[0].subtype").value("GPU"))
                 .andExpect(jsonPath("$.data[0].inputMode").doesNotExist())
                 .andExpect(jsonPath("$.data[0].options").doesNotExist())
                 .andExpect(jsonPath("$.data[0].englishLabel").doesNotExist())
                 .andExpect(jsonPath("$.data[0].specificationScope").doesNotExist())
                 .andExpect(jsonPath("$.data[0].filterable").doesNotExist())
-                .andExpect(jsonPath("$.data[?(@.code == 'architecture')]").doesNotExist())
-                .andExpect(jsonPath("$.data[?(@.code == 'unlisted_attribute')]").doesNotExist());
+                .andExpect(jsonPath("$.data[?(@.code == 'architecture')]").exists())
+                .andExpect(jsonPath("$.data[?(@.code == 'unlisted_attribute')]").doesNotExist())
+                .andExpect(jsonPath("$.data[?(@.code == 'configuration_items')]").exists())
+                .andExpect(jsonPath("$.data[?(@.code == 'configuration_summary')]").exists());
 
         mockMvc.perform(get("/api/catalog/admin/attribute-definitions"))
                 .andExpect(status().isUnauthorized());
@@ -109,10 +117,11 @@ class CatalogControllerTest {
         mockMvc.perform(get("/api/catalog/admin/attribute-definitions")
                         .with(user("admin").roles("ADMIN")))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.length()").value(3))
+                .andExpect(jsonPath("$.data.length()").value(5))
                 .andExpect(jsonPath("$.data[0].specificationScope").value("BOARD_VARIANT"))
                 .andExpect(jsonPath("$.data[2].options[0]").value("private option"))
-                .andExpect(jsonPath("$.data[2].englishLabel").value("Unlisted internal label"));
+                .andExpect(jsonPath("$.data[2].englishLabel").value("Unlisted internal label"))
+                .andExpect(jsonPath("$.data[4].code").value("configuration_summary"));
     }
 
     @Test
@@ -133,14 +142,21 @@ class CatalogControllerTest {
                 .andExpect(jsonPath("$.data[0].specifications.gpu_chip")
                         .value("NVIDIA GeForce RTX 4060"))
                 .andExpect(jsonPath("$.data[0].specifications.architecture").doesNotExist())
+                .andExpect(jsonPath("$.data[0].specificationQuality.gpu_chip.valueQuality")
+                        .value("UNVERIFIED_LEGACY"))
+                .andExpect(jsonPath("$.data[0].specificationQuality.gpu_chip.displayLabel")
+                        .value("Chưa xác minh / cần đối chiếu"))
                 .andExpect(jsonPath("$.data[0].verificationMetadata").doesNotExist())
                 .andExpect(jsonPath("$.data[0].images[0].url").value("https://example.com/image.png"))
-                .andExpect(jsonPath("$.data[0].demoData").value(true))
+                .andExpect(jsonPath("$.data[0].demoData").doesNotExist())
+                .andExpect(jsonPath("$.data[0].offers[0].offerId").isNotEmpty())
+                .andExpect(jsonPath("$.data[0].offers[0].offerCode").doesNotExist())
+                .andExpect(jsonPath("$.data[0].offers[0].isDemo").doesNotExist())
                 .andExpect(jsonPath("$.pagination.page").value(2))
                 .andExpect(jsonPath("$.pagination.limit").value(10))
                 .andExpect(jsonPath("$.pagination.total").value(1))
                 .andExpect(jsonPath("$.pagination.totalPages").value(1))
-                .andExpect(jsonPath("$.notice").isNotEmpty());
+                .andExpect(jsonPath("$.notice").doesNotExist());
 
         verify(catalogRepository).findProducts(argThat(query ->
                 query.page() == 2
@@ -197,6 +213,83 @@ class CatalogControllerTest {
         verify(catalogRepository, never()).updateGpuSpecifications(
                 org.mockito.ArgumentMatchers.anyString(),
                 org.mockito.ArgumentMatchers.anyMap());
+    }
+
+    @Test
+    void returnsConfiguredPcComponentsWithoutVerificationOrWorkflowMetadata() throws Exception {
+        CatalogProduct base = product();
+        CatalogProduct configuredPc = new CatalogProduct(
+                base.productId(),
+                "PBC-PC-CREATOR-008",
+                "Creator PC Ryzen 7",
+                base.shortDescription(),
+                base.description(),
+                base.status(),
+                "PC",
+                "Complete PC",
+                "PREBUILT_PC",
+                "Prebuilt PC",
+                base.brandName(),
+                base.offers(),
+                JsonMapper.builder().build().readTree("""
+                        {
+                          "component_details": [
+                            {"component_type":"CPU","model_code":"100-100000592BOX","product_name":"AMD Ryzen 7 7700","quantity":1}
+                          ],
+                          "configuration_items": [
+                            {"component_type":"CPU","model_code":"100-100000592BOX","product_name":"AMD Ryzen 7 7700"},
+                            {"component_type":"RAM","model_code":"KF560C36BBEK2-32","product_name":"Kingston Fury Beast DDR5 32GB 6000"},
+                            {"component_type":"RAM","model_code":"KF560C36BBEK2-32","product_name":"Kingston Fury Beast DDR5 32GB 6000 (kit 2)"}
+                          ],
+                          "configuration_summary": ["Internal duplicate summary"],
+                          "bom_status": "CONFIGURED"
+                        }
+                        """),
+                Map.of("configuration_items", new CatalogAttributeVerification(
+                        CatalogVerificationStatus.NEEDS_REVIEW,
+                        "https://internal.example/source",
+                        "Internal evidence locator",
+                        null)),
+                base.images(),
+                true);
+        when(catalogRepository.findActiveProduct("PBC-PC-CREATOR-008"))
+                .thenReturn(Optional.of(configuredPc));
+        when(catalogRepository.findProducts(org.mockito.ArgumentMatchers.any()))
+                .thenReturn(new CatalogRepository.ProductPage(List.of(configuredPc), 1));
+
+        String detailResponse = mockMvc.perform(get("/api/catalog/products/PBC-PC-CREATOR-008"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.specifications.component_details.length()").value(1))
+                .andExpect(jsonPath("$.data.specifications.configuration_items.length()").value(3))
+                .andExpect(jsonPath("$.data.specifications.configuration_items[1].model_code")
+                        .value("KF560C36BBEK2-32"))
+                .andExpect(jsonPath("$.data.specifications.configuration_items[2].model_code")
+                        .value("KF560C36BBEK2-32"))
+                .andExpect(jsonPath("$.data.specifications.configuration_summary[0]")
+                        .value("Internal duplicate summary"))
+                .andExpect(jsonPath("$.data.specifications.bom_status").doesNotExist())
+                .andExpect(jsonPath("$.data.verificationMetadata").doesNotExist())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        String searchResponse = mockMvc.perform(get("/api/catalog/products")
+                        .param("q", "PBC-PC-CREATOR-008"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[0].specifications.configuration_items.length()").value(3))
+                .andExpect(jsonPath("$.data[0].specifications.configuration_summary[0]")
+                        .value("Internal duplicate summary"))
+                .andExpect(jsonPath("$.data[0].specifications.bom_status").doesNotExist())
+                .andExpect(jsonPath("$.data[0].verificationMetadata").doesNotExist())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        for (String response : List.of(detailResponse, searchResponse)) {
+            assertFalse(response.contains("https://internal.example/source"));
+            assertFalse(response.contains("Internal evidence locator"));
+            assertFalse(response.contains("verificationStatus"));
+            assertFalse(response.contains("sourceUrl"));
+        }
     }
 
     @Test
@@ -260,8 +353,10 @@ class CatalogControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.modelCode").value("KF432C16BB/8"))
                 .andExpect(jsonPath("$.data.productTypeName").value("Memory"))
-                .andExpect(jsonPath("$.data.offers[0].isDemo").value(true))
-                .andExpect(jsonPath("$.notice").isNotEmpty());
+                .andExpect(jsonPath("$.data.shortDescription").doesNotExist())
+                .andExpect(jsonPath("$.data.offers[0].offerId").isNotEmpty())
+                .andExpect(jsonPath("$.data.offers[0].offerCode").doesNotExist())
+                .andExpect(jsonPath("$.notice").doesNotExist());
 
         when(catalogRepository.findActiveProduct("missing")).thenReturn(Optional.empty());
         mockMvc.perform(get("/api/catalog/products/missing"))
@@ -358,7 +453,7 @@ class CatalogControllerTest {
                 "12345678901234567890",
                 "KF432C16BB/8",
                 "Memory kit",
-                null,
+                "Memory kit - catalog tham khảo PC Builder Store.",
                 "Description",
                 "ACTIVE",
                 "MEMORY",
@@ -367,7 +462,7 @@ class CatalogControllerTest {
                 "Memory",
                 "Acme",
                 List.of(new CatalogOffer(
-                        "DEMO-KF432C16BB/8",
+                        "98765",
                         "NEW",
                         new BigDecimal("123.45"),
                         "VND",
@@ -375,8 +470,7 @@ class CatalogControllerTest {
                         3,
                         7,
                         12L,
-                        "ACTIVE",
-                        true)),
+                        "ACTIVE")),
                 JsonMapper.builder().build().readTree("{\"capacity_gb\":16}"),
                 List.of(new CatalogImage("https://example.com/image.png", null, true)),
                 true);

@@ -73,7 +73,6 @@ public final class CatalogCsvImporter {
             "review_date",
             "specification_scope");
     private static final Set<String> ATTRIBUTE_HEADERS = expectedAttributeHeaders();
-    private static final int EXPECTED_COLUMN_COUNT = BASE_HEADERS.size() + ATTRIBUTE_HEADERS.size();
     private static final Set<String> VERIFICATION_STATUSES =
             Set.of("VERIFIED_EXACT_MODEL", "VERIFIED_EXACT_VARIANT", "NEEDS_REVIEW", "UNKNOWN");
     private static final long MAX_OFFER_STOCK = 4_294_967_295L;
@@ -133,7 +132,9 @@ public final class CatalogCsvImporter {
                            'verificationStatus', CAST(? AS text),
                            'sourceUrl', CAST(? AS text),
                            'sourceLocator', CAST(? AS text),
-                           'verificationScope', CAST(? AS text)
+                           'verificationScope', CAST(? AS text),
+                           'reviewNote', CAST(? AS text),
+                           'reviewDate', CAST(? AS text)
                        ))),
                    TRUE
                )
@@ -257,20 +258,20 @@ public final class CatalogCsvImporter {
                         .setIgnoreEmptyLines(false)
                         .build())) {
             List<String> headers = parser.getHeaderNames();
-            if (headers.size() != EXPECTED_COLUMN_COUNT
+                if (headers.size() < BASE_HEADERS.size()
                     || !headers.subList(0, BASE_HEADERS.size()).equals(BASE_HEADERS)
-                    || !new HashSet<>(headers.subList(BASE_HEADERS.size(), headers.size()))
-                            .equals(ATTRIBUTE_HEADERS)
+                    || !ATTRIBUTE_HEADERS.containsAll(
+                        new HashSet<>(headers.subList(BASE_HEADERS.size(), headers.size())))
                     || new HashSet<>(headers).size() != headers.size()) {
                 throw new IllegalArgumentException(
-                        "CSV header must contain the 24 canonical base columns followed by all "
-                                + AttributeDefinitionRegistry.all().size() + " registry-defined attribute columns.");
+                    "CSV header must contain the 24 canonical base columns followed by known registry attribute columns.");
             }
+                int expectedColumnCount = headers.size();
             rows = new ArrayList<>();
             for (CSVRecord record : parser) {
                 int rowNumber = Math.toIntExact(record.getRecordNumber() + 1);
-                if (!record.isConsistent() || record.size() != EXPECTED_COLUMN_COUNT) {
-                    throw rowError(rowNumber, "expected " + EXPECTED_COLUMN_COUNT + " columns.");
+                if (!record.isConsistent() || record.size() != expectedColumnCount) {
+                    throw rowError(rowNumber, "expected " + expectedColumnCount + " columns.");
                 }
                 rows.add(parseRow(record, rowNumber, objectMapper));
             }
@@ -345,17 +346,22 @@ public final class CatalogCsvImporter {
                     throw rowError(rowNumber, "evidence unit does not match the attribute definition.");
                 }
                 String evidenceSpecificationScope = record.get("specification_scope").trim();
-                if (!java.util.Objects.equals(
-                        definition.specificationScope(),
-                        evidenceSpecificationScope.isEmpty() ? null : evidenceSpecificationScope)) {
-                    throw rowError(rowNumber, "evidence specification scope does not match the attribute definition.");
-                }
+                String sourceUrl = nullableText(record.get("source_url"));
+                String sourceLocator = nullableText(record.get("source_locator"));
+                String reviewNote = nullableText(record.get("review_note"));
+                String reviewDate = nullableText(record.get("review_date"));
+                CatalogCsvEvidence evidence = new CatalogCsvEvidence(
+                        status,
+                        sourceUrl,
+                        sourceLocator,
+                        evidenceSpecificationScope.isEmpty() ? null : evidenceSpecificationScope,
+                        reviewNote,
+                        reviewDate);
                 if (!status.startsWith("VERIFIED_")) {
+                    matchedEvidence.put(key, evidence);
                     continue;
                 }
-                String sourceUrl = record.get("source_url").trim();
-                String sourceLocator = record.get("source_locator").trim();
-                if (!isHttpUrl(sourceUrl) || sourceLocator.isBlank()) {
+                if (!isHttpUrl(sourceUrl) || sourceLocator == null || sourceLocator.isBlank()) {
                     throw rowError(rowNumber, "verified evidence requires a valid source URL and locator.");
                 }
                 JsonNode evidenceValue;
@@ -363,6 +369,10 @@ public final class CatalogCsvImporter {
                     evidenceValue = objectMapper.readTree(record.get("value_json"));
                 } catch (JacksonException exception) {
                     throw rowError(rowNumber, "verified evidence value_json is invalid JSON.");
+                }
+                if (evidenceValue != null && evidenceValue.isTextual()) {
+                    evidenceValue = objectMapper.getNodeFactory().textNode(
+                            normalizeOptionValue(definition, evidenceValue.textValue()));
                 }
                 if ("DECIMAL".equals(definition.dataType()) && evidenceValue != null && evidenceValue.isNumber()) {
                     evidenceValue = objectMapper.getNodeFactory().numberNode(evidenceValue.decimalValue());
@@ -373,13 +383,16 @@ public final class CatalogCsvImporter {
                 validateDefinitionValue(evidenceValue, definition, rowNumber);
                 JsonNode catalogValue = product.specifications().get(attributeCode);
                 if (catalogValue == null || !catalogValue.equals(evidenceValue)) {
+                    matchedEvidence.put(key, new CatalogCsvEvidence(
+                            "NEEDS_REVIEW",
+                            sourceUrl,
+                            sourceLocator,
+                            evidence.verificationScope(),
+                            reviewNote,
+                            reviewDate));
                     continue;
                 }
-                matchedEvidence.put(key, new CatalogCsvEvidence(
-                        status,
-                        sourceUrl,
-                        sourceLocator,
-                        status.substring("VERIFIED_".length())));
+                matchedEvidence.put(key, evidence);
             }
         } catch (IOException exception) {
             throw new IllegalArgumentException(
@@ -395,9 +408,7 @@ public final class CatalogCsvImporter {
                 }
                 String code = definition.code();
                 JsonNode value = row.specifications().get(code);
-                CatalogCsvEvidence evidence = value == null
-                        ? null
-                        : matchedEvidence.get(evidenceKey(row.modelCode(), code));
+                CatalogCsvEvidence evidence = matchedEvidence.get(evidenceKey(row.modelCode(), code));
                 metadata.put(
                         code,
                         evidence != null
@@ -764,7 +775,14 @@ public final class CatalogCsvImporter {
                 evidence.sourceUrl(),
                 evidence.sourceLocator(),
                 evidence.verificationScope(),
+                evidence.reviewNote(),
+                evidence.reviewDate(),
                 definitionId);
+    }
+
+    private static String nullableText(String value) {
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 
     private void upsertAttributeValue(long productId, Long definitionId, JsonNode value) {
@@ -832,6 +850,9 @@ public final class CatalogCsvImporter {
         Map<String, JsonNode> attributes = new LinkedHashMap<>();
         for (Definition definition : AttributeDefinitionRegistry.all()) {
             String column = definition.productType().toLowerCase(Locale.ROOT) + "__" + definition.code();
+            if (!record.isMapped(column)) {
+                continue;
+            }
             String rawValue = record.get(column);
             if (rawValue == null || rawValue.isBlank()) {
                 continue;
@@ -931,6 +952,9 @@ public final class CatalogCsvImporter {
     }
 
     private static boolean isHttpUrl(String value) {
+        if (value == null) {
+            return false;
+        }
         try {
             URI uri = URI.create(value);
             return uri.isAbsolute()

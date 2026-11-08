@@ -38,8 +38,8 @@ class CatalogCsvImporterTest {
         assertEquals(10, rows.stream().map(CatalogCsvRow::productTypeCode).distinct().count());
         assertEquals(10, rows.stream().map(CatalogCsvRow::categoryCode).distinct().count());
         assertEquals(41, rows.stream().map(CatalogCsvRow::brandName).distinct().count());
-        assertEquals(176, AttributeDefinitionRegistry.all().size());
-        assertEquals(2480, rows.stream().mapToInt(row -> row.specifications().size()).sum());
+        assertEquals(348, AttributeDefinitionRegistry.all().size());
+        assertEquals(2482, rows.stream().mapToInt(row -> row.specifications().size()).sum());
         assertEquals(150, rows.stream().filter(CatalogCsvRow::priceIsEstimate).count());
         assertEquals(81, rows.stream()
                 .map(row -> row.specifications().get("configuration_items"))
@@ -56,9 +56,9 @@ class CatalogCsvImporterTest {
                 rtx4060.verificationMetadata().get("slot_thickness").sourceUrl());
 
         CatalogCsvRow rtx4060Ti = rowByModel(rows, "DUAL-RTX4060TI-O8G");
-        assertEquals("NEEDS_REVIEW",
+        assertEquals("VERIFIED_EXACT_VARIANT",
                 rtx4060Ti.verificationMetadata().get("recommended_psu_watt").verificationStatus());
-        assertEquals("550", rtx4060Ti.specifications().get("recommended_psu_watt").toString());
+        assertEquals("650", rtx4060Ti.specifications().get("recommended_psu_watt").toString());
 
         CatalogCsvRow rtx4070Super = rowByModel(rows, "DUAL-RTX4070S-O12G");
         assertEquals("2.56", rtx4070Super.specifications().get("slot_thickness").toString());
@@ -71,10 +71,10 @@ class CatalogCsvImporterTest {
                 .flatMap(row -> row.verificationMetadata().values().stream())
                 .filter(metadata -> metadata.verificationStatus().startsWith("VERIFIED_"))
                 .count();
-        assertEquals(41, verifiedRows);
+        assertEquals(42, verifiedRows);
         assertTrue(rows.stream()
                 .flatMap(row -> row.verificationMetadata().values().stream())
-                .anyMatch(metadata -> "UNKNOWN".equals(metadata.verificationStatus())));
+                .anyMatch(metadata -> "NEEDS_REVIEW".equals(metadata.verificationStatus())));
     }
 
     @Test
@@ -219,7 +219,7 @@ class CatalogCsvImporterTest {
                 IllegalArgumentException.class,
                 () -> CatalogCsvImporter.parseRecords(changedHeader, objectMapper));
 
-        assertTrue(error.getMessage().contains("registry-defined attribute columns"));
+        assertTrue(error.getMessage().contains("known registry attribute columns"));
     }
 
     private static CatalogCsvRow rowByModel(List<CatalogCsvRow> rows, String modelCode) {

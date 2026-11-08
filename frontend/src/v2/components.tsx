@@ -207,12 +207,14 @@ export function Modal({
   title,
   children,
   footer,
+  className = "",
 }: {
   open: boolean;
   onClose: () => void;
   title: string;
   children: ReactNode;
   footer?: ReactNode;
+  className?: string;
 }) {
   const titleId = useId();
   const [dialog, setDialog] = useState<HTMLDialogElement | null>(null);
@@ -226,7 +228,7 @@ export function Modal({
   return (
     <dialog
       ref={setDialog}
-      className="v2-dialog"
+      className={`v2-dialog ${className}`}
       aria-labelledby={titleId}
       onCancel={(event) => {
         event.preventDefault();
@@ -242,6 +244,81 @@ export function Modal({
         {footer && <div className="v2-dialog-footer">{footer}</div>}
       </div>
     </dialog>
+  );
+}
+
+export function ConfirmationModal({
+  open,
+  onClose,
+  onConfirm,
+  title,
+  message,
+  details = [],
+  confirmLabel,
+  busy = false,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  title: string;
+  message: ReactNode;
+  details?: { label: string; value: ReactNode }[];
+  confirmLabel: string;
+  busy?: boolean;
+}) {
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      title={title}
+      className="v2-confirmation-dialog"
+      footer={<>
+        <SecondaryButton type="button" disabled={busy} onClick={onClose}>Hủy</SecondaryButton>
+        <PrimaryButton type="button" disabled={busy} onClick={onConfirm}>
+          {busy ? "Đang xử lý…" : confirmLabel}
+        </PrimaryButton>
+      </>}
+    >
+      <div className="v2-confirmation-content">
+        <p className="v2-confirmation-message">{message}</p>
+        {details.length > 0 && (
+          <dl className="v2-confirmation-details">
+            {details.map((detail) => (
+              <div key={detail.label}>
+                <dt>{detail.label}</dt>
+                <dd>{detail.value}</dd>
+              </div>
+            ))}
+          </dl>
+        )}
+      </div>
+    </Modal>
+  );
+}
+
+export function Toast({
+  message,
+  tone = "success",
+  onDismiss,
+}: {
+  message: string;
+  tone?: "success" | "error";
+  onDismiss: () => void;
+}) {
+  useEffect(() => {
+    const timeout = window.setTimeout(onDismiss, 5000);
+    return () => window.clearTimeout(timeout);
+  }, [message, onDismiss]);
+
+  return (
+    <div
+      className={`v2-toast v2-toast-${tone}`}
+      role={tone === "error" ? "alert" : "status"}
+      aria-live={tone === "error" ? "assertive" : "polite"}
+    >
+      <span>{message}</span>
+      <IconButton label="Đóng thông báo" onClick={onDismiss}><CloseIcon /></IconButton>
+    </div>
   );
 }
 
@@ -447,12 +524,12 @@ export function CustomerHeader() {
               <Link className="v2-header-link" to={user.roleCode === "CUSTOMER" ? "/customer/account" : "/admin/dashboard"}>{user.fullName} · {user.roleCode}</Link>
               <button className="v2-header-link" type="button" onClick={() => {
                 setLogoutError("");
-                void logout().then(() => navigate("/customer/login")).catch((reason: unknown) =>
+                void logout().then(() => navigate("/login")).catch((reason: unknown) =>
                   setLogoutError(reason instanceof Error ? reason.message : "Không thể đăng xuất."),
                 );
               }}>Đăng xuất</button>
             </>
-          ) : <Link className="v2-header-link" to="/customer/login">Đăng nhập</Link>}
+          ) : <Link className="v2-header-link" to="/login">Đăng nhập</Link>}
         </div>
       </div>
       {menuOpen && <div
@@ -533,7 +610,7 @@ export function CustomerFooter() {
           </nav>
         </div>
       </div>
-      <div className="v2-footer-bottom">PC Builder Store · Catalog sản phẩm</div>
+      <div className="v2-footer-bottom">PC Builder Store</div>
     </footer>
   );
 }
@@ -575,6 +652,7 @@ const adminNavGroups = [
     label: "Bán hàng",
     items: [
       { label: "Đơn hàng", path: "/admin/orders" },
+      { label: "Khuyến mãi", path: "/admin/promotions" },
       { label: "Tra cứu khách hàng", path: "/admin/customers" },
     ],
   },
@@ -585,6 +663,10 @@ const adminNavGroups = [
 ];
 
 export function AdminSidebar({ open = false, onNavigate }: { open?: boolean; onNavigate?: () => void }) {
+  const { user } = useAuth();
+  const visibleGroups = user?.roleCode === "ADMIN"
+    ? adminNavGroups
+    : adminNavGroups.filter((group) => group.items.some((item) => item.path === "/admin/dashboard"));
   return (
     <aside
       className={`v2-admin-sidebar${open ? " is-open" : ""}`}
@@ -595,7 +677,7 @@ export function AdminSidebar({ open = false, onNavigate }: { open?: boolean; onN
         <span className="v2-brand-mark" aria-hidden="true">⌘</span>
         <span>PC BUILDER STORE</span>
       </Link>
-      {adminNavGroups.map((group) => (
+      {visibleGroups.map((group) => (
         <nav className="v2-admin-nav-group" key={group.label} aria-label={group.label}>
           <h2 className="v2-admin-nav-heading">{group.label}</h2>
           {group.items.map((item) => (
@@ -650,7 +732,7 @@ export function AdminTopbar({
           {user && <span className="v2-admin-user">{user.fullName} · {user.roleCode}</span>}
           {user && <SecondaryButton type="button" onClick={() => {
             setLogoutError("");
-            void logout().then(() => navigate("/admin/login")).catch((reason: unknown) =>
+            void logout().then(() => navigate("/login")).catch((reason: unknown) =>
               setLogoutError(reason instanceof Error ? reason.message : "Could not log out."),
             );
           }}>Đăng xuất</SecondaryButton>}

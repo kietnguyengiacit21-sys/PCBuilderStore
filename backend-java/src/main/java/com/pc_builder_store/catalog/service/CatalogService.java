@@ -1,8 +1,11 @@
 package com.pc_builder_store.catalog.service;
 
 import com.pc_builder_store.catalog.CatalogInternalLedger;
+import com.pc_builder_store.catalog.CatalogUnavailableImageRegistry;
 import com.pc_builder_store.catalog.CatalogSpecificationValidator;
 import com.pc_builder_store.catalog.dto.CatalogFacets;
+import com.pc_builder_store.catalog.dto.CatalogImage;
+import com.pc_builder_store.catalog.dto.CatalogAttributeQuality;
 import com.pc_builder_store.catalog.dto.CatalogAttributeDefinition;
 import com.pc_builder_store.catalog.dto.CatalogProduct;
 import com.pc_builder_store.catalog.dto.CatalogProductPage;
@@ -14,6 +17,8 @@ import com.pc_builder_store.catalog.dto.CatalogQuery.Sort;
 import com.pc_builder_store.catalog.exception.CatalogProductNotFoundException;
 import com.pc_builder_store.catalog.exception.InvalidCatalogQueryException;
 import com.pc_builder_store.catalog.repository.CatalogRepository;
+import com.pc_builder_store.inventory.ComponentInventoryService;
+import com.pc_builder_store.promotions.PromotionPricingService;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -39,20 +44,23 @@ public class CatalogService {
             "sort", "order", "attribute");
     private static final BigDecimal MAX_DATABASE_PRICE =
             new BigDecimal("9999999999999.99");
-    private static final String DEMO_NOTICE =
-            "Giá và tồn kho của các offer mã DEMO- là dữ liệu minh họa, không phải thông tin bán hàng trực tiếp.";
-
     private final CatalogRepository catalogRepository;
     private final CatalogInternalLedger internalLedger;
     private final ObjectMapper objectMapper;
+    private final ComponentInventoryService componentInventory;
+    private final PromotionPricingService promotionPricing;
 
     public CatalogService(
             CatalogRepository catalogRepository,
             CatalogInternalLedger internalLedger,
-            ObjectMapper objectMapper) {
+            ObjectMapper objectMapper,
+            ComponentInventoryService componentInventory,
+            PromotionPricingService promotionPricing) {
         this.catalogRepository = catalogRepository;
         this.internalLedger = internalLedger;
         this.objectMapper = objectMapper;
+        this.componentInventory = componentInventory;
+        this.promotionPricing = promotionPricing;
     }
 
     public CatalogFacets getFacets() {
@@ -68,7 +76,8 @@ public class CatalogService {
                         definition.code(),
                         definition.label(),
                         definition.dataType(),
-                        definition.unit()))
+                        definition.unit(),
+                        definition.subtype()))
                 .toList();
     }
 
@@ -88,8 +97,7 @@ public class CatalogService {
         return new CatalogProductPage(
                 publicProducts,
                 new com.pc_builder_store.catalog.dto.CatalogPagination(
-                        query.page(), query.limit(), page.total(), totalPages),
-                DEMO_NOTICE);
+                        query.page(), query.limit(), page.total(), totalPages));
     }
 
     public CatalogProduct getProduct(String modelCode) {
@@ -120,32 +128,86 @@ public class CatalogService {
 
     private CatalogProduct filterPublicProduct(CatalogProduct product) {
         ObjectNode publicSpecifications = objectMapper.createObjectNode();
+        Map<String, CatalogAttributeQuality> publicQuality = new java.util.LinkedHashMap<>();
+        List<CatalogImage> publicImages = product.images().stream()
+            .filter(image -> !CatalogUnavailableImageRegistry.contains(image.url()))
+            .toList();
         JsonNode specifications = product.specifications();
         if (specifications != null && specifications.isObject()) {
             specifications.properties().forEach(entry -> {
                 if (internalLedger.isPubliclyVisible(
                         product.productType(), product.modelCode(), entry.getKey())) {
                     publicSpecifications.set(entry.getKey(), entry.getValue().deepCopy());
+                    publicQuality.put(
+                            entry.getKey(),
+                            product.specificationQuality().getOrDefault(
+                                    entry.getKey(),
+                                    new CatalogAttributeQuality(
+                                            "UNVERIFIED_LEGACY",
+                                            "Chưa xác minh / cần đối chiếu")));
                 }
             });
         }
+        List<com.pc_builder_store.catalog.dto.CatalogOffer> publicOffers =
+                product.offers().stream()
+                        .map(offer -> {
+                            long available = offer.availableQuantity();
+                            if ("PC".equals(product.productType())
+                                    && "NEW".equals(offer.condition())) {
+                                available = componentInventory.sellableQuantity(
+                                        new BigDecimal(product.productId()));
+                            }
+                            PromotionPricingService.Pricing pricing = promotionPricing.price(
+                                    new BigDecimal(product.productId()),
+                                    offer.condition(),
+                                    offer.price(),
+                                    offer.currency());
+                            return new com.pc_builder_store.catalog.dto.CatalogOffer(
+                                    offer.offerId(),
+                                    offer.condition(),
+                                    pricing.payablePrice(),
+                                    pricing.basePrice(),
+                                    pricing.discountAmount(),
+                                    offer.currency(),
+                                    offer.stockQuantity(),
+                                    offer.reservedQuantity(),
+                                    available,
+                                    offer.warrantyMonths(),
+                                    offer.status(),
+                                    pricing.primaryPromotionId(),
+                                    pricing.campaignNames(),
+                                    pricing.displayCopy(),
+                                    pricing.saleBadge(),
+                                    pricing.appliedPromotions(),
+                                    pricing.availableGifts());
+                        })
+                        .toList();
         return new CatalogProduct(
                 product.productId(),
                 product.modelCode(),
                 product.productName(),
-                product.shortDescription(),
-                product.description(),
+                customerText(product.shortDescription()),
+                customerText(product.description()),
                 product.status(),
                 product.productType(),
                 product.productTypeName(),
                 product.categoryCode(),
                 product.categoryName(),
                 product.brandName(),
-                product.offers(),
+                publicOffers,
                 publicSpecifications,
                 null,
-                product.images(),
-                product.demoData());
+                publicQuality,
+                publicImages,
+                product.demoData(),
+                product.bomComponents(),
+                product.contentSections());
+    }
+
+    private String customerText(String value) {
+        return value != null && value.toLowerCase(java.util.Locale.ROOT).contains("catalog")
+                ? null
+                : value;
     }
 
     private void validateModelCode(String modelCode) {
@@ -153,10 +215,6 @@ public class CatalogService {
                 || modelCode.chars().anyMatch(character -> character <= 0x1f || character == 0x7f)) {
             throw invalid("Product model code is invalid.");
         }
-    }
-
-    public String demoNotice() {
-        return DEMO_NOTICE;
     }
 
     CatalogQuery parseQuery(Map<String, String[]> parameters) {

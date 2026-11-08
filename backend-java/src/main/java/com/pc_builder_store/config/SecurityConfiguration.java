@@ -30,8 +30,10 @@ import org.springframework.security.web.firewall.StrictHttpFirewall;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 
 @Configuration
+@ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 public class SecurityConfiguration {
 
     @Bean
@@ -110,16 +112,25 @@ public class SecurityConfiguration {
                                 "/api/health",
                                 "/api/health/**",
                                 "/api/auth/csrf",
-                                "/api/auth/login")
+                                "/api/auth/login",
+                                "/api/auth/me",
+                                "/api/cart",
+                                "/api/cart/**")
                         .permitAll()
                         .requestMatchers("/api/catalog/admin/**")
                         .hasRole("ADMIN")
+                        .requestMatchers("/api/orders/admin", "/api/orders/admin/**")
+                        .hasRole("ADMIN")
+                        .requestMatchers("/api/admin/accounts", "/api/admin/accounts/**")
+                        .hasRole("ADMIN")
+                        .requestMatchers("/api/orders", "/api/orders/**")
+                        .hasRole("CUSTOMER")
                         .requestMatchers(request ->
                                 "GET".equals(request.getMethod())
                                         && request.getRequestURI().startsWith(
                                                 request.getContextPath() + "/api/catalog/"))
                         .permitAll()
-                        .requestMatchers("/api/auth/me", "/api/auth/logout")
+                        .requestMatchers("/api/auth/logout")
                         .authenticated()
                         .anyRequest()
                         .denyAll())

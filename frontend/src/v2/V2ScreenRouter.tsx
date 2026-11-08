@@ -9,15 +9,17 @@ import {
   CustomerLookupPage,
   DashboardPage,
   OrdersManagementPage,
-  ProductEditPage,
   StaffRolesPage,
 } from "./AdminScreens";
+import {
+  AdminProductEditorPage,
+  AdminProductManagementPage,
+} from "./AdminCatalogScreens";
 import {
   ComparePage,
   FacetManagementPage,
   HomePage,
   PartsPage,
-  ProductManagementPage,
   ProductPage,
 } from "./CatalogScreens";
 import {
@@ -31,6 +33,7 @@ import {
   RegisterPage,
   RoleGate,
 } from "./CustomerScreens";
+import { PromotionsPage } from "./PromotionsPage";
 import { AdminLayout, CustomerLayout, ErrorState } from "./components";
 
 class V2ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
@@ -55,8 +58,16 @@ class V2ErrorBoundary extends Component<{ children: ReactNode }, { error: Error 
   }
 }
 
-function AdminScreen({ title, children }: { title: string; children: ReactNode }) {
-  return <RoleGate audience="staff"><AdminLayout
+function AdminScreen({
+  title,
+  children,
+  audience = "admin",
+}: {
+  title: string;
+  children: ReactNode;
+  audience?: "staff" | "admin";
+}) {
+  return <RoleGate audience={audience}><AdminLayout
       title={title}
       breadcrumb={[{ label: "Quản trị", href: "/admin/dashboard" }, { label: title }]}
     >
@@ -67,9 +78,9 @@ function AdminScreen({ title, children }: { title: string; children: ReactNode }
 function ComingSoonPage() {
   return <CustomerLayout><div className="v2-page v2-coming-page">
     <span className="v2-coming-illustration" aria-hidden="true">PC</span>
-    <p className="v2-eyebrow">B01–B08 · Hoãn triển khai</p>
-    <h1>Build-PC · Coming Soon</h1>
-    <p>Trình xây dựng cấu hình PC chưa được triển khai. Chưa có kiểm tra tương thích, benchmark hoặc tính tồn kho theo BOM.</p>
+    <p className="v2-eyebrow">PC tùy chỉnh</p>
+    <h1>Cấu hình PC</h1>
+    <p>Tính năng cấu hình PC hiện chưa khả dụng. Bạn có thể tiếp tục tìm linh kiện riêng lẻ.</p>
     <Link className="v2-button v2-button-secondary" to="/customer/parts">Tiếp tục tìm linh kiện</Link>
   </div></CustomerLayout>;
 }
@@ -83,19 +94,19 @@ function screenContent(path: string): ReactNode {
     case "/customer/checkout": return <CustomerLayout><CheckoutPage /></CustomerLayout>;
     case "/customer/order-result": return <CustomerLayout><OrderResultPage /></CustomerLayout>;
     case "/customer/register": return <CustomerLayout><RegisterPage /></CustomerLayout>;
-    case "/customer/login": return <CustomerLayout><LoginPage audience="customer" /></CustomerLayout>;
+    case "/login": return <LoginPage />;
     case "/customer/account": return <CustomerLayout><RoleGate audience="customer"><AccountPage /></RoleGate></CustomerLayout>;
     case "/customer/orders": return <CustomerLayout><RoleGate audience="customer"><OrderHistoryPage /></RoleGate></CustomerLayout>;
     case "/customer/order-detail": return <CustomerLayout><RoleGate audience="customer"><OrderDetailPage /></RoleGate></CustomerLayout>;
     case "/customer/compare": return <CustomerLayout><ComparePage /></CustomerLayout>;
-    case "/admin/login": return <LoginPage audience="staff" />;
-    case "/admin/dashboard": return <AdminScreen title="Tổng quan điều hành"><DashboardPage /></AdminScreen>;
-    case "/admin/products": return <AdminScreen title="Quản lý sản phẩm"><RoleGate audience="staff"><ProductManagementPage /></RoleGate></AdminScreen>;
-    case "/admin/product-edit": return <AdminScreen title="Tạo / sửa sản phẩm"><ProductEditPage /></AdminScreen>;
+    case "/admin/dashboard": return <AdminScreen title="Tổng quan điều hành" audience="staff"><DashboardPage /></AdminScreen>;
+    case "/admin/products": return <AdminScreen title="Quản lý sản phẩm"><AdminProductManagementPage /></AdminScreen>;
+    case "/admin/product-edit": return <AdminScreen title="Tạo / sửa sản phẩm"><AdminProductEditorPage /></AdminScreen>;
     case "/admin/csv-import": return <AdminScreen title="Nhập dữ liệu CSV"><CsvImportPage /></AdminScreen>;
     case "/admin/categories": return <AdminScreen title="Quản lý danh mục"><CategoriesAdminPage /></AdminScreen>;
     case "/admin/brands": return <AdminScreen title="Quản lý thương hiệu"><BrandsAdminPage /></AdminScreen>;
     case "/admin/orders": return <AdminScreen title="Quản lý đơn hàng"><OrdersManagementPage /></AdminScreen>;
+    case "/admin/promotions": return <AdminScreen title="Khuyến mãi và chiến dịch"><PromotionsPage /></AdminScreen>;
     case "/admin/customers": return <AdminScreen title="Tra cứu khách hàng"><CustomerLookupPage /></AdminScreen>;
     case "/admin/staff": return <AdminScreen title="Nhân viên và vai trò"><StaffRolesPage /></AdminScreen>;
     default:

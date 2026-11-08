@@ -2,6 +2,9 @@ export interface PCConfigurationComponent {
   componentType: string;
   modelCode: string;
   productName?: string;
+  quantity?: number;
+  componentWarrantyMonths?: number;
+  keySpecifications?: Record<string, unknown>;
 }
 
 const componentTypeLabels: Record<string, string> = {
@@ -36,11 +39,19 @@ export function parsePCConfiguration(value: unknown): PCConfigurationComponent[]
     const componentType = record.component_type;
     const modelCode = record.model_code;
     const productName = record.product_name;
+    const quantity = record.quantity;
+    const componentWarrantyMonths = record.component_warranty_months;
+    const keySpecifications = record.key_specifications;
     if (typeof componentType !== "string"
         || !componentTypeLabels[componentType.toUpperCase()]
         || typeof modelCode !== "string"
         || !modelCode.trim()
-        || (productName !== undefined && typeof productName !== "string")) {
+        || (productName !== undefined && typeof productName !== "string")
+        || (quantity !== undefined && (typeof quantity !== "number" || !Number.isSafeInteger(quantity) || quantity <= 0))
+        || (componentWarrantyMonths !== undefined && (typeof componentWarrantyMonths !== "number"
+          || !Number.isSafeInteger(componentWarrantyMonths) || componentWarrantyMonths <= 0))
+        || (keySpecifications !== undefined && (typeof keySpecifications !== "object"
+          || keySpecifications === null || Array.isArray(keySpecifications)))) {
       return undefined;
     }
     components.push({
@@ -49,9 +60,35 @@ export function parsePCConfiguration(value: unknown): PCConfigurationComponent[]
       ...(typeof productName === "string" && productName.trim()
         ? { productName: productName.trim() }
         : {}),
+      ...(typeof quantity === "number" ? { quantity } : {}),
+      ...(typeof componentWarrantyMonths === "number" ? { componentWarrantyMonths } : {}),
+      ...(typeof keySpecifications === "object" && keySpecifications !== null && !Array.isArray(keySpecifications)
+        ? { keySpecifications: keySpecifications as Record<string, unknown> }
+        : {}),
     });
   }
   return components;
+}
+
+export function pcReferenceDescription(
+  specifications: Record<string, unknown>,
+  bomComponents?: readonly { productType: string; modelCode: string; productName: string }[],
+): string | null {
+  if (bomComponents?.length) {
+    const names = ["CPU", "GPU", "RAM", "STORAGE"].flatMap((type) => {
+      const component = bomComponents.find((entry) => entry.productType === type);
+      return component ? [component.productName || component.modelCode] : [];
+    });
+    return names.length ? `Cấu hình gồm ${names.join(", ")}.` : null;
+  }
+  const components = parsePCConfiguration(specifications.component_details)
+    ?? parsePCConfiguration(specifications.configuration_items);
+  if (!components) return null;
+  const names = ["CPU", "GPU", "RAM", "STORAGE"].flatMap((type) => {
+    const component = components.find((entry) => entry.componentType === type);
+    return component ? [component.productName ?? component.modelCode] : [];
+  });
+  return names.length ? `Cấu hình gồm ${names.join(", ")}.` : null;
 }
 
 export function pcConfigurationSummaryEntries(
@@ -77,7 +114,8 @@ export function pcComponentTypeLabel(componentType: string): string {
 }
 
 export function pcComponentSummary(component: PCConfigurationComponent): string {
-  return `${pcComponentTypeLabel(component.componentType)} · ${component.productName ?? component.modelCode}`;
+  const quantity = component.quantity && component.quantity > 1 ? ` × ${component.quantity}` : "";
+  return `${pcComponentTypeLabel(component.componentType)} · ${component.productName ?? component.modelCode}${quantity}`;
 }
 
 export function pcConfigurationStatusLabel(status: unknown): string | undefined {

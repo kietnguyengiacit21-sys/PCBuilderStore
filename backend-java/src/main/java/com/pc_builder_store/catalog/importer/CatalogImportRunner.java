@@ -69,6 +69,64 @@ public class CatalogImportRunner implements ApplicationRunner {
         }
 
         CatalogCsvImporter.ImportSummary summary = importer.apply(rows, defaultStock);
+        verifyCommittedCatalog(rows, summary);
         LOGGER.info("Development catalog import committed: {}", summary);
+    }
+
+    private void verifyCommittedCatalog(List<CatalogCsvRow> rows, CatalogCsvImporter.ImportSummary summary) {
+        String placeholders = String.join(",", java.util.Collections.nCopies(rows.size(), "?"));
+        Object[] modelCodes = rows.stream().map(CatalogCsvRow::modelCode).toArray();
+        Long products = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM products WHERE model_code IN (" + placeholders + ")",
+                Long.class,
+                modelCodes);
+        Long offers = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM product_offers "
+                        + "WHERE offer_code IN (SELECT 'DEMO-' || model_code FROM products "
+                        + "WHERE model_code IN (" + placeholders + "))",
+                Long.class,
+                modelCodes);
+        Long attributeValues = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM product_attribute_values value "
+                        + "JOIN products product ON product.product_id = value.product_id "
+                        + "WHERE product.model_code IN (" + placeholders + ") "
+                        + "AND (value.value_text IS NOT NULL OR value.value_decimal IS NOT NULL "
+                        + "OR value.value_integer IS NOT NULL OR value.value_boolean IS NOT NULL "
+                        + "OR value.value_json IS NOT NULL)",
+                Long.class,
+                modelCodes);
+        Long verificationMetadata = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM product_attribute_definitions definition "
+                        + "CROSS JOIN LATERAL jsonb_each(COALESCE("
+                        + "definition.validation_json -> 'verificationByModel', '{}'::jsonb)) metadata "
+                        + "WHERE metadata.key IN (" + placeholders + ")",
+                Long.class,
+                modelCodes);
+        long expectedVerificationMetadata = rows.stream()
+                .mapToLong(row -> row.verificationMetadata().size())
+                .sum();
+
+        if (products == null || products != rows.size()
+                || offers == null || offers != summary.offers()
+                || attributeValues == null || attributeValues < summary.attributeValues()
+                || verificationMetadata == null || verificationMetadata < expectedVerificationMetadata) {
+            throw new IllegalStateException(
+                    "Catalog persistence verification failed: products=" + products + "/" + rows.size()
+                            + ", offers=" + offers + "/" + summary.offers()
+                            + ", typedAttributeValues=" + attributeValues + "/" + summary.attributeValues()
+                            + ", verificationMetadata=" + verificationMetadata + "/"
+                            + expectedVerificationMetadata + ".");
+        }
+        LOGGER.info(
+                "Catalog persistence verified in PostgreSQL: products={}/{}, DEMO offers={}/{}, "
+                        + "typed attribute values={}/at least {}, verification metadata={}/at least {}.",
+                products,
+                rows.size(),
+                offers,
+                summary.offers(),
+                attributeValues,
+                summary.attributeValues(),
+                verificationMetadata,
+                expectedVerificationMetadata);
     }
 }

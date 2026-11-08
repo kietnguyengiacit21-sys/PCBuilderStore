@@ -46,7 +46,7 @@ public class CatalogController {
     @GetMapping("/admin/products/{modelCode}")
     public CatalogProductResponse adminProduct(@PathVariable String modelCode) {
         CatalogProduct product = catalogService.getAdminProduct(modelCode);
-        return new CatalogProductResponse(product, catalogService.demoNotice());
+        return new CatalogProductResponse(product);
     }
 
     @GetMapping("/products")
@@ -65,7 +65,7 @@ public class CatalogController {
             resolvedModelCode = resolvedModelCode.substring(1);
         }
         CatalogProduct product = catalogService.getProduct(resolvedModelCode);
-        return new CatalogProductResponse(product, catalogService.demoNotice());
+        return new CatalogProductResponse(product);
     }
 
     @PutMapping("/admin/products/{modelCode}/specifications")
@@ -74,7 +74,7 @@ public class CatalogController {
             @RequestBody UpdateGpuSpecificationsRequest request) {
         CatalogProduct product = catalogService.updateGpuSpecifications(
                 modelCode, request == null ? null : request.specifications());
-        return new CatalogProductResponse(product, catalogService.demoNotice());
+        return new CatalogProductResponse(product);
     }
 
     private String modelCodeFromRequestPath(HttpServletRequest request) {

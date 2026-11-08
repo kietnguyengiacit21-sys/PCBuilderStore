@@ -3,7 +3,6 @@ import type { ReactNode } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import type { CatalogProduct } from "../catalog-api";
 import { fetchCatalogProduct } from "../catalog-api";
-import { money } from "../demo/demo-store";
 
 const codesStorageKey = "pc-builder-store.compare-models";
 const itemsStorageKey = "pc-builder-store.compare-items";
@@ -17,14 +16,12 @@ export interface ComparisonItem {
   categoryCode: string;
   imageUrl?: string;
   imageAlt?: string;
-  offerPrice?: string | number;
-  currency?: string;
 }
 
 interface ComparisonContextValue {
   items: ComparisonItem[];
   codes: string[];
-  toggle: (product: CatalogProduct, offerCode?: string) => void;
+  toggle: (product: CatalogProduct) => void;
   remove: (modelCode: string) => void;
   clear: () => void;
   collapsed: boolean;
@@ -44,9 +41,7 @@ function isComparisonItem(value: unknown): value is ComparisonItem {
     && typeof item.productType === "string"
     && typeof item.categoryCode === "string"
     && (item.imageUrl === undefined || typeof item.imageUrl === "string")
-    && (item.imageAlt === undefined || typeof item.imageAlt === "string")
-    && (item.offerPrice === undefined || typeof item.offerPrice === "string" || typeof item.offerPrice === "number")
-    && (item.currency === undefined || typeof item.currency === "string");
+    && (item.imageAlt === undefined || typeof item.imageAlt === "string");
 }
 
 function readSavedComparison(): { items: ComparisonItem[]; notice: string } {
@@ -89,9 +84,8 @@ function readSavedComparison(): { items: ComparisonItem[]; notice: string } {
   return { items, notice };
 }
 
-function comparisonItem(product: CatalogProduct, offerCode?: string): ComparisonItem {
+function comparisonItem(product: CatalogProduct): ComparisonItem {
   const image = product.images.find((item) => item.isPrimary) ?? product.images[0];
-  const offer = product.offers.find((item) => item.offerCode === offerCode) ?? product.offers[0];
   return {
     modelCode: product.modelCode,
     productId: product.productId,
@@ -99,7 +93,6 @@ function comparisonItem(product: CatalogProduct, offerCode?: string): Comparison
     productType: product.productType,
     categoryCode: product.categoryCode,
     ...(image ? { imageUrl: image.url, imageAlt: image.altText ?? product.productName } : {}),
-    ...(offer ? { offerPrice: offer.price, currency: offer.currency } : {}),
   };
 }
 
@@ -146,8 +139,8 @@ export function ComparisonProvider({ children }: { children: ReactNode }) {
     };
   }, [items, showNotice]);
 
-  const toggle = useCallback((product: CatalogProduct, offerCode?: string) => {
-    const item = comparisonItem(product, offerCode);
+  const toggle = useCallback((product: CatalogProduct) => {
+    const item = comparisonItem(product);
     if (items.some((selected) => selected.modelCode === item.modelCode)) {
       setItems(items.filter((selected) => selected.modelCode !== item.modelCode));
       return;
@@ -262,7 +255,6 @@ export function ComparisonTray() {
                   <div className="v2-comparison-selection-copy">
                     <Link to={`/customer/product?modelCode=${encodeURIComponent(item.modelCode)}`}>{item.productName}</Link>
                     <span className="v2-mono">{item.modelCode}</span>
-                    {item.offerPrice !== undefined && item.currency && <strong>{money(item.offerPrice, item.currency)}</strong>}
                   </div>
                   <button type="button" className="v2-comparison-remove" aria-label={`Bỏ ${item.productName} khỏi so sánh`} onClick={() => remove(item.modelCode)}>×</button>
                 </article>

@@ -10,6 +10,48 @@ $mavenWrapper = Join-Path $backendDirectory 'mvnw.cmd'
 $frontendPackage = Join-Path $frontendDirectory 'package.json'
 $dataSourceUrl = 'jdbc:postgresql://[::1]:5432/pc_builder_store_dev?ApplicationName=pcbs-demo-dev'
 
+function Get-PgPassPassword {
+    $pgpassPath = Join-Path $env:APPDATA 'postgresql\pgpass.conf'
+    if (-not (Test-Path -LiteralPath $pgpassPath -PathType Leaf)) {
+        return $null
+    }
+
+    foreach ($line in [IO.File]::ReadAllLines($pgpassPath)) {
+        if ([string]::IsNullOrWhiteSpace($line) -or $line.StartsWith('#')) {
+            continue
+        }
+
+        $fields = New-Object 'System.Collections.Generic.List[string]'
+        $field = New-Object System.Text.StringBuilder
+        $escaped = $false
+        foreach ($character in $line.ToCharArray()) {
+            if ($escaped) {
+                [void]$field.Append($character)
+                $escaped = $false
+                continue
+            }
+            if ($character -eq [char]92) {
+                $escaped = $true
+                continue
+            }
+            if ($character -eq ':') {
+                $fields.Add($field.ToString())
+                [void]$field.Clear()
+                continue
+            }
+            [void]$field.Append($character)
+        }
+        $fields.Add($field.ToString())
+
+        $hostMatches = @('*', 'localhost', '127.0.0.1', '::1', '[::1]') -contains $fields[0]
+        if ($fields.Count -eq 5 -and $hostMatches -and $fields[1] -eq '5432' -and $fields[2] -eq 'pc_builder_store_dev' -and $fields[3] -eq 'postgres' -and -not [string]::IsNullOrEmpty($fields[4])) {
+            return $fields[4]
+        }
+    }
+
+    return $null
+}
+
 if ($BackendChild) {
     if ($env:SPRING_DATASOURCE_URL -ne $dataSourceUrl -or
         $env:SPRING_DATASOURCE_USERNAME -ne 'postgres' -or
@@ -128,12 +170,19 @@ $cancelHandler = [ConsoleCancelEventHandler]{
 try {
     Write-Host 'Starting PC Builder Store development services.'
     Write-Host 'Database target: pc_builder_store_dev on PostgreSQL at ::1:5432.'
-    $securePassword = Read-Host 'PostgreSQL password for local development (input hidden)' -AsSecureString
+    $plainPassword = [Environment]::GetEnvironmentVariable('SPRING_DATASOURCE_PASSWORD')
+    if ([string]::IsNullOrWhiteSpace($plainPassword)) {
+        $plainPassword = Get-PgPassPassword
+    }
+    $securePassword = $null
     $passwordPointer = [IntPtr]::Zero
 
     try {
-        $passwordPointer = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($securePassword)
-        $plainPassword = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($passwordPointer)
+        if ([string]::IsNullOrWhiteSpace($plainPassword)) {
+            $securePassword = Read-Host 'PostgreSQL password for local development (input hidden)' -AsSecureString
+            $passwordPointer = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($securePassword)
+            $plainPassword = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($passwordPointer)
+        }
         $env:SPRING_DATASOURCE_URL = $dataSourceUrl
         $env:SPRING_DATASOURCE_USERNAME = 'postgres'
         $env:SPRING_DATASOURCE_PASSWORD = $plainPassword

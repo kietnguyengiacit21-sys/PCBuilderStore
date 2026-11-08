@@ -8,5 +8,15 @@ public record PublicCatalogAttributeDefinition(
         String code,
         String label,
         String dataType,
-        String unit) {
+                String unit,
+                String subtype) {
+
+        public PublicCatalogAttributeDefinition(
+                        String productType,
+                        String code,
+                        String label,
+                        String dataType,
+                        String unit) {
+                this(productType, code, label, dataType, unit, null);
+        }
 }

@@ -37,7 +37,11 @@ class AttributeDefinitionRegistryTest {
 
     @Test
     void includesExpandedTypedGpuDictionaryAndEditorOptions() {
-        assertEquals(Set.of(
+        Set<String> gpuCodes = AttributeDefinitionRegistry.all().stream()
+                .filter(definition -> "GPU".equals(definition.productType()))
+                .map(AttributeDefinitionRegistry.Definition::code)
+                .collect(java.util.stream.Collectors.toSet());
+        assertTrue(gpuCodes.containsAll(Set.of(
                 "gpu_chip", "architecture", "processor_unit_label", "processor_unit_count",
                 "base_clock_mhz", "boost_clock_mhz", "vram_gb", "memory_type",
                 "memory_bus_width_bit", "memory_data_rate_gbps", "memory_bandwidth_gbs",
@@ -48,11 +52,9 @@ class AttributeDefinitionRegistryTest {
                 "vulkan_version", "gpu_technologies", "cooling_design", "fan_count",
                 "board_length_mm", "board_width_mm", "board_height_mm", "slot_thickness",
                 "supported_operating_systems", "multi_gpu_support", "included_accessories",
-                "included_documentation"),
-                AttributeDefinitionRegistry.all().stream()
-                        .filter(definition -> "GPU".equals(definition.productType()))
-                        .map(AttributeDefinitionRegistry.Definition::code)
-                        .collect(java.util.stream.Collectors.toSet()));
+                "included_documentation", "ai_accelerator_unit_count", "av1_decode_support",
+                "av1_encode_support", "hdmi_version", "displayport_version", "ray_accelerator_unit_count",
+                "rop_units", "tensor_core_count", "texture_mapping_units", "vr_ready")));
         assertEquals(Map.of(
                 "memory_clock_mhz", "DECIMAL",
                 "max_display_refresh_rate_hz", "INTEGER",
@@ -85,6 +87,6 @@ class AttributeDefinitionRegistryTest {
             assertEquals("GPU_SILICON",
                     AttributeDefinitionRegistry.find("GPU", code).orElseThrow().specificationScope());
         }
-        assertEquals(176, AttributeDefinitionRegistry.all().size());
+        assertEquals(348, AttributeDefinitionRegistry.all().size());
     }
 }

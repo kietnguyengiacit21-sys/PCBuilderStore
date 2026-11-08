@@ -85,7 +85,16 @@ async function currentUser(): Promise<AuthUser | null> {
   if (response.status === 401) return null;
   if (!response.ok) throw await responseError(response);
   try {
-    return parseAuthUser(await response.json());
+    const payload: unknown = await response.json();
+    if (typeof payload === "object" && payload !== null && "authenticated" in payload
+        && payload.authenticated === false) {
+      return null;
+    }
+    if (typeof payload === "object" && payload !== null && "authenticated" in payload
+        && payload.authenticated === true && "user" in payload) {
+      return parseAuthUser(payload.user);
+    }
+    return parseAuthUser(payload);
   } catch (reason) {
     if (reason instanceof Error) throw reason;
     throw new Error("Authentication service returned an invalid response.");

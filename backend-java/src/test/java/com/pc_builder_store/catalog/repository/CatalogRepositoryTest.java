@@ -199,12 +199,15 @@ class CatalogRepositoryTest {
         when(row.getString("categoryCode")).thenReturn("RAM");
         when(row.getString("categoryName")).thenReturn("Memory");
         when(row.getString("offersJson")).thenReturn("""
-                [{"offerCode":"DEMO-KIT","condition":"NEW","price":123.45,"currency":"VND",
+                [{"offerId":"18446744073709551615","condition":"NEW","price":123.45,"currency":"VND",
                   "stockQuantity":10,"reservedQuantity":3,"availableQuantity":7,
-                  "warrantyMonths":12,"status":"ACTIVE","isDemo":true}]
+                  "warrantyMonths":12,"status":"ACTIVE"}]
                 """);
         when(row.getString("specificationsJson")).thenReturn(
                 "{\"capacity_gb\":16,\"supports_xmp\":true}");
+        when(row.getString("specificationQualityJson")).thenReturn(
+                "{\"capacity_gb\":{\"valueQuality\":\"MANUFACTURER_SOURCE\","
+                        + "\"displayLabel\":\"Theo thông số hãng\",\"reviewNote\":\"private\"}}");
         when(row.getString("verificationMetadataJson")).thenReturn("""
                 {
                   "capacity_gb":{"verificationStatus":"VERIFIED_EXACT_MODEL","sourceUrl":"https://example.com/spec","sourceLocator":"Capacity","verificationScope":"EXACT_MODEL"},
@@ -218,6 +221,13 @@ class CatalogRepositoryTest {
                  {"url":"https://example.com:99999/image.png","altText":"bad port","isPrimary":true},
                  {"url":"https://example.com/image.png","altText":"good","isPrimary":false}]
                 """);
+        when(row.getString("bomComponentsJson")).thenReturn("""
+                [{"componentProductId":"2","modelCode":"CPU-1","productName":"Processor",
+                  "productType":"CPU","quantity":1,"warrantyMonths":24,
+                  "displayCategory":"CPU","displayOrder":0}]
+                """);
+        when(row.getString("contentSectionsJson")).thenReturn(
+                "[{\"title\":\"Overview\",\"body\":\"Customer content\"}]");
         when(row.getBoolean("demoData")).thenReturn(true);
 
         CatalogProduct product = repository.mapProduct(row, 0);
@@ -226,9 +236,13 @@ class CatalogRepositoryTest {
         assertEquals("KF432C16BB/8", product.modelCode());
         assertEquals(new BigDecimal("123.45"), product.offers().get(0).price());
         assertEquals(7, product.offers().get(0).availableQuantity());
-        assertTrue(product.offers().get(0).isDemo());
+        assertEquals("18446744073709551615", product.offers().get(0).offerId());
         assertEquals(16, product.specifications().path("capacity_gb").intValue());
         assertTrue(product.specifications().path("supports_xmp").booleanValue());
+        assertEquals("MANUFACTURER_SOURCE",
+                product.specificationQuality().get("capacity_gb").valueQuality());
+        assertEquals("Theo thông số hãng",
+                product.specificationQuality().get("capacity_gb").displayLabel());
         assertEquals(
                 CatalogVerificationStatus.VERIFIED_EXACT_MODEL,
                 product.verificationMetadata().get("capacity_gb").verificationStatus());
@@ -247,6 +261,9 @@ class CatalogRepositoryTest {
                 product.verificationMetadata().get("missing_field").verificationStatus());
         assertEquals(1, product.images().size());
         assertEquals("https://example.com/image.png", product.images().get(0).url());
+        assertEquals(1, product.bomComponents().size());
+        assertEquals("CPU-1", product.bomComponents().getFirst().modelCode());
+        assertEquals("Customer content", product.contentSections().get(0).path("body").asString());
         assertTrue(product.demoData());
     }
 

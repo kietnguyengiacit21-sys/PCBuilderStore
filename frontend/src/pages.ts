@@ -41,7 +41,7 @@ export const screens: ScreenRoute[] = [
     source: "../C01-C17/C07-register/index.html",
   },
   {
-    path: "/customer/login",
+    path: "/login",
     title: "Đăng nhập",
     source: "../C01-C17/C08-login/index.html",
   },
@@ -64,11 +64,6 @@ export const screens: ScreenRoute[] = [
     path: "/customer/compare",
     title: "So sánh sản phẩm",
     source: "../C01-C17/C17-product-comparison/index.html",
-  },
-  {
-    path: "/admin/login",
-    title: "Đăng nhập nhân viên",
-    source: "../A01-A15/A01-staff-login/index.html",
   },
   {
     path: "/admin/dashboard",
@@ -104,6 +99,11 @@ export const screens: ScreenRoute[] = [
     path: "/admin/orders",
     title: "Quản lý đơn hàng",
     source: "../A01-A15/A09-order-management/index.html",
+  },
+  {
+    path: "/admin/promotions",
+    title: "Khuyến mãi và chiến dịch",
+    source: "../A01-A15/A13-promotions/index.html",
   },
   {
     path: "/admin/customers",
@@ -177,7 +177,7 @@ export const routeByDataPath: Record<string, string> = {
   "chon-psu": "/customer/parts",
   "chon-ssd": "/customer/parts",
   "chon-tan-nhiet": "/customer/parts",
-  "dang-nhap": "/customer/login",
+  "dang-nhap": "/login",
   "do-kiem-hieu-nang": "/build-pc/benchmark",
   "goi-y-thay-the": "/build-pc/replacements",
   "kiem-tra-tuong-thich": "/build-pc/compatibility",

@@ -1,4 +1,4 @@
 package com.pc_builder_store.catalog.dto;
 
-public record CatalogProductResponse(CatalogProduct data, String notice) {
+public record CatalogProductResponse(CatalogProduct data) {
 }
