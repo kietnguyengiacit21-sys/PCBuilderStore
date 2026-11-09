@@ -20,6 +20,7 @@ import {
   groupSpecifications,
 } from "./product-specifications";
 import { pcReferenceDescription } from "./v2/pc-configuration";
+import { customerVisibleCopy } from "./v2/product-information";
 
 const compareStorageKey = "pc-builder-store.compare-models";
 
@@ -27,9 +28,7 @@ function productSummary(product: CatalogProduct): string | null {
   if (product.modelCode === "PBC-PC-GAME-002") {
     return pcReferenceDescription(product.specifications, product.bomComponents);
   }
-  return product.shortDescription?.toLowerCase().includes("catalog")
-    ? null
-    : product.shortDescription;
+  return customerVisibleCopy(product.shortDescription);
 }
 
 function readCompareCodes(): string[] {
@@ -546,6 +545,7 @@ function ProductDetail({ modelCode, onCompare, compareCodes }: {
   if (!product) return null;
   const offer = customerVisibleOffers(product.offers)[0];
   const image = product.images.find((item) => item.isPrimary) ?? product.images[0];
+  const description = customerVisibleCopy(product.description);
   const specificationGroups = groupSpecifications(product.productType, product.specifications);
   return (
     <div className="mx-auto w-full max-w-7xl px-margin pb-space-3xl lg:px-margin-desktop">
@@ -568,8 +568,7 @@ function ProductDetail({ modelCode, onCompare, compareCodes }: {
           <h1 className="font-headline-xl text-on-surface">{product.productName}</h1>
           <p className="font-tech-code-sm text-on-surface-variant">Mã model: {product.modelCode}</p>
           {productSummary(product) && <p className="text-body-md text-on-surface-variant">{productSummary(product)}</p>}
-          {product.description && !product.description.toLowerCase().includes("catalog")
-            && <p className="text-body-sm text-on-surface-variant">{product.description}</p>}
+          {description && <p className="text-body-sm text-on-surface-variant">{description}</p>}
           {offer ? (
             <div className="rounded border border-surface-container-high bg-surface-container-low p-space-md">
               <p className="font-headline-lg text-primary">{money(offer.price, offer.currency)}</p>

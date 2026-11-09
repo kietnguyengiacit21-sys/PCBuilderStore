@@ -69,7 +69,7 @@ class CatalogImportSqlUnitTest {
     }
 
     @Test
-    void offerUpsertUsesConfiguredInsertDefaultAndOmitsExistingManagedFieldsFromUpdate() throws IOException {
+    void offerUpsertStoresCompareAtAndStockWithoutChangingReservations() throws IOException {
         CatalogCsvImporter.validateDefaultOfferStock(5);
         CatalogCsvImporter.validateDefaultOfferStock(0);
         CatalogCsvImporter.validateDefaultOfferStock(4_294_967_295L);
@@ -90,17 +90,20 @@ class CatalogImportSqlUnitTest {
                 .findFirst()
                 .orElseThrow();
         Object[] parameters = sqlParameters(offerWrite);
-        assertEquals(BigDecimal.valueOf(5), parameters[4]);
+        assertEquals(BigDecimal.valueOf(5), parameters[5]);
 
         String conflictClause = CatalogCsvImporter.OFFER_UPSERT_SQL
                 .substring(CatalogCsvImporter.OFFER_UPSERT_SQL.indexOf("DO UPDATE SET"));
-        assertFalse(conflictClause.contains("\"stock_quantity\" ="));
-        assertFalse(conflictClause.contains("\"reserved_quantity\" ="));
+        assertTrue(conflictClause.contains("\"stock_quantity\" = CASE"));
+        assertTrue(conflictClause.contains("\"reserved_quantity\" = 0"));
+        assertTrue(conflictClause.contains("THEN EXCLUDED.\"stock_quantity\""));
+        assertTrue(conflictClause.contains("ELSE \"product_offers\".\"stock_quantity\""));
+        assertFalse(conflictClause.contains("\"reserved_quantity\" = EXCLUDED."));
         assertFalse(conflictClause.contains("\"condition_code\" ="));
-        assertFalse(conflictClause.contains("\"offer_status\" ="));
+        assertTrue(conflictClause.contains("\"offer_status\" = 'ACTIVE'"));
         assertTrue(conflictClause.contains("WHERE \"product_offers\".\"offer_code\" LIKE 'DEMO-%'"));
 
-        assertEquals(BigDecimal.valueOf(5), parameters[4]);
+        assertEquals(BigDecimal.valueOf(5), parameters[5]);
         assertFalse(CatalogCsvImporter.PRODUCT_UPSERT_SQL.contains("\"product_status\" ="));
     }
 
@@ -201,7 +204,7 @@ class CatalogImportSqlUnitTest {
         assertTrue(imageWrites.stream().noneMatch(
                 invocation -> ((String) invocation.getArguments()[0]).startsWith("DELETE")));
         assertTrue(imageWrites.stream().anyMatch(
-                invocation -> ((String) invocation.getArguments()[0]).contains("\"is_primary\" = CASE")));
+                invocation -> ((String) invocation.getArguments()[0]).contains("\"is_primary\" = ?")));
         assertEquals(row.images().size() - 1, inserts);
         assertTrue(secondRead.stream().anyMatch(image ->
                 "https://existing.example/primary.jpg".equals(image.get("image_url"))

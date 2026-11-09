@@ -61,6 +61,11 @@ export const screens: ScreenRoute[] = [
     source: "../C01-C17/C12-order-detail/index.html",
   },
   {
+    path: "/customer/guest-order-lookup",
+    title: "Tra cứu đơn khách",
+    source: "../C01-C17/C12-order-detail/index.html",
+  },
+  {
     path: "/customer/compare",
     title: "So sánh sản phẩm",
     source: "../C01-C17/C17-product-comparison/index.html",

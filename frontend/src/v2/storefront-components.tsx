@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import type { CatalogImage, CatalogProduct } from "../catalog-api";
 import { ChevronIcon, CloseIcon, IconButton } from "./components";
-import { availableProductImages, preferredProductImage, uniqueProductImages } from "./product-images";
+import { availableProductImages, displayProductImages, preferredProductImage } from "./product-images";
 
 const typeLabels: Record<string, string> = {
   ACCESSORY: "Phụ kiện",
@@ -56,7 +56,67 @@ export function categoryLabel(categoryCode: string, fallbackLabel: string): stri
   return categoryLabels[categoryCode] ?? fallbackLabel;
 }
 
-function HardwareIllustration({ productType }: { productType: string }) {
+function AccessoryIllustration({ productName }: { productName: string }) {
+  const name = productName.toLocaleLowerCase();
+  if (/monitor|vg\d{3}|xg\d{2}|odyssey|g24f|24g2/.test(name)) {
+    return <svg viewBox="0 0 360 220" aria-hidden="true" focusable="false">
+      <rect x="44" y="24" width="272" height="154" rx="14" fill="#302542" />
+      <rect x="57" y="37" width="246" height="128" rx="8" fill="#eee8fa" />
+      <path d="M180 178v22m-44 0h88" stroke="#8d65e8" strokeWidth="10" strokeLinecap="round" />
+      <path d="M73 144 132 91l36 32 41-47 66 68" fill="none" stroke="#6d4aff" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>;
+  }
+  if (/keyboard|blackwidow|kumara|fizz|aula|k70|k8 pro/.test(name)) {
+    return <svg viewBox="0 0 360 220" aria-hidden="true" focusable="false">
+      <path d="M37 67a13 13 0 0 1 13-13h260a13 13 0 0 1 13 13v100a13 13 0 0 1-13 13H50a13 13 0 0 1-13-13z" fill="#302542" />
+      <path d="M57 77h246v10H57zm0 22h246v10H57zm0 22h246v10H57zm0 22h158v10H57z" fill="#bda8e8" />
+      <path d="M225 143h78v10h-78z" fill="#6d4aff" />
+    </svg>;
+  }
+  if (/headset|headphone|cloud|blackshark|kraken|g733/.test(name)) {
+    return <svg viewBox="0 0 360 220" aria-hidden="true" focusable="false">
+      <path d="M72 125V96a108 108 0 0 1 216 0v29" fill="none" stroke="#302542" strokeWidth="24" strokeLinecap="round" />
+      <rect x="48" y="109" width="66" height="78" rx="24" fill="#6d4aff" />
+      <rect x="246" y="109" width="66" height="78" rx="24" fill="#6d4aff" />
+      <path d="M276 178q-17 26-55 20" fill="none" stroke="#8d65e8" strokeWidth="8" strokeLinecap="round" />
+    </svg>;
+  }
+  if (/microphone|micro\b|am8|k688|webcam/.test(name)) {
+    return <svg viewBox="0 0 360 220" aria-hidden="true" focusable="false">
+      <rect x="137" y="26" width="86" height="119" rx="42" fill="#302542" />
+      <path d="M119 100v20a61 61 0 0 0 122 0v-20m-61 81v22m-43 0h86" fill="none" stroke="#6d4aff" strokeWidth="11" strokeLinecap="round" />
+      <path d="M157 61h46m-46 17h46m-46 17h46" stroke="#bda8e8" strokeWidth="6" strokeLinecap="round" />
+    </svg>;
+  }
+  if (/controller|dualsense|xbox/.test(name)) {
+    return <svg viewBox="0 0 360 220" aria-hidden="true" focusable="false">
+      <path d="M82 78q10-20 34-20h128q24 0 34 20l28 75q8 23-8 31-15 8-29-7l-30-31H121l-30 31q-14 15-29 7-16-8-8-31z" fill="#302542" />
+      <path d="M113 104v42m-21-21h42" stroke="#bda8e8" strokeWidth="10" strokeLinecap="round" />
+      <circle cx="244" cy="111" r="8" fill="#6d4aff" /><circle cx="267" cy="133" r="8" fill="#8d65e8" />
+    </svg>;
+  }
+  if (/stream deck|streamdeck/.test(name)) {
+    return <svg viewBox="0 0 360 220" aria-hidden="true" focusable="false">
+      <rect x="63" y="35" width="234" height="151" rx="20" fill="#302542" />
+      {[0, 1, 2].map((column) => [0, 1].map((row) =>
+        <rect key={`${column}-${row}`} x={84 + column * 64} y={57 + row * 57} width="48" height="43" rx="7" fill="#8d65e8" />))}
+    </svg>;
+  }
+  if (/mouse|deathadder|viper|g102|g304|g502|superlight/.test(name)) {
+    return <svg viewBox="0 0 360 220" aria-hidden="true" focusable="false">
+      <path d="M180 27c-48 0-77 37-77 90v24c0 41 31 65 77 65s77-24 77-65v-24c0-53-29-90-77-90z" fill="#302542" />
+      <path d="M180 30v61m-18-50v42h36V41" fill="none" stroke="#bda8e8" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M180 92v26" stroke="#6d4aff" strokeWidth="8" strokeLinecap="round" />
+    </svg>;
+  }
+  return <svg viewBox="0 0 360 220" aria-hidden="true" focusable="false">
+    <rect x="86" y="43" width="188" height="134" rx="24" fill="#302542" />
+    <path d="M119 79h122m-122 31h122m-122 31h82" stroke="#8d65e8" strokeWidth="12" strokeLinecap="round" />
+  </svg>;
+}
+
+function HardwareIllustration({ productType, productName }: { productType: string; productName: string }) {
+  if (productType === "ACCESSORY") return <AccessoryIllustration productName={productName} />;
   if (productType === "GPU") {
     return <svg viewBox="0 0 360 220" aria-hidden="true" focusable="false">
       <rect x="28" y="52" width="298" height="118" rx="18" fill="#302542" />
@@ -97,6 +157,39 @@ function HardwareIllustration({ productType }: { productType: string }) {
       <rect x="122" y="91" width="48" height="40" rx="6" fill="#f0ecf8" />
       <rect x="184" y="91" width="70" height="40" rx="6" fill="#f0ecf8" />
       <path d="M84 160v18m46-18v18m46-18v18m46-18v18m46-18v18" stroke="#d9ad62" strokeWidth="7" strokeLinecap="round" />
+    </svg>;
+  }
+  if (productType === "MOTHERBOARD" || productType === "MAINBOARD") {
+    return <svg viewBox="0 0 360 220" aria-hidden="true" focusable="false">
+      <rect x="73" y="24" width="214" height="172" rx="14" fill="#302542" />
+      <rect x="89" y="40" width="106" height="84" rx="8" fill="#493b62" />
+      <rect x="105" y="55" width="74" height="54" rx="5" fill="#d9ad62" />
+      <rect x="211" y="42" width="55" height="12" rx="4" fill="#8d65e8" />
+      <rect x="211" y="61" width="55" height="12" rx="4" fill="#8d65e8" />
+      <rect x="211" y="80" width="55" height="12" rx="4" fill="#8d65e8" />
+      <rect x="96" y="141" width="164" height="12" rx="4" fill="#d9ad62" />
+      <path d="M125 124v17m50-17v17m51 24v17m-92-17v17" stroke="#c8b3ed" strokeWidth="5" />
+    </svg>;
+  }
+  if (productType === "PSU") {
+    return <svg viewBox="0 0 360 220" aria-hidden="true" focusable="false">
+      <rect x="67" y="48" width="226" height="126" rx="16" fill="#302542" />
+      <rect x="82" y="62" width="196" height="98" rx="10" fill="#493b62" />
+      <circle cx="158" cy="111" r="34" fill="#ded6eb" />
+      <circle cx="158" cy="111" r="9" fill="#8d65e8" />
+      <path d="M158 77v25m0 18v25m-34-34h25m18 0h25m-58-24 18 18m13 13 18 18m-49 0 18-18m13-13 18-18" stroke="#8d65e8" strokeWidth="5" />
+      <path d="M219 91h39m-39 16h39m-39 16h30" stroke="#d9ad62" strokeWidth="5" strokeLinecap="round" />
+    </svg>;
+  }
+  if (productType === "CASE" || productType === "PC") {
+    return <svg viewBox="0 0 360 220" aria-hidden="true" focusable="false">
+      <rect x="105" y="20" width="150" height="180" rx="15" fill="#302542" />
+      <rect x="119" y="36" width="122" height="145" rx="9" fill="#493b62" />
+      <rect x="132" y="49" width="76" height="118" rx="5" fill="#332947" />
+      <circle cx="221" cy="77" r="12" fill="#8d65e8" />
+      <circle cx="221" cy="112" r="12" fill="#d9ad62" />
+      <circle cx="221" cy="147" r="12" fill="#8d65e8" />
+      <path d="M138 184h84" stroke="#c8b3ed" strokeWidth="5" strokeLinecap="round" />
     </svg>;
   }
   return <svg viewBox="0 0 360 220" aria-hidden="true" focusable="false">
@@ -144,8 +237,8 @@ export function ProductArtwork({
           role="img"
           aria-label={`Minh họa danh mục ${productTypeLabel(productType)} cho ${productName}`}
         >
-          <HardwareIllustration productType={productType} />
-          <small aria-hidden="true">Hình minh họa · chưa có ảnh xác minh</small>
+          <HardwareIllustration productType={productType} productName={productName} />
+          <small aria-hidden="true">Hình minh họa danh mục</small>
         </div>
       )}
     </div>
@@ -271,7 +364,10 @@ function GalleryThumbnails({
 }
 
 export function ProductImageGallery({ product }: { product: CatalogProduct }) {
-  const images = uniqueProductImages(product.images.filter((image) => image.mediaType !== "VIDEO"));
+  const images = displayProductImages(
+    product.images.filter((image) => image.mediaType !== "VIDEO"),
+    product.productType,
+  );
   const [failedUrls, setFailedUrls] = useState<ReadonlySet<string>>(() => new Set());
   const availableImages = availableProductImages(images, failedUrls);
   const [selectedUrl, setSelectedUrl] = useState(() => preferredProductImage(images)?.url ?? "");
@@ -333,7 +429,8 @@ export function ProductImageGallery({ product }: { product: CatalogProduct }) {
   };
 
   return (
-    <section className="v2-product-gallery" aria-label="Thư viện ảnh sản phẩm">
+    <section className={`v2-product-gallery is-${product.productType.toLocaleLowerCase()}`}
+      aria-label="Thư viện ảnh sản phẩm">
       <div className="v2-gallery-main">
         <button
           ref={mainImageButtonRef}

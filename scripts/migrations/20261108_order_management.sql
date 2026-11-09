@@ -34,9 +34,9 @@ BEGIN
         FROM "order_items" oi
         LEFT JOIN "product_offers" po ON po."offer_id" = oi."offer_id"
         WHERE oi."currency_code" IS NULL
-           OR oi."currency_code" !~ '^[A-Z]{3}$'
+           OR oi."currency_code" COLLATE "C" !~ '^[A-Z]{3}$'
            OR po."currency_code" IS NULL
-           OR po."currency_code" !~ '^[A-Z]{3}$'
+           OR po."currency_code" COLLATE "C" !~ '^[A-Z]{3}$'
     ) THEN
         RAISE EXCEPTION
             'Existing order items lack a valid currency code from product offers; refusing to set currency_code NOT NULL.';

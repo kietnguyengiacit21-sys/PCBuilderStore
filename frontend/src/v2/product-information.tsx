@@ -7,8 +7,9 @@ import type {
   CatalogProduct,
   CatalogVerificationStatus,
 } from "../catalog-api";
-import { customerVisibleOffers } from "../catalog-api";
+import { customerVisibleOffers, offerOriginalPrice } from "../catalog-api";
 import type { ReactNode } from "react";
+import { Link } from "react-router-dom";
 import { Badge, Card } from "./components";
 import { money } from "../demo/demo-store";
 import {
@@ -26,10 +27,21 @@ import {
   pcConfigurationSummaryEntries,
   pcConfigurationStatusLabel,
 } from "./pc-configuration";
+import { ProductArtwork } from "./storefront-components";
 
 export function formatWarranty(months: number | null | undefined): string | null {
   if (typeof months !== "number" || !Number.isSafeInteger(months) || months <= 0) return null;
   return `${months} tháng`;
+}
+
+export function customerVisibleCopy(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const internalCopy = /\b(?:demo|development|internal|catalog(?:ue)?|estimated?|sample|placeholder)\b|(?:giá|dữ liệu|thông số)\s+(?:demo|ước tính|thử nghiệm)|mua\s+thật/iu;
+  const visibleCopy = value.split(/(?<=[.!?])\s+|\r?\n+/)
+    .filter((sentence) => !internalCopy.test(sentence))
+    .join(" ")
+    .trim();
+  return visibleCopy || null;
 }
 
 export function hasVerifiedPCConfiguration(
@@ -509,7 +521,7 @@ export function TechnicalSpecifications({
                 {present
                   ? <SpecificationValue value={value} definition={definition} />
                   : <span className="v2-spec-missing">Chưa có dữ liệu</span>}
-                {present && quality && <small className="v2-spec-quality-label">{quality.displayLabel}</small>}
+                {showInternalMetadata && present && quality && <small className="v2-spec-quality-label">{quality.displayLabel}</small>}
                 {showInternalMetadata && verification && <VerificationMetadataDisplay metadata={verification} />}
               </dd>
             </div>
@@ -626,7 +638,7 @@ export function SpecificationComparison({
                   {hasValue(product.specifications, code)
                     ? <SpecificationValue value={product.specifications[code]} definition={definition} />
                     : "Chưa có dữ liệu"}
-                  {hasValue(product.specifications, code) && product.specificationQuality?.[code]
+                  {showInternalMetadata && hasValue(product.specifications, code) && product.specificationQuality?.[code]
                     && <small className="v2-spec-quality-label">{product.specificationQuality[code].displayLabel}</small>}
                   {showInternalMetadata && <VerificationMetadataDisplay metadata={verificationFor(
                       product.verificationMetadata,
@@ -656,19 +668,30 @@ const componentTypeOrder = ["CPU", "GPU", "MOTHERBOARD", "RAM", "STORAGE", "PSU"
 const componentSpecificationLabels: Record<string, string> = {
   boost_GHz: "Xung tăng tối đa",
   capacity_GB: "Dung lượng",
+  capacity_gb: "Dung lượng",
   CAS: "Độ trễ CAS",
+  cas_latency_cycles: "Độ trễ CAS",
   chipset: "Chipset",
   cores: "Số nhân",
   data_rate_MT_s: "Tốc độ dữ liệu",
+  data_rate_mt_s: "Tốc độ dữ liệu",
+  drive_type: "Loại ổ đĩa",
   efficiency: "Hiệu suất",
   form_factor: "Chuẩn kích thước",
   height_mm: "Chiều cao",
+  interface: "Giao tiếp",
   max_GPU_length_mm: "Chiều dài GPU tối đa",
+  max_gpu_length_mm: "Chiều dài GPU tối đa",
   memory_bus_bit: "Độ rộng bus bộ nhớ",
   memory_type: "Loại bộ nhớ",
   modularity: "Thiết kế cáp nguồn",
   processor_units: "Số đơn vị xử lý",
+  protocol: "Giao thức",
   read_MB_s: "Tốc độ đọc tuần tự",
+  sequential_read_mb_s: "Tốc độ đọc tuần tự",
+  sequential_write_mb_s: "Tốc độ ghi tuần tự",
+  vram_gb: "Bộ nhớ đồ họa",
+  wattage_w: "Công suất định mức",
   socket: "Socket",
   sockets: "Socket hỗ trợ",
   threads: "Số luồng",
@@ -680,17 +703,66 @@ const componentSpecificationLabels: Record<string, string> = {
 const componentSpecificationUnits: Record<string, string> = {
   boost_GHz: "GHz",
   capacity_GB: "GB",
+  capacity_gb: "GB",
   data_rate_MT_s: "MT/s",
+  data_rate_mt_s: "MT/s",
+  cas_latency_cycles: "chu kỳ",
   height_mm: "mm",
   max_GPU_length_mm: "mm",
+  max_gpu_length_mm: "mm",
   memory_bus_bit: "bit",
   read_MB_s: "MB/s",
+  sequential_read_mb_s: "MB/s",
+  sequential_write_mb_s: "MB/s",
   VRAM_GB: "GB",
+  vram_gb: "GB",
   wattage_W: "W",
+  wattage_w: "W",
   write_MB_s: "MB/s",
 };
 
-function formatPCComponentSpecification(code: string, value: unknown): string {
+const componentSpecificationPriority: Record<string, string[]> = {
+  CPU: ["socket", "cores", "threads", "boost_GHz"],
+  GPU: ["memory_type", "VRAM_GB", "memory_bus_bit"],
+  MOTHERBOARD: ["socket", "chipset", "memory_type", "form_factor"],
+  RAM: ["memory_type", "capacity_gb", "data_rate_mt_s", "cas_latency_cycles"],
+  STORAGE: ["capacity_gb", "interface", "protocol", "drive_type", "sequential_read_mb_s", "sequential_write_mb_s"],
+  PSU: ["wattage_W", "efficiency", "modularity", "form_factor"],
+  COOLER: ["type", "socket", "height_mm"],
+  CASE: ["form_factor", "max_gpu_length_mm", "height_mm"],
+};
+
+function componentSpecificationEntries(
+  componentType: string,
+  specifications: Record<string, unknown> | undefined,
+): { code: string; label: string; value: string }[] {
+  if (!specifications) return [];
+  const priority = componentSpecificationPriority[componentType.toUpperCase()] ?? [];
+  const entries = Object.entries(specifications)
+    .filter(([, value]) => value !== null && value !== undefined
+      && value !== "" && (!Array.isArray(value) || value.length > 0));
+  const prioritized = priority
+    .map((code) => entries.find(([entryCode]) => entryCode === code))
+    .filter((entry): entry is [string, unknown] => entry !== undefined);
+  const prioritizedCodes = new Set(priority);
+  const remaining = entries
+    .filter(([code]) => !prioritizedCodes.has(code))
+    .sort(([left], [right]) => left.localeCompare(right));
+  const selected = [...prioritized, ...remaining];
+  return selected
+    .slice(0, 6)
+    .map(([code, value]) => {
+      const formatted = formatPCComponentSpecification(code, value);
+      const separator = formatted.indexOf(":");
+      return {
+        code,
+        label: separator < 0 ? humanizeCode(code) : formatted.slice(0, separator),
+        value: separator < 0 ? formatted : formatted.slice(separator + 1).trim(),
+      };
+    });
+}
+
+export function formatPCComponentSpecification(code: string, value: unknown): string {
   const formatted = typeof value === "boolean" ? (value ? "Có" : "Không") : formatSpecificationValue(value);
   const unit = componentSpecificationUnits[code];
   return `${componentSpecificationLabels[code] ?? humanizeCode(code)}: ${formatted}${unit && typeof value === "number" ? ` ${unit}` : ""}`;
@@ -779,8 +851,7 @@ export function PCConfigurationDetails({
   const specificationComponents = parsePCConfiguration(specifications.component_details)
     ?? parsePCConfiguration(specifications.configuration_items)
     ?? [];
-  const components = bomComponents?.length
-    ? bomComponents.map((component) => {
+  const components = (bomComponents ?? []).map((component) => {
       const details = specificationComponents.find((entry) => entry.modelCode === component.modelCode);
       return {
         componentType: component.productType || details?.componentType || component.displayCategory,
@@ -788,54 +859,92 @@ export function PCConfigurationDetails({
         productName: component.productName || details?.productName,
         quantity: component.quantity,
         componentWarrantyMonths: component.warrantyMonths ?? undefined,
-        keySpecifications: details?.keySpecifications,
+        keySpecifications: details?.keySpecifications ?? component.keySpecifications ?? undefined,
+        imageUrl: component.imageUrl,
+        imageAltText: component.imageAltText,
       };
-    })
-    : specificationComponents;
-  const summaryEntries = bomComponents?.length
-    ? bomComponents.map(
-      (component) => `${pcComponentTypeLabel(component.productType)}: ${component.productName}`,
-    )
-    : pcConfigurationSummaryEntries(undefined, specifications.configuration_summary);
+    });
   const status = pcConfigurationStatusLabel(specifications.bom_status);
   const hasComponents = components.length > 0;
-  if (!hasComponents && summaryEntries.length === 0) return null;
+  const hasWarranty = components.some((component) => formatWarranty(component.componentWarrantyMonths));
+  const hasSpecifications = components.some((component) =>
+    componentSpecificationEntries(component.componentType, component.keySpecifications).length > 0);
+  if (!hasComponents) return null;
   return <section className="v2-pc-configuration-details" aria-labelledby="pc-configuration-title">
     <div className="v2-pc-configuration-details-heading">
       <div>
-        {hasComponents && <p className="v2-eyebrow">Cấu hình tham khảo</p>}
         <h2 id="pc-configuration-title">Cấu hình linh kiện</h2>
       </div>
       {hasComponents && status && <span className="v2-pc-configuration-status">{status}</span>}
     </div>
-    {hasComponents ? <div className="v2-table-wrap">
-      <table className="v2-table v2-pc-configuration-table">
+    <div className="v2-table-wrap v2-pc-configuration-table-wrap">
+      <table className={`v2-table v2-pc-configuration-table${hasWarranty ? " has-warranty" : ""}${hasSpecifications ? " has-specifications" : ""}`}>
+        <colgroup><col /><col /><col /><col />
+          {hasWarranty && <col />}
+          {hasSpecifications && <col />}
+        </colgroup>
         <thead><tr>
           <th scope="col">Loại linh kiện</th>
-          <th scope="col">Tên sản phẩm</th>
+          <th scope="col">Linh kiện</th>
           <th scope="col">Mã model</th>
           <th scope="col">Số lượng</th>
-          <th scope="col">Bảo hành tham khảo</th>
-          <th scope="col">Thông số chính</th>
+          {hasWarranty && <th scope="col">Bảo hành</th>}
+          {hasSpecifications && <th scope="col">Thông số chính</th>}
         </tr></thead>
         <tbody>{components.map((component, index) => <tr key={`${index}:${component.componentType}:${component.modelCode}`}>
-          <td>{pcComponentTypeLabel(component.componentType)}</td>
-          <td>{component.productName ?? "Chưa có tên sản phẩm"}</td>
-          <td className="v2-mono">{component.modelCode}</td>
+          <td className="v2-pc-bom-type">{pcComponentTypeLabel(component.componentType)}</td>
+          <td><div className="v2-pc-bom-component">
+            <Link to={`/customer/product?modelCode=${encodeURIComponent(component.modelCode)}`}>
+              <ProductArtwork
+                image={component.imageUrl
+                  ? { url: component.imageUrl, altText: component.imageAltText ?? component.productName ?? component.modelCode, isPrimary: true }
+                  : undefined}
+                productName={component.productName ?? component.modelCode}
+                productType={component.componentType}
+              />
+            </Link>
+            <Link to={`/customer/product?modelCode=${encodeURIComponent(component.modelCode)}`}>
+              {component.productName ?? "Chưa có tên sản phẩm"}
+            </Link>
+          </div></td>
+          <td className="v2-mono v2-pc-bom-model">{component.modelCode}</td>
           <td>{component.quantity ?? "—"}</td>
-          <td>{formatWarranty(component.componentWarrantyMonths) ?? "—"}</td>
-          <td>{component.keySpecifications
-            ? Object.entries(component.keySpecifications)
-              .map(([key, value]) => formatPCComponentSpecification(key, value))
-              .join(" · ")
-            : "—"}</td>
+          {hasWarranty && <td>{formatWarranty(component.componentWarrantyMonths)}</td>}
+          {hasSpecifications && <td><div className="v2-pc-bom-specs">
+            {componentSpecificationEntries(component.componentType, component.keySpecifications)
+              .map((specification) => <span key={specification.code}>
+                <strong>{specification.label}</strong>{specification.value}
+              </span>)}
+          </div></td>}
         </tr>)}</tbody>
       </table>
-    </div> : <p className="v2-pc-configuration-empty">Cấu hình linh kiện hiện chưa có dữ liệu công khai.</p>}
-    {summaryEntries.length > 0 && <div className="v2-pc-configuration-summary-detail">
-      <h3>Tóm tắt cấu hình tham khảo</h3>
-      <ul>{summaryEntries.map((entry, index) => <li key={`${index}:${entry}`}>{entry}</li>)}</ul>
-    </div>}
+    </div>
+  </section>;
+}
+
+export function PCComponentChecklist({ components }: { components: CatalogBomComponent[] }) {
+  if (components.length === 0) return null;
+  return <section className="v2-pc-component-checklist" aria-label="Tóm tắt cấu hình PC">
+    <h2>Cấu hình linh kiện</h2>
+    <ul>{[...components].sort((a, b) => a.displayOrder - b.displayOrder).map((component) => {
+      const specs = component.keySpecifications
+        ? Object.entries(component.keySpecifications)
+          .map(([key, value]) => formatPCComponentSpecification(key, value))
+          .filter(Boolean)
+          .slice(0, 2)
+        : [];
+      return <li key={`${component.displayOrder}:${component.modelCode}`}>
+        <svg aria-hidden="true" viewBox="0 0 20 20">
+          <path d="m4 10 4 4 8-8" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        <span className="v2-pc-checklist-type">{pcComponentTypeLabel(component.productType || component.displayCategory)}</span>
+        <span className="v2-pc-checklist-name">
+          {component.productName}
+          <small>{component.modelCode}{component.quantity > 1 ? ` · ${component.quantity} cái` : ""}</small>
+        </span>
+        {specs.length > 0 && <span className="v2-pc-checklist-specs">{specs.join(" · ")}</span>}
+      </li>;
+    })}</ul>
   </section>;
 }
 
@@ -972,8 +1081,8 @@ export function ProductOfferPanel({
       <div className="v2-current-offer">
         <div className="v2-current-offer-price">
           <span className="v2-current-offer-label">Giá bán hiện tại</span>
-          {Number(selectedOffer.basePrice ?? selectedOffer.price) > Number(selectedOffer.price)
-            && <span className="v2-promotion-original-price">{money(selectedOffer.basePrice ?? selectedOffer.price, selectedOffer.currency)}</span>}
+          {offerOriginalPrice(selectedOffer) > 0
+            && <span className="v2-promotion-original-price">{money(offerOriginalPrice(selectedOffer), selectedOffer.currency)}</span>}
           <strong>{money(selectedOffer.price, selectedOffer.currency)}</strong>
         </div>
         <div className="v2-current-offer-facts">
@@ -1010,7 +1119,9 @@ export function ProductOfferPanel({
           </button>;
         })}
       </div>}
-    </> : <p className="v2-muted">Giá bán và tình trạng hàng chưa được cập nhật.</p>}
+    </> : <>
+      <p className="v2-muted">Hiện chưa có ưu đãi hợp lệ để đặt mua.</p>
+    </>}
   </section>;
 }
 

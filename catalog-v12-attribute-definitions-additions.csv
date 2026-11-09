@@ -1,0 +1,21 @@
+﻿product_type,code,label_vi,label_en,data_type,unit,filterable,build_critical,subtype,input_mode,options,specification_scope
+CPU,max_memory_bandwidth_gbs,Băng thông bộ nhớ tối đa,Maximum memory bandwidth,DECIMAL,GB/s,false,false,,,,
+GPU,ray_accelerator_unit_count,Số đơn vị tăng tốc Ray Tracing,Ray tracing accelerator units,INTEGER,units,false,false,,,,GPU_SILICON
+GPU,ai_accelerator_unit_count,Số đơn vị tăng tốc AI,AI accelerator units,INTEGER,units,false,false,,,,GPU_SILICON
+RAM,on_die_ecc,ECC tích hợp trên chip DRAM (On-die ECC),On-die ECC,BOOLEAN,,false,false,,,,
+STORAGE,cache_type,Loại bộ nhớ đệm SSD,SSD cache type,TEXT,,false,false,,,,
+COOLER,heatpipe_count,Số ống dẫn nhiệt,Heat pipe count,INTEGER,pipes,false,false,,,,
+ACCESSORY,monitor_hdcp_version,Phiên bản HDCP,HDCP version,TEXT,,false,false,MONITOR,,,
+ACCESSORY,monitor_gsync_compatible,Tương thích NVIDIA G-SYNC,NVIDIA G-SYNC compatible,BOOLEAN,,false,false,MONITOR,,,
+ACCESSORY,monitor_color_depth_bit,Độ sâu màu,Color depth,INTEGER,bit,false,false,MONITOR,,,
+ACCESSORY,monitor_adaptive_sync_range_hz,Dải tần số Adaptive-Sync,Adaptive-Sync range,JSON,Hz,false,false,MONITOR,JSON,,
+ACCESSORY,mouse_switch_type,Loại switch nút chuột,Mouse switch type,TEXT,,false,false,MOUSE,,,
+ACCESSORY,mouse_rgb_lighting,Đèn RGB,RGB lighting,BOOLEAN,,false,false,MOUSE,,,
+ACCESSORY,keyboard_switch_lifespan_million,Tuổi thọ switch,Switch lifespan,INTEGER,million keystrokes,false,false,KEYBOARD,,,
+ACCESSORY,keyboard_wrist_rest_included,Có kê tay đi kèm,Wrist rest included,BOOLEAN,,false,false,KEYBOARD,,,
+ACCESSORY,headset_virtual_surround,Âm thanh vòm ảo,Virtual surround sound,BOOLEAN,,false,false,HEADSET,,,
+ACCESSORY,headset_detachable_microphone,Micro có thể tháo rời,Detachable microphone,BOOLEAN,,false,false,HEADSET,,,
+PC,component_details,Chi tiết từng linh kiện trong cấu hình,Detailed PC component list,JSON,,false,false,,JSON_ARRAY,,
+PC,component_count,Số lượng linh kiện trong cấu hình,Component count,INTEGER,components,false,false,,,,
+PC,target_use,Nhu cầu sử dụng đề xuất,Recommended use case,TEXT,,false,false,,,,
+PC,recommended_resolution,Độ phân giải chơi game đề xuất,Recommended gaming resolution,TEXT,,false,false,,,,

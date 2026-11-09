@@ -469,6 +469,12 @@ export function CustomerHeader() {
 
   return (
     <header className="v2-customer-header" data-shared-component="v2-customer-header">
+      <div className="v2-customer-announcement">
+        <div className="v2-customer-announcement-inner">
+          <span>Khám phá phần cứng PC và thông tin kỹ thuật chi tiết</span>
+          <Link to="/customer/parts">Khám phá danh mục <span aria-hidden="true">→</span></Link>
+        </div>
+      </div>
       <div className="v2-customer-header-inner">
         <Link className="v2-brand" to="/customer/home">
           <span className="v2-brand-mark" aria-hidden="true">⌘</span>
@@ -497,9 +503,7 @@ export function CustomerHeader() {
             Danh mục sản phẩm <span aria-hidden="true">⌄</span>
           </button>
           <NavLink to="/customer/compare">So sánh</NavLink>
-          <span className="v2-header-link" aria-label="Build-PC coming soon">
-            Build-PC <span className="v2-coming-soon">Coming Soon</span>
-          </span>
+          <NavLink to="/build-pc/start">Tự cấu hình PC</NavLink>
         </nav>
         <form
           className="v2-header-search"
@@ -550,20 +554,24 @@ export function CustomerHeader() {
               ? <Link to="/customer/parts?type=PC" onClick={() => setMenuOpen(false)}>Tất cả máy tính bộ</Link>
               : <span className="is-unavailable">Máy tính bộ · chưa có dữ liệu danh mục</span>}
             {([
-              { label: "PC Gaming", terms: ["gaming"] },
+              { label: "PC Gaming", terms: ["gaming"], searchTerm: "gaming" },
               { label: "PC AI", terms: ["pc ai", "ai pc"] },
-              { label: "PC Workstation / Đồ họa", terms: ["workstation", "do hoa"] },
-              { label: "PC Creator / Streaming", terms: ["creator", "streaming"] },
-              { label: "PC Văn phòng", terms: ["van phong", "office"] },
+              { label: "PC Workstation / Đồ họa", terms: ["workstation", "do hoa"], searchTerm: "workstation" },
+              { label: "PC Creator / Streaming", terms: ["creator", "streaming"], searchTerm: "creator" },
+              { label: "PC Văn phòng", terms: ["van phong", "office"], searchTerm: "văn phòng" },
               { label: "PC Mini", terms: ["pc mini", "mini pc"] },
               { label: "PC AMD Gaming", terms: ["amd gaming", "pc amd"] },
             ]).map((item) => {
               const category = catalogFacets && findMenuCategory(catalogFacets.categories, item.terms);
-              return category
-                ? <Link key={item.label} to={`/customer/parts?type=PC&category=${encodeURIComponent(category.value)}`} onClick={() => setMenuOpen(false)}>{item.label}</Link>
-                : <span className="is-unavailable" key={item.label}>{item.label} · chưa được phân loại</span>;
+              const destination = category
+                ? `/customer/parts?type=PC&category=${encodeURIComponent(category.value)}`
+                : item.searchTerm
+                  ? `/customer/parts?type=PC&q=${encodeURIComponent(item.searchTerm)}`
+                  : undefined;
+              return destination
+                ? <Link key={item.label} to={destination} onClick={() => setMenuOpen(false)}>{item.label}</Link>
+                : null;
             })}
-            <Link to="/customer/parts?type=PC" onClick={() => setMenuOpen(false)}>PC theo tầm giá · lọc trong danh mục</Link>
           </section>
           <section>
             <h2>Linh kiện</h2>

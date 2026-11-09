@@ -78,6 +78,84 @@ class CatalogCsvImporterTest {
     }
 
     @Test
+    void parsesAndValidatesTheRequestedFullDemoCatalog() throws IOException {
+        String catalogCsv = Files.readString(
+                Path.of("..", "catalog-import-full-demo-v2.csv").toAbsolutePath().normalize(),
+                StandardCharsets.UTF_8);
+        List<CatalogCsvRow> rows = CatalogCsvImporter.parseRecords(catalogCsv, objectMapper);
+
+        CatalogCsvImporter.validateDataset(rows);
+
+        assertEquals(200, rows.size());
+        assertEquals(14, rows.stream().filter(row -> "PC".equals(row.productTypeCode())).count());
+        assertEquals(111, rows.stream().mapToInt(row -> row.bomComponents().size()).sum());
+        assertEquals(83, rows.stream().mapToInt(row -> row.upgradeGroups().size()).sum());
+        assertEquals(431, rows.stream()
+                .flatMap(row -> row.upgradeGroups().stream())
+                .mapToInt(group -> group.options().size())
+                .sum());
+        assertTrue(rows.stream().allMatch(CatalogCsvRow::priceIsEstimate));
+        assertTrue(rows.stream().allMatch(row -> !row.images().isEmpty()));
+        assertTrue(rows.stream().allMatch(row -> row.merchandising().description() != null));
+    }
+
+    @Test
+    void parsesAndValidatesTheV4FullMasterCatalogWithoutTruncatingUpgradeOptions() throws IOException {
+        String catalogCsv = Files.readString(
+                Path.of("..", "catalog-import-full-demo-v4.csv").toAbsolutePath().normalize(),
+                StandardCharsets.UTF_8);
+        List<CatalogCsvRow> rows = CatalogCsvImporter.parseRecords(catalogCsv, objectMapper);
+
+        CatalogCsvImporter.validateDataset(rows);
+
+        assertEquals(252, rows.size());
+        List<CatalogCsvRow> pcs = rows.stream()
+                .filter(row -> "PC".equals(row.productTypeCode()))
+                .toList();
+        assertEquals(36, pcs.size());
+        assertEquals(287, pcs.stream().mapToInt(row -> row.upgradeGroups().size()).sum());
+        assertEquals(2_681, pcs.stream()
+                .flatMap(row -> row.upgradeGroups().stream())
+                .mapToInt(group -> group.options().size())
+                .sum());
+        assertTrue(pcs.stream().flatMap(row -> row.upgradeGroups().stream())
+                .allMatch(group -> group.options().size() >= 2));
+        assertTrue(pcs.stream().allMatch(row -> !row.bomComponents().isEmpty()));
+    }
+
+    @Test
+    void attachingEvidencePreservesAllV2CatalogFields() throws IOException {
+        String catalogCsv = Files.readString(
+                Path.of("..", "catalog-import-full-demo-v2.csv").toAbsolutePath().normalize(),
+                StandardCharsets.UTF_8);
+        String evidenceCsv = String.join(",",
+                "model_code", "product_type", "attribute_code", "data_type", "unit",
+                "value_json", "source_url", "source_locator", "verification_status",
+                "review_note", "review_date", "specification_scope");
+
+        List<CatalogCsvRow> original = CatalogCsvImporter.parseRecords(catalogCsv, objectMapper);
+        List<CatalogCsvRow> enriched = CatalogCsvImporter.parseRecords(catalogCsv, evidenceCsv, objectMapper);
+        CatalogCsvRow originalPc = original.stream()
+                .filter(row -> "PC".equals(row.productTypeCode())
+                        && !row.bomComponents().isEmpty()
+                        && !row.upgradeGroups().isEmpty())
+                .findFirst()
+                .orElseThrow();
+        CatalogCsvRow enrichedPc = enriched.stream()
+                .filter(row -> row.modelCode().equals(originalPc.modelCode()))
+                .findFirst()
+                .orElseThrow();
+
+        assertEquals(originalPc.compareAtPrice(), enrichedPc.compareAtPrice());
+        assertEquals(originalPc.stockQuantity(), enrichedPc.stockQuantity());
+        assertEquals(originalPc.merchandising(), enrichedPc.merchandising());
+        assertEquals(originalPc.bomComponents(), enrichedPc.bomComponents());
+        assertEquals(originalPc.upgradeGroups(), enrichedPc.upgradeGroups());
+        assertEquals(originalPc.specifications(), enrichedPc.specifications());
+        assertFalse(enrichedPc.verificationMetadata().isEmpty());
+    }
+
+    @Test
     void rejectsLegacyHeaderInsteadOfFallingBackToLegacyCsv() {
         IllegalArgumentException error = assertThrows(
                 IllegalArgumentException.class,
@@ -151,6 +229,20 @@ class CatalogCsvImporterTest {
                 () -> CatalogCsvImporter.validateConfigurationItems(
                         withConfigurationItems(pc, items), productTypes));
         assertTrue(error.getMessage().contains("MISSING-MODEL"));
+    }
+
+    @Test
+    void acceptsOptionalPositiveConfigurationItemQuantity() throws Exception {
+        CatalogCsvRow pc = canonicalRows().stream()
+                .filter(row -> "PC".equals(row.productTypeCode()))
+                .findFirst()
+                .orElseThrow();
+        JsonNode items = objectMapper.readTree(
+                pc.specifications().get("configuration_items").toString());
+        ((tools.jackson.databind.node.ObjectNode) items.get(0)).put("quantity", 2);
+
+        CatalogCsvImporter.validateConfigurationItems(withConfigurationItems(pc, items),
+                productTypesByModel(canonicalRows()));
     }
 
     @Test

@@ -1,0 +1,11 @@
+﻿product_type,product_count,new_attribute_definitions,delta_values,manufacturer_source_or_derived,estimated_or_derived_reference
+ACCESSORY,10,8,18,11,7
+CASE,15,8,120,90,30
+COOLER,15,8,120,72,48
+CPU,15,6,90,75,15
+GPU,15,8,120,105,15
+MOTHERBOARD,15,14,210,196,14
+PC,10,8,80,0,80
+PSU,15,8,120,104,16
+RAM,20,6,120,40,80
+STORAGE,20,6,120,40,80

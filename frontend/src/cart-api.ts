@@ -3,11 +3,11 @@ export interface CartItem {
   productName: string;
   modelCode: string;
   quantity: number;
-  unitPrice: number;
-  baseUnitPrice: number;
+  unitPrice: number | null;
+  baseUnitPrice: number | null;
   discountAmount: number;
-  currency: string;
-  subtotal: number;
+  currency: string | null;
+  subtotal: number | null;
   availableQuantity: number;
   availability: "AVAILABLE" | "OUT_OF_STOCK" | "INSUFFICIENT_STOCK" | "UNAVAILABLE" | "INVALID_PRICE";
   availabilityMessage: string;

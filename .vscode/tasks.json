@@ -1,0 +1,55 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Import Catalog V10",
+			"type": "shell",
+			"command": "powershell.exe",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-File",
+				"scripts/import-catalog-v10.ps1"
+			],
+			"isBackground": true,
+			"problemMatcher": []
+		},
+		{
+			"label": "Import catalog v10",
+			"type": "shell",
+			"command": "powershell.exe",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-File",
+				"scripts/import-catalog-v10.ps1"
+			],
+			"isBackground": true,
+			"problemMatcher": []
+		},
+		{
+			"label": "Read PC BOM from local PostgreSQL",
+			"type": "shell",
+			"command": "C:\\Program Files\\PostgreSQL\\18\\bin\\psql.exe",
+			"args": [
+				"-h",
+				"localhost",
+				"-p",
+				"5432",
+				"-U",
+				"postgres",
+				"-d",
+				"pc_builder_store_dev",
+				"-X",
+				"-v",
+				"ON_ERROR_STOP=1",
+				"-c",
+				"SELECT p.model_code, ad.attribute_code, av.value_text, av.value_json::text FROM products p JOIN product_attribute_values av ON av.product_id=p.product_id JOIN product_attribute_definitions ad ON ad.attribute_definition_id=av.attribute_definition_id JOIN product_types pt ON pt.product_type_id=ad.product_type_id AND pt.product_type_id=p.product_type_id WHERE p.model_code IN ('PBC-PC-GAME-002','PBC-PC-CREATOR-008') AND ad.attribute_code IN ('configuration_items','configuration_summary','bom_status') ORDER BY p.model_code, ad.attribute_code;"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		}
+	]
+}

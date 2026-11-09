@@ -48,23 +48,18 @@ public class CatalogImportRunner implements ApplicationRunner {
         importer.validateExistingAttributeDefinitionTypes();
 
         Path csvPath = Path.of(environment.getProperty(
-                "catalog.import.csv", "..\\catalog-import-150-products-enriched-v5.csv"));
-        Path evidencePath = Path.of(environment.getProperty(
-                "catalog.import.evidence-csv", "..\\seed\\catalog-attribute-evidence.csv"));
+                "catalog.import.csv", "..\\catalog-import-full-demo-v4.csv"));
+        String evidenceCsv = environment.getProperty("catalog.import.evidence-csv");
+        Path evidencePath = evidenceCsv == null || evidenceCsv.isBlank()
+                ? null
+                : Path.of(evidenceCsv);
         long defaultStock = environment.getProperty("catalog.import.default-stock", Long.class, 5L);
         CatalogCsvImporter.validateDefaultOfferStock(defaultStock);
         List<CatalogCsvRow> rows = importer.readAndValidate(csvPath, evidencePath);
         boolean apply = environment.getProperty("catalog.import.apply", Boolean.class, false);
         if (!apply) {
-            LOGGER.info(
-                    "Catalog import preview validated {} products, 10 types, 10 categories, 41 brands, "
-                            + "{} typed attribute values, and {} exact evidence matches. No database writes were made.",
-                    rows.size(),
-                    rows.stream().mapToInt(row -> row.specifications().size()).sum(),
-                    rows.stream()
-                            .flatMap(row -> row.verificationMetadata().values().stream())
-                            .filter(evidence -> evidence.verificationStatus().startsWith("VERIFIED_"))
-                            .count());
+            CatalogCsvImporter.ImportSummary summary = importer.preview(rows, defaultStock);
+            LOGGER.info("Catalog import preview (no writes): {}", summary);
             return;
         }
 
@@ -80,10 +75,11 @@ public class CatalogImportRunner implements ApplicationRunner {
                 "SELECT COUNT(*) FROM products WHERE model_code IN (" + placeholders + ")",
                 Long.class,
                 modelCodes);
-        Long offers = jdbcTemplate.queryForObject(
+        Long activeOffers = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM product_offers "
                         + "WHERE offer_code IN (SELECT 'DEMO-' || model_code FROM products "
-                        + "WHERE model_code IN (" + placeholders + "))",
+                        + "WHERE model_code IN (" + placeholders + ")) "
+                        + "AND offer_status = 'ACTIVE'",
                 Long.class,
                 modelCodes);
         Long attributeValues = jdbcTemplate.queryForObject(
@@ -105,28 +101,64 @@ public class CatalogImportRunner implements ApplicationRunner {
         long expectedVerificationMetadata = rows.stream()
                 .mapToLong(row -> row.verificationMetadata().size())
                 .sum();
+        Long bomComponents = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM product_bom_components bom "
+                        + "JOIN products parent ON parent.product_id = bom.parent_product_id "
+                        + "JOIN product_types type ON type.product_type_id = parent.product_type_id "
+                        + "WHERE parent.model_code IN (" + placeholders + ") AND type.type_code = 'PC'",
+                Long.class,
+                modelCodes);
+        Long upgradeGroups = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM product_upgrade_groups groups "
+                        + "JOIN products product ON product.product_id = groups.product_id "
+                        + "WHERE product.model_code IN (" + placeholders + ") "
+                        + "AND groups.is_enabled = TRUE",
+                Long.class,
+                modelCodes);
+        Long upgradeOptions = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM product_upgrade_options options "
+                        + "JOIN product_upgrade_groups groups "
+                        + "ON groups.upgrade_group_id = options.upgrade_group_id "
+                        + "JOIN products product ON product.product_id = groups.product_id "
+                        + "WHERE product.model_code IN (" + placeholders + ") "
+                        + "AND groups.is_enabled = TRUE AND options.is_enabled = TRUE",
+                Long.class,
+                modelCodes);
 
         if (products == null || products != rows.size()
-                || offers == null || offers != summary.offers()
+                || activeOffers == null || activeOffers != summary.offers()
                 || attributeValues == null || attributeValues < summary.attributeValues()
-                || verificationMetadata == null || verificationMetadata < expectedVerificationMetadata) {
+                || verificationMetadata == null || verificationMetadata < expectedVerificationMetadata
+                || bomComponents == null || bomComponents != summary.bomComponents()
+                || upgradeGroups == null || upgradeGroups != summary.upgradeGroups()
+                || upgradeOptions == null || upgradeOptions != summary.upgradeOptions()) {
             throw new IllegalStateException(
                     "Catalog persistence verification failed: products=" + products + "/" + rows.size()
-                            + ", offers=" + offers + "/" + summary.offers()
+                            + ", active offers=" + activeOffers + "/" + summary.offers()
                             + ", typedAttributeValues=" + attributeValues + "/" + summary.attributeValues()
                             + ", verificationMetadata=" + verificationMetadata + "/"
-                            + expectedVerificationMetadata + ".");
+                            + expectedVerificationMetadata + ", BOM components=" + bomComponents
+                            + "/" + summary.bomComponents() + ", active upgrade groups=" + upgradeGroups
+                            + "/" + summary.upgradeGroups() + ", active upgrade options=" + upgradeOptions
+                            + "/" + summary.upgradeOptions() + ".");
         }
         LOGGER.info(
-                "Catalog persistence verified in PostgreSQL: products={}/{}, DEMO offers={}/{}, "
-                        + "typed attribute values={}/at least {}, verification metadata={}/at least {}.",
+                "Catalog persistence verified in PostgreSQL: products={}/{}, active catalog offers={}/{}, "
+                        + "typed attribute values={}/at least {}, verification metadata={}/at least {}, "
+                        + "PC BOM components={}/{}, active upgrade groups={}/{}, active upgrade options={}/{}.",
                 products,
                 rows.size(),
-                offers,
+                activeOffers,
                 summary.offers(),
                 attributeValues,
                 summary.attributeValues(),
                 verificationMetadata,
-                expectedVerificationMetadata);
+                expectedVerificationMetadata,
+                bomComponents,
+                summary.bomComponents(),
+                upgradeGroups,
+                summary.upgradeGroups(),
+                upgradeOptions,
+                summary.upgradeOptions());
     }
 }

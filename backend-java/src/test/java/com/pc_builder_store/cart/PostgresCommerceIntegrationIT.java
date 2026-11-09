@@ -3,6 +3,7 @@ package com.pc_builder_store.cart;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 import com.pc_builder_store.auth.AuthUserPrincipal;
 import com.pc_builder_store.catalog.dto.ProductUpgradeDtos.BundleSelection;
@@ -160,32 +161,38 @@ class PostgresCommerceIntegrationIT {
                     FROM "order_items" oi
                     JOIN "orders" o ON o."order_id" = oi."order_id"
                     WHERE o."user_id" IN (SELECT "user_id" FROM "users" WHERE "email" LIKE ?)
+                       OR o."customer_email" LIKE ?
                 )
-                """, userPattern);
+                """, userPattern, userPattern);
         jdbc.update("""
                 DELETE FROM "order_payment_transactions"
                 WHERE "order_id" IN (SELECT "order_id" FROM "orders"
-                                     WHERE "user_id" IN (SELECT "user_id" FROM "users" WHERE "email" LIKE ?))
-                """, userPattern);
+                                     WHERE "user_id" IN (SELECT "user_id" FROM "users" WHERE "email" LIKE ?)
+                                        OR "customer_email" LIKE ?)
+                """, userPattern, userPattern);
         jdbc.update("""
                 DELETE FROM "order_refund_transactions"
                 WHERE "order_id" IN (SELECT "order_id" FROM "orders"
-                                     WHERE "user_id" IN (SELECT "user_id" FROM "users" WHERE "email" LIKE ?))
-                """, userPattern);
+                                     WHERE "user_id" IN (SELECT "user_id" FROM "users" WHERE "email" LIKE ?)
+                                        OR "customer_email" LIKE ?)
+                """, userPattern, userPattern);
         jdbc.update("""
                 DELETE FROM "order_status_history"
                 WHERE "order_id" IN (SELECT "order_id" FROM "orders"
-                                     WHERE "user_id" IN (SELECT "user_id" FROM "users" WHERE "email" LIKE ?))
-                """, userPattern);
+                                     WHERE "user_id" IN (SELECT "user_id" FROM "users" WHERE "email" LIKE ?)
+                                        OR "customer_email" LIKE ?)
+                """, userPattern, userPattern);
         jdbc.update("""
                 DELETE FROM "order_items"
                 WHERE "order_id" IN (SELECT "order_id" FROM "orders"
-                                     WHERE "user_id" IN (SELECT "user_id" FROM "users" WHERE "email" LIKE ?))
-                """, userPattern);
+                                     WHERE "user_id" IN (SELECT "user_id" FROM "users" WHERE "email" LIKE ?)
+                                        OR "customer_email" LIKE ?)
+                """, userPattern, userPattern);
         jdbc.update("""
                 DELETE FROM "orders"
                 WHERE "user_id" IN (SELECT "user_id" FROM "users" WHERE "email" LIKE ?)
-                """, userPattern);
+                   OR "customer_email" LIKE ?
+                """, userPattern, userPattern);
 
         jdbc.update("""
                 DELETE FROM "cart_item_gifts"
@@ -608,6 +615,185 @@ class PostgresCommerceIntegrationIT {
         assertEquals(BigDecimal.ONE, reservedQuantity(products.cpuOfferId()));
         assertEquals(BigDecimal.ONE, reservedQuantity(products.ramOfferId()));
         assertEquals(2, activeReservationCountForFixtureUsers());
+    }
+
+    @Test
+    void successfulPaymentAndRepeatedShippingTransitionDeductStockExactlyOnce() {
+        when(paymentGateway.charge(any(BigDecimal.class), anyString(), anyString()))
+                .thenReturn(new PaymentGateway.PaymentResult(
+                        "SIMULATED", "SUCCEEDED", prefix + "PAID"));
+        BigDecimal cpuStockBefore = stockQuantity(products.cpuOfferId());
+        OrderDtos.OrderDetail created = checkout(customer, "SIMULATED_ONLINE");
+
+        OrderDtos.OrderDetail paid = orderService.processSimulatedPayment(
+                created.order().orderNumber(), prefix + "PAY-ONCE", customer.principal());
+        assertEquals("PAID", paid.order().paymentStatus());
+        assertEquals(BigDecimal.ONE, reservedQuantity(products.cpuOfferId()));
+
+        updateToReadyToShip(created.order().orderNumber());
+        orderService.updateStatus(
+                created.order().orderNumber(),
+                new OrderDtos.StatusUpdateRequest(
+                        OrderDtos.FulfillmentStatus.SHIPPING, "Ship paid order"),
+                admin.principal());
+        assertEquals(cpuStockBefore.subtract(BigDecimal.ONE), stockQuantity(products.cpuOfferId()));
+        assertEquals(BigDecimal.ZERO, reservedQuantity(products.cpuOfferId()));
+
+        orderService.updateStatus(
+                created.order().orderNumber(),
+                new OrderDtos.StatusUpdateRequest(
+                        OrderDtos.FulfillmentStatus.SHIPPING, "Repeat status update"),
+                admin.principal());
+        assertEquals(cpuStockBefore.subtract(BigDecimal.ONE), stockQuantity(products.cpuOfferId()));
+    }
+
+    @Test
+    void guestCheckoutUsesCartSnapshotsAndScopesIdempotencyToGuestToken() {
+        BigDecimal promotionId = createRequiredGiftPromotion();
+        cartService.addItem(null, guestToken, products.pcOfferId().toString(), 1);
+        cartService.setSelectedGifts(
+                null,
+                guestToken,
+                products.pcOfferId().toString(),
+                List.of(new GiftSelection(
+                        promotionId.toString(), products.giftOfferId().toString(), 1)));
+
+        OrderDtos.GuestCheckoutRequest request = new OrderDtos.GuestCheckoutRequest(
+                "Guest buyer",
+                prefix + "guest@example.test",
+                "555-0100",
+                "Guest address",
+                "Test region",
+                "00000",
+                "COD",
+                List.of(new OrderDtos.CheckoutItem(products.pcOfferId().toString(), 1)));
+        String key = prefix + "GUEST-CHECKOUT";
+        OrderDtos.OrderDetail order = orderService.createGuestOrder(
+                request, key, guestTokens.hash(guestToken));
+
+        assertEquals(request.customerEmail(), order.order().customerEmail());
+        assertEquals(OrderDtos.FulfillmentStatus.PENDING_CONFIRMATION, order.order().status());
+        assertEquals(0, jdbc.queryForObject(
+                "SELECT count(*) FROM \"orders\" WHERE \"order_number\" = ? AND \"user_id\" IS NOT NULL",
+                Integer.class, order.order().orderNumber()));
+        assertEquals(1, jdbc.queryForObject("""
+                SELECT count(*) FROM "order_status_history"
+                WHERE "order_id" = (
+                    SELECT "order_id" FROM "orders" WHERE "order_number" = ?
+                ) AND "actor_user_id" IS NULL AND "actor_role_code" = 'GUEST'
+                """, Integer.class, order.order().orderNumber()));
+        assertEquals(1, jdbc.queryForObject("""
+                SELECT count(*) FROM "order_items"
+                WHERE "order_id" = (
+                    SELECT "order_id" FROM "orders" WHERE "order_number" = ?
+                ) AND "is_gift_snapshot" = TRUE
+                """, Integer.class, order.order().orderNumber()));
+        assertTrue(cartService.getCart(null, guestToken).items().isEmpty());
+
+        OrderDtos.OrderDetail repeated = orderService.createGuestOrder(
+                request, key, guestTokens.hash(guestToken));
+        assertEquals(order.order().orderNumber(), repeated.order().orderNumber());
+
+        String secondToken = guestTokens.createToken();
+        createdGuestTokens.add(secondToken);
+        cartService.addItem(null, secondToken, products.pcOfferId().toString(), 1);
+        cartService.setSelectedGifts(
+                null,
+                secondToken,
+                products.pcOfferId().toString(),
+                List.of(new GiftSelection(
+                        promotionId.toString(), products.giftOfferId().toString(), 1)));
+        OrderDtos.OrderDetail separate = orderService.createGuestOrder(
+                request, key, guestTokens.hash(secondToken));
+        assertNotEquals(order.order().orderNumber(), separate.order().orderNumber());
+    }
+
+    @Test
+    void guestCheckoutRejectsItemsThatDoNotExactlyMatchTheCart() {
+        cartService.addItem(null, guestToken, products.pcOfferId().toString(), 1);
+        OrderDtos.GuestCheckoutRequest forgedQuantity = new OrderDtos.GuestCheckoutRequest(
+                "Guest buyer",
+                prefix + "guest@example.test",
+                "555-0100",
+                "Guest address",
+                null,
+                null,
+                "COD",
+                List.of(new OrderDtos.CheckoutItem(products.pcOfferId().toString(), 2)));
+
+        OrderManagementException error = assertThrows(
+                OrderManagementException.class,
+                () -> orderService.createGuestOrder(
+                        forgedQuantity, prefix + "GUEST-FORGED",
+                        guestTokens.hash(guestToken)));
+
+        assertEquals(org.springframework.http.HttpStatus.CONFLICT, error.status());
+        assertEquals(1, cartService.getCart(null, guestToken).items().getFirst().quantity());
+        assertEquals(0, jdbc.queryForObject(
+                "SELECT count(*) FROM \"orders\" WHERE \"customer_email\" = ?",
+                Integer.class, prefix + "guest@example.test"));
+    }
+
+    @Test
+    void guestLookupRequiresMatchingPhoneAndNeverReturnsCustomerOrders() {
+        cartService.addItem(null, guestToken, products.pcOfferId().toString(), 1);
+        OrderDtos.OrderDetail guestOrder = orderService.createGuestOrder(
+                new OrderDtos.GuestCheckoutRequest(
+                        "Guest buyer", prefix + "guest@example.test", "555-0100",
+                        "Guest address", null, null, "COD",
+                        List.of(new OrderDtos.CheckoutItem(products.pcOfferId().toString(), 1))),
+                prefix + "GUEST-LOOKUP", guestTokens.hash(guestToken));
+
+        assertEquals(guestOrder.order().orderNumber(),
+                orderService.lookupGuestOrder(guestOrder.order().orderNumber(), "(555) 0100")
+                        .order().orderNumber());
+        OrderManagementException wrongPhone = assertThrows(
+                OrderManagementException.class,
+                () -> orderService.lookupGuestOrder(
+                        guestOrder.order().orderNumber(), "555-9999"));
+        assertEquals(org.springframework.http.HttpStatus.NOT_FOUND, wrongPhone.status());
+
+        OrderDtos.OrderDetail customerOrder = checkout(customer, "COD");
+        OrderManagementException registeredOrder = assertThrows(
+                OrderManagementException.class,
+                () -> orderService.lookupGuestOrder(
+                        customerOrder.order().orderNumber(), "5550000"));
+        assertEquals(org.springframework.http.HttpStatus.NOT_FOUND, registeredOrder.status());
+        assertEquals(wrongPhone.getMessage(), registeredOrder.getMessage());
+    }
+
+    @Test
+    void guestPaymentVerifiesPhoneAndReleasesThenReacquiresInventory() {
+        when(paymentGateway.charge(any(BigDecimal.class), anyString(), anyString()))
+                .thenReturn(
+                        new PaymentGateway.PaymentResult("SIMULATED", "FAILED", prefix + "FAIL"),
+                        new PaymentGateway.PaymentResult("SIMULATED", "SUCCEEDED", prefix + "RETRY"));
+        cartService.addItem(null, guestToken, products.pcOfferId().toString(), 1);
+        OrderDtos.OrderDetail guestOrder = orderService.createGuestOrder(
+                new OrderDtos.GuestCheckoutRequest(
+                        "Guest buyer", prefix + "guest@example.test", "555-0100",
+                        "Guest address", null, null, "SIMULATED_ONLINE",
+                        List.of(new OrderDtos.CheckoutItem(products.pcOfferId().toString(), 1))),
+                prefix + "GUEST-PAYMENT", guestTokens.hash(guestToken));
+
+        OrderManagementException wrongPhone = assertThrows(
+                OrderManagementException.class,
+                () -> orderService.processGuestPayment(
+                        guestOrder.order().orderNumber(), prefix + "GUEST-PAY-0", "555-9999"));
+        assertEquals(org.springframework.http.HttpStatus.NOT_FOUND, wrongPhone.status());
+        verifyNoInteractions(paymentGateway);
+
+        OrderDtos.OrderDetail failed = orderService.processGuestPayment(
+                guestOrder.order().orderNumber(), prefix + "GUEST-PAY-1", "555 0100");
+        assertEquals("FAILED", failed.order().paymentStatus());
+        assertEquals(BigDecimal.ZERO, reservedQuantity(products.cpuOfferId()));
+        assertEquals(BigDecimal.ZERO, reservedQuantity(products.ramOfferId()));
+
+        OrderDtos.OrderDetail retried = orderService.processGuestPayment(
+                guestOrder.order().orderNumber(), prefix + "GUEST-PAY-2", "(555)0100");
+        assertEquals("PAID", retried.order().paymentStatus());
+        assertEquals(BigDecimal.ONE, reservedQuantity(products.cpuOfferId()));
+        assertEquals(BigDecimal.ONE, reservedQuantity(products.ramOfferId()));
     }
 
     @Test

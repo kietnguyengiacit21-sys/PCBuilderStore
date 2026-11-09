@@ -74,21 +74,42 @@ export function pcReferenceDescription(
   specifications: Record<string, unknown>,
   bomComponents?: readonly { productType: string; modelCode: string; productName: string }[],
 ): string | null {
+  const components = parsePCConfiguration(specifications.component_details)
+    ?? parsePCConfiguration(specifications.configuration_items);
   if (bomComponents?.length) {
+    let selectedBom = bomComponents;
+    let matchedSpecificationBom = false;
+    if (components?.length) {
+      const expectedModelCodes = new Set(components.map((component) => component.modelCode));
+      const matchingBom = bomComponents.filter((component) => expectedModelCodes.has(component.modelCode));
+      if (matchingBom.length === expectedModelCodes.size) {
+        selectedBom = matchingBom;
+        matchedSpecificationBom = true;
+      }
+    }
+    const componentGroups = new Map<string, typeof selectedBom>();
+    for (const component of selectedBom) {
+      const type = component.productType.toUpperCase();
+      componentGroups.set(type, [...(componentGroups.get(type) ?? []), component]);
+    }
     const names = ["CPU", "GPU", "RAM", "STORAGE"].flatMap((type) => {
-      const component = bomComponents.find((entry) => entry.productType === type);
-      return component ? [component.productName || component.modelCode] : [];
+      const componentsForType = componentGroups.get(type) ?? [];
+      if (matchedSpecificationBom) {
+        return componentsForType.map((component) => component.productName || component.modelCode);
+      }
+      return componentsForType.length === 1
+        ? [componentsForType[0].productName || componentsForType[0].modelCode]
+        : [];
     });
     return names.length ? `Cấu hình gồm ${names.join(", ")}.` : null;
   }
-  const components = parsePCConfiguration(specifications.component_details)
-    ?? parsePCConfiguration(specifications.configuration_items);
-  if (!components) return null;
-  const names = ["CPU", "GPU", "RAM", "STORAGE"].flatMap((type) => {
-    const component = components.find((entry) => entry.componentType === type);
-    return component ? [component.productName ?? component.modelCode] : [];
-  });
-  return names.length ? `Cấu hình gồm ${names.join(", ")}.` : null;
+  if (components) {
+    const names = ["CPU", "GPU", "RAM", "STORAGE"].flatMap((type) =>
+      components.filter((component) => component.componentType === type)
+        .map((component) => component.productName ?? component.modelCode));
+    return names.length ? `Cấu hình gồm ${names.join(", ")}.` : null;
+  }
+  return null;
 }
 
 export function pcConfigurationSummaryEntries(
@@ -121,6 +142,7 @@ export function pcComponentSummary(component: PCConfigurationComponent): string 
 export function pcConfigurationStatusLabel(status: unknown): string | undefined {
   if (typeof status !== "string" || !status.trim()) return undefined;
   const labels: Record<string, string> = {
+    COMPLETE: "Đã ghi nhận đầy đủ",
     CONFIGURED: "Đã ghi nhận cấu hình",
     PARTIAL: "Đã ghi nhận một phần cấu hình",
     PENDING: "Chưa ghi nhận cấu hình",

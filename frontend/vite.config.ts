@@ -10,7 +10,7 @@ export default defineConfig(({ mode }) => {
       fs: { allow: [".."] },
       proxy: {
         "/api": {
-          target: API_PROXY_TARGET || "http://localhost:8080",
+          target: API_PROXY_TARGET || "http://localhost:8081",
           changeOrigin: true,
         },
       },

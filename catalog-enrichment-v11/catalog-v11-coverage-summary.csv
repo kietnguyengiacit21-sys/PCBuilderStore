@@ -1,0 +1,11 @@
+﻿product_type,applicable_attribute_fields,populated_attribute_fields_v11,public_populated_attribute_fields_v11,missing_applicable_fields,verified_evidence_rows_v11
+ACCESSORY,219,174,153,45,153
+CASE,210,210,192,0,192
+COOLER,210,195,156,15,156
+CPU,270,270,232,0,232
+GPU,555,540,304,15,304
+MOTHERBOARD,285,285,160,0,160
+PC,40,40,20,0,0
+PSU,225,225,99,0,99
+RAM,300,300,201,0,201
+STORAGE,380,358,256,22,256

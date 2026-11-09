@@ -437,7 +437,7 @@ public class CartService {
     private Offer lockOffer(BigDecimal offerId) {
         try {
             return jdbc.queryForObject("""
-                    SELECT po."offer_id", po."price", po."currency_code",
+                    SELECT po."offer_id", po."offer_code", po."price", po."currency_code",
                            po."stock_quantity", po."reserved_quantity",
                            po."offer_status", p."product_status",
                            p."product_name", p."model_code", p."product_id",
@@ -456,6 +456,7 @@ public class CartService {
     private static Offer mapOffer(ResultSet rs, int row) throws SQLException {
         return new Offer(
                 rs.getBigDecimal("offer_id"),
+                rs.getString("offer_code"),
                 rs.getBigDecimal("price"),
                 rs.getString("currency_code"),
                 rs.getInt("stock_quantity"),
@@ -512,6 +513,7 @@ public class CartService {
                        GREATEST(po."stock_quantity" - po."reserved_quantity", 0)::integer
                            AS "availableQuantity",
                        po."offer_status" AS "offerStatus",
+                       po."offer_code" AS "offerCode",
                        p."product_status" AS "productStatus",
                        p."product_id" AS "productId",
                        pt."type_code" AS "productType",
@@ -532,6 +534,28 @@ public class CartService {
         int quantity = rs.getInt("quantity");
         boolean active = "ACTIVE".equals(rs.getString("offerStatus"))
                 && "ACTIVE".equals(rs.getString("productStatus"));
+        if (!active) {
+            return new CartItem(
+                    rs.getString("offerId"),
+                    rs.getString("productName"),
+                    rs.getString("modelCode"),
+                    quantity,
+                    null,
+                    null,
+                    BigDecimal.ZERO,
+                    null,
+                    null,
+                    0,
+                    "UNAVAILABLE",
+                    "Sản phẩm hiện không thể mua.",
+                    null,
+                    null,
+                    null,
+                    List.of(),
+                    List.of(),
+                    List.of(),
+                    null);
+        }
         ProductUpgradeService.ResolvedConfiguration resolved = null;
         if (active && "PC".equals(rs.getString("productType"))
                 && "NEW".equals(rs.getString("conditionCode"))) {
@@ -691,6 +715,7 @@ public class CartService {
 
     record Offer(
             BigDecimal offerId,
+            String offerCode,
             BigDecimal price,
             String currency,
             int stockQuantity,
@@ -702,6 +727,23 @@ public class CartService {
             BigDecimal productId,
             String productType,
             String conditionCode) {
+        Offer(
+                BigDecimal offerId,
+                BigDecimal price,
+                String currency,
+                int stockQuantity,
+                int reservedQuantity,
+                String offerStatus,
+                String productStatus,
+                String productName,
+                String modelCode,
+                BigDecimal productId,
+                String productType,
+                String conditionCode) {
+            this(offerId, "", price, currency, stockQuantity, reservedQuantity, offerStatus,
+                    productStatus, productName, modelCode, productId, productType, conditionCode);
+        }
+
         private int availableQuantity() {
             return Math.max(stockQuantity - reservedQuantity, 0);
         }

@@ -5,7 +5,9 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -84,9 +86,14 @@ public class SecurityConfiguration {
     }
 
     @Bean
-    public CsrfTokenRepository csrfTokenRepository() {
+    public CsrfTokenRepository csrfTokenRepository(
+            @Value("${server.servlet.session.cookie.same-site:lax}") String sameSite,
+            @Value("${server.servlet.session.cookie.secure:false}") boolean secure) {
         CookieCsrfTokenRepository repository = CookieCsrfTokenRepository.withHttpOnlyFalse();
         repository.setCookiePath("/");
+        repository.setCookieCustomizer(cookie -> cookie
+                .sameSite(sameSite)
+                .secure(secure));
         return repository;
     }
 
@@ -119,16 +126,31 @@ public class SecurityConfiguration {
                         .permitAll()
                         .requestMatchers("/api/catalog/admin/**")
                         .hasRole("ADMIN")
+                        .requestMatchers("/api/storefront/**")
+                        .permitAll()
                         .requestMatchers("/api/orders/admin", "/api/orders/admin/**")
                         .hasRole("ADMIN")
                         .requestMatchers("/api/admin/accounts", "/api/admin/accounts/**")
                         .hasRole("ADMIN")
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/orders/guest",
+                                "/api/orders/guest/lookup",
+                                "/api/orders/guest/*/payments",
+                                "/api/catalog/pc-builder/compatibility")
+                        .permitAll()
                         .requestMatchers("/api/orders", "/api/orders/**")
                         .hasRole("CUSTOMER")
                         .requestMatchers(request ->
                                 "GET".equals(request.getMethod())
                                         && request.getRequestURI().startsWith(
                                                 request.getContextPath() + "/api/catalog/"))
+                        .permitAll()
+                        .requestMatchers(request ->
+                                "POST".equals(request.getMethod())
+                                        && request.getRequestURI().startsWith(
+                                                request.getContextPath() + "/api/catalog/products/")
+                                        && request.getRequestURI().endsWith("/gaming-performance"))
                         .permitAll()
                         .requestMatchers("/api/auth/logout")
                         .authenticated()

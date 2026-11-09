@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.Email;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -96,6 +97,29 @@ public final class OrderDtos {
             @Size(max = 30) String shippingPostalCode,
             @NotBlank String paymentMethod,
             @NotEmpty @Size(max = 50) List<@Valid CheckoutItem> items) {}
+
+    public record GuestCheckoutRequest(
+            @NotBlank @Size(max = 160) String customerName,
+            @NotBlank @Email @Size(max = 254) String customerEmail,
+            @NotBlank @Size(max = 40) String customerPhone,
+            @NotBlank @Size(max = 2000) String shippingAddress,
+            @Size(max = 160) String shippingRegion,
+            @Size(max = 30) String shippingPostalCode,
+            @NotBlank String paymentMethod,
+            @NotEmpty @Size(max = 50) List<@Valid CheckoutItem> items) {
+        public CheckoutRequest toCheckoutRequest() {
+            return new CheckoutRequest(
+                    customerName, customerPhone, shippingAddress, shippingRegion,
+                    shippingPostalCode, paymentMethod, items);
+        }
+    }
+
+    public record GuestOrderLookupRequest(
+            @NotBlank @Size(max = 100) String orderNumber,
+            @NotBlank @Size(max = 40) String customerPhone) {}
+
+    public record GuestPaymentRequest(
+            @NotBlank @Size(max = 40) String customerPhone) {}
 
     public record CheckoutItem(
             @NotBlank @Size(max = 20) String offerId,

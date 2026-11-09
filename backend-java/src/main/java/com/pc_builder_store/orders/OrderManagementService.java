@@ -11,6 +11,7 @@ import com.pc_builder_store.promotions.PromotionPricingService;
 import com.pc_builder_store.orders.OrderDtos.CancellationDecisionRequest;
 import com.pc_builder_store.orders.OrderDtos.CheckoutItem;
 import com.pc_builder_store.orders.OrderDtos.CheckoutRequest;
+import com.pc_builder_store.orders.OrderDtos.GuestCheckoutRequest;
 import com.pc_builder_store.orders.OrderDtos.OrderDetail;
 import com.pc_builder_store.orders.OrderDtos.OrderItem;
 import com.pc_builder_store.orders.OrderDtos.OrderSummary;
@@ -19,12 +20,16 @@ import com.pc_builder_store.orders.OrderDtos.StatusHistory;
 import com.pc_builder_store.orders.OrderDtos.StatusUpdateRequest;
 import com.pc_builder_store.orders.PaymentGateway.PaymentResult;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.sql.PreparedStatement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.HexFormat;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -146,6 +151,24 @@ public class OrderManagementService {
     }
 
     @Transactional(readOnly = true)
+    public OrderDetail lookupGuestOrder(String orderNumber, String customerPhone) {
+        String normalizedPhone = normalizePhone(customerPhone);
+        if (!StringUtils.hasText(orderNumber) || normalizedPhone.isEmpty()) {
+            throw guestOrderNotFound();
+        }
+        List<String> matches = jdbc.query("""
+                SELECT "order_number"
+                FROM "orders"
+                WHERE "order_number" = ?
+                  AND "user_id" IS NULL
+                  AND regexp_replace(COALESCE("customer_phone", '') COLLATE "C",
+                                     '[^0-9]', '', 'g') = ?
+                """, (rs, row) -> rs.getString(1), orderNumber.trim(), normalizedPhone);
+        if (matches.isEmpty()) throw guestOrderNotFound();
+        return findDetail(matches.getFirst(), null, true);
+    }
+
+    @Transactional(readOnly = true)
     public OrderDetail getAdminOrder(String orderNumber) {
         return findDetail(orderNumber, null);
     }
@@ -229,13 +252,35 @@ public class OrderManagementService {
     @Transactional
     public OrderDetail processSimulatedPayment(
             String orderNumber, String idempotencyKey, AuthUserPrincipal customer) {
+        if (customer == null || customer.userId() == null) {
+            throw new OrderManagementException(HttpStatus.NOT_FOUND, "Order not found.");
+        }
+        return processSimulatedPayment(
+                orderNumber, idempotencyKey, Long.parseLong(customer.userId()), null, false);
+    }
+
+    @Transactional
+    public OrderDetail processGuestPayment(
+            String orderNumber, String idempotencyKey, String customerPhone) {
+        return processSimulatedPayment(
+                orderNumber, idempotencyKey, null, normalizePhone(customerPhone), true);
+    }
+
+    private OrderDetail processSimulatedPayment(
+            String orderNumber,
+            String idempotencyKey,
+            Long customerId,
+            String normalizedPhone,
+            boolean guestOnly) {
         if (!StringUtils.hasText(idempotencyKey) || idempotencyKey.length() > 120) {
             throw new OrderManagementException(HttpStatus.BAD_REQUEST,
                     "A valid payment idempotency key is required.");
         }
         Map<String, Object> row = lockOrder(orderNumber);
-        if (row.get("user_id") == null
-                || number(row.get("user_id")) != Long.parseLong(customer.userId())) {
+        if (guestOnly
+                ? row.get("user_id") != null
+                        || !phoneMatches(row.get("customer_phone"), normalizedPhone)
+                : row.get("user_id") == null || number(row.get("user_id")) != customerId) {
             throw new OrderManagementException(HttpStatus.NOT_FOUND, "Order not found.");
         }
         FulfillmentStatus fulfillmentStatus = statusFrom(row);
@@ -256,11 +301,11 @@ public class OrderManagementService {
                 WHERE "order_id" = ? AND "idempotency_key" = ?
                 """, number(row.get("order_id")), idempotencyKey);
         if (!existing.isEmpty()) {
-            return findDetail(orderNumber, number(row.get("user_id")));
+            return findDetail(orderNumber, customerId, guestOnly);
         }
         if ("PAID".equalsIgnoreCase(String.valueOf(row.get("payment_status")))
                 || "PENDING".equalsIgnoreCase(String.valueOf(row.get("payment_status")))) {
-            return findDetail(orderNumber, number(row.get("user_id")));
+            return findDetail(orderNumber, customerId, guestOnly);
         }
         if (!hasActiveReservations(number(row.get("order_id")))) {
             reacquireOrderReservations(number(row.get("order_id")));
@@ -291,13 +336,56 @@ public class OrderManagementService {
         if ("FAILED".equals(paymentStatus) || "CANCELLED".equals(paymentStatus)) {
             releaseInventoryReservations(number(row.get("order_id")));
         }
-        return findDetail(orderNumber, number(row.get("user_id")));
+        return findDetail(orderNumber, customerId, guestOnly);
     }
 
     @Transactional
     public OrderDetail createOrder(
             CheckoutRequest request, String idempotencyKey, AuthUserPrincipal customer) {
-        if (request == null || !StringUtils.hasText(request.paymentMethod())
+        if (customer == null || customer.userId() == null) {
+            throw new OrderManagementException(HttpStatus.UNAUTHORIZED,
+                    "Customer authentication is required.");
+        }
+        CheckoutOwner owner = new CheckoutOwner(
+                Long.parseLong(customer.userId()),
+                customer.email(),
+                null,
+                customer.userId(),
+                customer.fullName(),
+                customer.roleCode(),
+                false);
+        return createOrder(request, idempotencyKey, owner);
+    }
+
+    @Transactional
+    public OrderDetail createGuestOrder(
+            GuestCheckoutRequest request, String idempotencyKey, String guestCartTokenHash) {
+        if (request == null || !StringUtils.hasText(request.customerEmail())
+                || !request.customerEmail().trim().matches(
+                        "(?i)^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")) {
+            throw new OrderManagementException(HttpStatus.BAD_REQUEST,
+                    "A valid customer email is required for guest checkout.");
+        }
+        if (!StringUtils.hasText(guestCartTokenHash)
+                || !guestCartTokenHash.matches("[0-9a-f]{64}")) {
+            throw new OrderManagementException(HttpStatus.BAD_REQUEST,
+                    "A valid guest cart token is required.");
+        }
+        CheckoutOwner owner = new CheckoutOwner(
+                null,
+                request.customerEmail().trim(),
+                guestCartTokenHash,
+                null,
+                "Guest customer",
+                "GUEST",
+                true);
+        return createOrder(request.toCheckoutRequest(), idempotencyKey, owner);
+    }
+
+    private OrderDetail createOrder(
+            CheckoutRequest request, String idempotencyKey, CheckoutOwner owner) {
+        if (request == null || request.items() == null || request.items().isEmpty()
+                || !StringUtils.hasText(request.paymentMethod())
                 || !StringUtils.hasText(idempotencyKey) || idempotencyKey.length() > 120) {
             throw new OrderManagementException(HttpStatus.BAD_REQUEST,
                     "Checkout details and a valid idempotency key are required.");
@@ -307,11 +395,13 @@ public class OrderManagementService {
             throw new OrderManagementException(HttpStatus.BAD_REQUEST,
                     "Choose COD or simulated online payment.");
         }
-        long userId = Long.parseLong(customer.userId());
+        String storedIdempotencyKey = owner.guest()
+                ? guestIdempotencyKey(owner.guestCartTokenHash(), idempotencyKey)
+                : idempotencyKey;
         ConnectionCallback<Object> acquireIdempotencyLock = connection -> {
             try (PreparedStatement statement = connection.prepareStatement(
                     "SELECT pg_advisory_xact_lock(hashtextextended(?, 0))")) {
-                statement.setString(1, idempotencyKey);
+                statement.setString(1, storedIdempotencyKey);
                 statement.execute();
             }
             return null;
@@ -320,14 +410,18 @@ public class OrderManagementService {
         List<Map<String, Object>> existing = jdbc.queryForList("""
                 SELECT "order_number", "user_id"
                 FROM "orders" WHERE "idempotency_key" = ?
-                """, idempotencyKey);
+                """, storedIdempotencyKey);
         if (!existing.isEmpty()) {
             Map<String, Object> prior = existing.getFirst();
-            if (prior.get("user_id") == null || number(prior.get("user_id")) != userId) {
+            if (owner.guest()
+                    ? prior.get("user_id") != null
+                    : prior.get("user_id") == null
+                            || number(prior.get("user_id")) != owner.userId()) {
                 throw new OrderManagementException(HttpStatus.CONFLICT,
                         "The checkout idempotency key is already associated with another order.");
             }
-            return findDetail(String.valueOf(prior.get("order_number")), userId);
+            return findDetail(
+                    String.valueOf(prior.get("order_number")), owner.userId(), owner.guest());
         }
 
         Map<String, Integer> quantities = new TreeMap<>();
@@ -348,6 +442,9 @@ public class OrderManagementService {
             throw new OrderManagementException(HttpStatus.BAD_REQUEST,
                     "The total quantity for an offer cannot exceed 100.");
         }
+        BigDecimal guestCartId = owner.guest()
+                ? lockAndVerifyGuestCart(owner.guestCartTokenHash(), quantities)
+                : null;
 
         List<Map<String, Object>> offers = new ArrayList<>();
         String currencyCode = null;
@@ -361,7 +458,8 @@ public class OrderManagementService {
                     FROM "product_offers" po
                     JOIN "products" p ON p."product_id" = po."product_id"
                     JOIN "product_types" pt ON pt."product_type_id" = p."product_type_id"
-                    WHERE po."offer_id" = CAST(? AS NUMERIC) AND po."offer_status" = 'ACTIVE'
+                    WHERE po."offer_id" = CAST(? AS NUMERIC)
+                      AND po."offer_status" = 'ACTIVE'
                       AND p."product_status" = 'ACTIVE'
                     FOR UPDATE OF po
                     """, item.getKey());
@@ -381,7 +479,7 @@ public class OrderManagementService {
             ProductUpgradeService.ResolvedConfiguration configuration =
                     componentInventoryProduct
                             ? checkoutConfiguration(
-                                    userId, item.getKey(),
+                                    owner.userId(), guestCartId, item.getKey(),
                                     (BigDecimal) offer.get("product_id"),
                                     String.valueOf(offer.get("condition_code")),
                                     offerCurrency, item.getValue())
@@ -451,9 +549,9 @@ public class OrderManagementService {
                 """,
                 Long.class,
                 orderNumber,
-                userId,
+                    owner.userId(),
                 request.customerName().trim(),
-                customer.email(),
+                    owner.customerEmail(),
                 request.customerPhone().trim(),
                 request.shippingAddress().trim(),
                 blankToNull(request.shippingRegion()),
@@ -463,7 +561,7 @@ public class OrderManagementService {
                 subtotal,
                 baseSubtotal.subtract(subtotal),
                 subtotal,
-                idempotencyKey);
+                storedIdempotencyKey);
         for (Map<String, Object> offer : offers) {
             int quantity = Math.toIntExact(number(offer.get("checkout_quantity")));
             BigDecimal baseUnitPrice = (BigDecimal) offer.get("configured_base_unit_price");
@@ -474,7 +572,8 @@ public class OrderManagementService {
                     (ProductUpgradeService.ResolvedConfiguration) offer.get("configuration");
             BigDecimal lineTotal = unitPrice.multiply(BigDecimal.valueOf(quantity));
             List<Map<String, Object>> selectedGifts = selectedGiftsForCheckout(
-                    userId, (BigDecimal) offer.get("offer_id"), quantity, pricing);
+                    owner.userId(), guestCartId,
+                    (BigDecimal) offer.get("offer_id"), quantity, pricing);
             Long orderItemId = jdbc.queryForObject("""
                     INSERT INTO "order_items" (
                         "order_id", "offer_id", "product_name_snapshot", "offer_code_snapshot",
@@ -533,29 +632,45 @@ public class OrderManagementService {
             }
             createGiftOrderItems(orderId, itemKey, quantity, selectedGifts, pricing, currencyCode);
         }
-        for (String offerId : quantities.keySet()) {
-            jdbc.update("""
-                    DELETE FROM "cart_items" ci
-                    USING "carts" c
-                    WHERE ci."cart_id" = c."cart_id"
-                      AND c."user_id" = ?
-                      AND c."cart_status" = 'ACTIVE'
-                      AND ci."offer_id" = CAST(? AS NUMERIC)
-                    """, userId, offerId);
+        if (owner.guest()) {
+            for (String offerId : quantities.keySet()) {
+                jdbc.update("""
+                        DELETE FROM "cart_items"
+                        WHERE "cart_id" = ? AND "offer_id" = CAST(? AS NUMERIC)
+                        """, guestCartId, offerId);
+            }
+        } else {
+            for (String offerId : quantities.keySet()) {
+                jdbc.update("""
+                        DELETE FROM "cart_items" ci
+                        USING "carts" c
+                        WHERE ci."cart_id" = c."cart_id"
+                          AND c."user_id" = ?
+                          AND c."cart_status" = 'ACTIVE'
+                          AND ci."offer_id" = CAST(? AS NUMERIC)
+                        """, owner.userId(), offerId);
+            }
         }
         insertHistory(orderId, null, FulfillmentStatus.PENDING_CONFIRMATION.name(),
-                "ORDER_CREATED", customer.userId(), customer.fullName(), customer.roleCode(), null);
-        return findDetail(orderNumber, userId);
+                "ORDER_CREATED", owner.actorUserId(), owner.actorName(), owner.actorRole(), null);
+        return findDetail(orderNumber, owner.userId(), owner.guest());
     }
 
     private ProductUpgradeService.ResolvedConfiguration checkoutConfiguration(
-            long userId,
+            Long userId,
+            BigDecimal guestCartId,
             String offerId,
             BigDecimal productId,
             String condition,
             String currency,
             int quantity) {
-        List<BigDecimal> cartItemIds = jdbc.query("""
+        List<BigDecimal> cartItemIds = guestCartId != null
+                ? jdbc.query("""
+                SELECT ci."cart_item_id"
+                FROM "cart_items" ci
+                WHERE ci."cart_id" = ? AND ci."offer_id" = CAST(? AS NUMERIC)
+                """, (rs, row) -> rs.getBigDecimal(1), guestCartId, offerId)
+                : jdbc.query("""
                 SELECT ci."cart_item_id"
                 FROM "cart_items" ci
                 JOIN "carts" c ON c."cart_id" = ci."cart_id"
@@ -730,6 +845,10 @@ public class OrderManagementService {
     }
 
     private OrderDetail findDetail(String orderNumber, Long customerId) {
+        return findDetail(orderNumber, customerId, false);
+    }
+
+    private OrderDetail findDetail(String orderNumber, Long customerId, boolean guestOnly) {
         String sql = """
                 SELECT "order_id", "order_number", "user_id", "customer_name", "customer_email",
                        "customer_phone", "shipping_address", "shipping_region", "shipping_postal_code",
@@ -760,10 +879,12 @@ public class OrderManagementService {
                        "total_amount", "placed_at"::text AS "placed_at_text",
                        "updated_at"::text AS "updated_at_text"
                 FROM "orders" WHERE "order_number" = ?
-                """ + (customerId == null ? "" : " AND \"user_id\" = ?");
-        List<Map<String, Object>> rows = customerId == null
-                ? jdbc.queryForList(sql, orderNumber)
-                : jdbc.queryForList(sql, orderNumber, customerId);
+                """ + (customerId != null
+                        ? " AND \"user_id\" = ?"
+                        : guestOnly ? " AND \"user_id\" IS NULL" : "");
+        List<Map<String, Object>> rows = customerId != null
+                ? jdbc.queryForList(sql, orderNumber, customerId)
+                : jdbc.queryForList(sql, orderNumber);
         if (rows.isEmpty()) {
             throw new OrderManagementException(HttpStatus.NOT_FOUND, "Order not found.");
         }
@@ -864,10 +985,64 @@ public class OrderManagementService {
                 previousStatus,
                 nextStatus,
                 action,
-                Long.parseLong(actorUserId),
+                actorUserId == null ? null : Long.parseLong(actorUserId),
                 actorName,
                 actorRole,
                 blankToNull(note));
+    }
+
+    private BigDecimal lockAndVerifyGuestCart(
+            String guestCartTokenHash, Map<String, Integer> requestedQuantities) {
+        List<BigDecimal> cartIds = jdbc.query("""
+                SELECT "cart_id"
+                FROM "carts"
+                WHERE "guest_token" = ? AND "cart_status" = 'ACTIVE'
+                FOR UPDATE
+                """, (rs, row) -> rs.getBigDecimal(1), guestCartTokenHash);
+        if (cartIds.isEmpty()) {
+            throw new OrderManagementException(HttpStatus.CONFLICT,
+                    "The guest cart is empty or no longer available.");
+        }
+        BigDecimal cartId = cartIds.getFirst();
+        Map<String, Integer> cartQuantities = new TreeMap<>();
+        jdbc.query("""
+                SELECT "offer_id"::text, "quantity"
+                FROM "cart_items"
+                WHERE "cart_id" = ?
+                ORDER BY "offer_id"
+                FOR UPDATE
+                """, (org.springframework.jdbc.core.RowCallbackHandler) rs ->
+                        cartQuantities.put(rs.getString(1), rs.getInt(2)),
+                cartId);
+        if (cartQuantities.isEmpty() || !cartQuantities.equals(requestedQuantities)) {
+            throw new OrderManagementException(HttpStatus.CONFLICT,
+                    "Checkout items must exactly match the current guest cart.");
+        }
+        return cartId;
+    }
+
+    private static String guestIdempotencyKey(String guestCartTokenHash, String requestKey) {
+        try {
+            byte[] digest = MessageDigest.getInstance("SHA-256").digest(
+                    (guestCartTokenHash + "\u0000" + requestKey)
+                            .getBytes(StandardCharsets.UTF_8));
+            return "GUEST:" + HexFormat.of().formatHex(digest);
+        } catch (NoSuchAlgorithmException exception) {
+            throw new IllegalStateException("SHA-256 is required for guest checkout idempotency.", exception);
+        }
+    }
+
+    private static String normalizePhone(String phone) {
+        return phone == null ? "" : phone.replaceAll("[^0-9]", "");
+    }
+
+    private static boolean phoneMatches(Object storedPhone, String normalizedPhone) {
+        return storedPhone != null && !normalizedPhone.isEmpty()
+                && normalizePhone(String.valueOf(storedPhone)).equals(normalizedPhone);
+    }
+
+    private static OrderManagementException guestOrderNotFound() {
+        return new OrderManagementException(HttpStatus.NOT_FOUND, "Order not found.");
     }
 
     private void releaseInventoryReservations(long orderId) {
@@ -939,11 +1114,21 @@ public class OrderManagementService {
     }
 
     private List<Map<String, Object>> selectedGiftsForCheckout(
-                        long userId,
+                        Long userId,
+                        BigDecimal guestCartId,
                         BigDecimal offerId,
                         int orderQuantity,
                         PromotionPricingService.Pricing pricing) {
-                    List<Map<String, Object>> selections = jdbc.queryForList("""
+                    List<Map<String, Object>> selections = guestCartId != null
+                            ? jdbc.queryForList("""
+                            SELECT cig."promotion_id", cig."gift_offer_id", cig."quantity",
+                                   ci."quantity" AS "cart_quantity"
+                            FROM "cart_items" ci
+                            JOIN "cart_item_gifts" cig ON cig."cart_item_id" = ci."cart_item_id"
+                            WHERE ci."cart_id" = ? AND ci."offer_id" = ?
+                            ORDER BY cig."promotion_id", cig."gift_offer_id"
+                            """, guestCartId, offerId)
+                            : jdbc.queryForList("""
                             SELECT cig."promotion_id", cig."gift_offer_id", cig."quantity",
                                    ci."quantity" AS "cart_quantity"
                             FROM "carts" c
@@ -1024,7 +1209,8 @@ public class OrderManagementService {
                                     FROM "product_offers" po
                                     JOIN "products" p ON p."product_id" = po."product_id"
                                     WHERE po."offer_id" = ? AND po."condition_code" = 'NEW'
-                                      AND po."offer_status" = 'ACTIVE' AND p."product_status" = 'ACTIVE'
+                                      AND po."offer_status" = 'ACTIVE'
+                                      AND p."product_status" = 'ACTIVE'
                                     FOR UPDATE OF po
                                     """, giftOfferId);
                         } catch (org.springframework.dao.EmptyResultDataAccessException exception) {
@@ -1222,4 +1408,13 @@ public class OrderManagementService {
     private String blankToNull(String value) {
         return StringUtils.hasText(value) ? value.trim() : null;
     }
+
+    private record CheckoutOwner(
+            Long userId,
+            String customerEmail,
+            String guestCartTokenHash,
+            String actorUserId,
+            String actorName,
+            String actorRole,
+            boolean guest) {}
 }

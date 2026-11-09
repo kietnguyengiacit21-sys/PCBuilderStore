@@ -77,8 +77,68 @@ class CatalogRepositoryTest {
         assertTrue(where.sql().contains("pf.\"price\" >= :minPrice"));
         assertTrue(where.sql().contains("pf.\"price\" <= :maxPrice"));
         assertTrue(where.sql().contains("pf.\"offer_status\" = 'ACTIVE'"));
+        assertFalse(where.sql().contains("NOT LIKE 'DEMO-%'"));
         assertEquals(new BigDecimal("100.00"), where.parameters().getValue("minPrice"));
         assertEquals(new BigDecimal("200.00"), where.parameters().getValue("maxPrice"));
+    }
+
+    @Test
+    void filtersPcCollectionsUsingTargetUseAndBomPlatformData() {
+        CatalogRepository.SqlQuery amd = repository.productWhere(new CatalogQuery(
+                1, 20, null, "PC", null, null, null, null,
+                Sort.NAME, Direction.ASC, List.of(), "amd-gaming", false));
+        CatalogRepository.SqlQuery ai = repository.productWhere(new CatalogQuery(
+                1, 20, null, "PC", null, null, null, null,
+                Sort.NAME, Direction.ASC, List.of(), "ai-development", false));
+        CatalogRepository.SqlQuery sale = repository.productWhere(new CatalogQuery(
+                1, 20, null, null, null, null, null, null,
+                Sort.NAME, Direction.ASC, List.of(), null, true));
+
+        assertTrue(amd.sql().contains("AS \"targetDefinition\""));
+        assertTrue(amd.sql().contains("AS \"targetValue\""));
+        assertTrue(amd.sql().contains("\"targetDefinition\".\"attribute_code\" = 'target_use'"));
+        assertTrue(amd.sql().contains(
+                "\"targetValue\".\"value_text\" COLLATE \"C\" ILIKE '%gaming%'"));
+        assertTrue(amd.sql().contains("AS \"cpuType\""));
+        assertTrue(amd.sql().contains("\"cpuType\".\"type_code\" = 'CPU'"));
+        assertTrue(amd.sql().contains(
+                "\"cpuProduct\".\"product_name\" COLLATE \"C\" ILIKE '%ryzen%'"));
+        assertTrue(ai.sql().contains(
+                "p.\"product_name\" COLLATE \"C\" ~* '(^|[^[:alnum:]])ai([^[:alnum:]]|$)'"));
+        assertTrue(ai.sql().contains("p.\"product_name\" COLLATE \"C\" ILIKE '%developer%'"));
+        for (String collection : List.of(
+                "gaming", "workstation-creator", "amd-gaming", "office", "ai-development")) {
+            CatalogRepository.SqlQuery filtered = repository.productWhere(new CatalogQuery(
+                    1, 20, null, "PC", null, null, null, null,
+                    Sort.NAME, Direction.ASC, List.of(), collection, false));
+            assertFalse(filtered.sql().contains("\"value_text\" ILIKE"));
+            assertFalse(filtered.sql().contains("\"value_text\" ~*"));
+            assertFalse(filtered.sql().contains("\"product_name\" ILIKE"));
+            assertFalse(filtered.sql().contains("\"product_name\" ~*"));
+        }
+        assertTrue(sale.sql().contains("AS \"saleOffer\""));
+        assertTrue(sale.sql().contains("\"saleOffer\".\"compare_at_price\" > \"saleOffer\".\"price\""));
+        assertTrue(sale.sql().contains("\"saleOffer\".\"stock_quantity\" > \"saleOffer\".\"reserved_quantity\""));
+    }
+
+    @Test
+    void filtersAccessoryCollectionsByStructuredAttributesAndProductNames() {
+        CatalogRepository.SqlQuery monitor = repository.productWhere(new CatalogQuery(
+                1, 20, null, "ACCESSORY", null, null, null, null,
+                Sort.NAME, Direction.ASC, List.of(), null, "monitor", false));
+
+        assertTrue(monitor.sql().contains("AS \"accessoryDefinition\""));
+        assertTrue(monitor.sql().contains("AS \"accessoryValue\""));
+        assertTrue(monitor.sql().contains("LEFT(\"accessoryDefinition\".\"attribute_code\", 8) = 'monitor_'"));
+        assertTrue(monitor.sql().contains(
+                "p.\"product_name\" COLLATE \"C\" ILIKE '%monitor%'"));
+        assertTrue(monitor.sql().contains(":type"));
+        for (String accessoryType : List.of("monitor", "keyboard", "mouse", "headset", "accessory")) {
+            CatalogRepository.SqlQuery filtered = repository.productWhere(new CatalogQuery(
+                    1, 20, null, "ACCESSORY", null, null, null, null,
+                    Sort.NAME, Direction.ASC, List.of(), null, accessoryType, false));
+            assertFalse(filtered.sql().contains("\"product_name\" ILIKE"));
+        }
     }
 
     @Test

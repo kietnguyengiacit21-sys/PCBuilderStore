@@ -30,6 +30,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
 
 @Service
@@ -39,9 +40,16 @@ public class CatalogService {
     private static final Pattern ATTRIBUTE_CODE = Pattern.compile("[a-z][a-z0-9_]{0,99}");
     private static final Pattern NON_NEGATIVE_INTEGER = Pattern.compile("\\d+");
     private static final Pattern PRICE = Pattern.compile("\\d+(?:\\.\\d{1,2})?");
+    private static final Pattern INTERNAL_CUSTOMER_CONTENT = Pattern.compile(
+            "(?iu)\\b(?:demo|development|internal|catalog)\\b|\\b(?:estimate|estimated)\\b"
+                    + "|(?:giá|dữ liệu)\\s+(?:demo|ước tính)|mua\\s+thật");
     private static final Set<String> ALLOWED_PARAMETERS = Set.of(
             "page", "limit", "q", "type", "category", "brand", "minPrice", "maxPrice",
-            "sort", "order", "attribute");
+            "sort", "order", "attribute", "pcCollection", "accessoryType", "sale");
+    private static final Set<String> PC_COLLECTIONS = Set.of(
+            "gaming", "workstation-creator", "amd-gaming", "office", "ai-development");
+    private static final Set<String> ACCESSORY_TYPES =
+            Set.of("monitor", "keyboard", "mouse", "headset", "accessory");
     private static final BigDecimal MAX_DATABASE_PRICE =
             new BigDecimal("9999999999999.99");
     private final CatalogRepository catalogRepository;
@@ -107,6 +115,12 @@ public class CatalogService {
         }
         return catalogRepository.findActiveProduct(modelCode)
                 .map(this::filterPublicProduct)
+                .orElseThrow(CatalogProductNotFoundException::new);
+    }
+
+    CatalogProduct getCompatibilityProduct(String modelCode) {
+        validateModelCode(modelCode);
+        return catalogRepository.findActiveProduct(modelCode)
                 .orElseThrow(CatalogProductNotFoundException::new);
     }
 
@@ -179,7 +193,8 @@ public class CatalogService {
                                     pricing.displayCopy(),
                                     pricing.saleBadge(),
                                     pricing.appliedPromotions(),
-                                    pricing.availableGifts());
+                                    pricing.availableGifts(),
+                                    offer.compareAtPrice());
                         })
                         .toList();
         return new CatalogProduct(
@@ -201,13 +216,36 @@ public class CatalogService {
                 publicImages,
                 product.demoData(),
                 product.bomComponents(),
-                product.contentSections());
+                customerContentSections(product.contentSections()),
+                product.featured(),
+                product.displayOrder());
     }
 
     private String customerText(String value) {
-        return value != null && value.toLowerCase(java.util.Locale.ROOT).contains("catalog")
-                ? null
-                : value;
+        if (value == null || value.isBlank()) return value;
+        String customerCopy = java.util.Arrays.stream(value.split("(?<=[.!?])\\s+|\\R+"))
+                .filter(sentence -> !INTERNAL_CUSTOMER_CONTENT.matcher(sentence).find())
+                .collect(java.util.stream.Collectors.joining(" "))
+                .trim();
+        return customerCopy.isEmpty() ? null : customerCopy;
+    }
+
+    private JsonNode customerContentSections(JsonNode sections) {
+        if (sections == null || !sections.isArray()) return sections;
+        ArrayNode sanitized = objectMapper.createArrayNode();
+        for (JsonNode section : sections) {
+            if (!section.isObject()) continue;
+            String heading = customerText(section.path("heading").asString(null));
+            String body = customerText(section.path("body").asString(null));
+            if (heading == null || body == null) continue;
+            ObjectNode copy = objectMapper.createObjectNode();
+            section.properties().forEach(entry ->
+                    copy.set(entry.getKey(), entry.getValue().deepCopy()));
+            copy.put("heading", heading);
+            copy.put("body", body);
+            sanitized.add(copy);
+        }
+        return sanitized;
     }
 
     private void validateModelCode(String modelCode) {
@@ -240,9 +278,19 @@ public class CatalogService {
         String type = singleValue(parameters, "type");
         String category = singleValue(parameters, "category");
         String brand = singleValue(parameters, "brand");
+        String pcCollection = singleValue(parameters, "pcCollection");
+        String accessoryType = singleValue(parameters, "accessoryType");
         validateIdentifierParameter("type", type);
         validateIdentifierParameter("category", category);
         validateIdentifierParameter("brand", brand);
+        if (pcCollection != null
+                && (!PC_COLLECTIONS.contains(pcCollection) || !"PC".equals(type))) {
+            throw invalid("The selected PC collection is not supported.");
+        }
+        if (accessoryType != null
+                && (!ACCESSORY_TYPES.contains(accessoryType) || !"ACCESSORY".equals(type))) {
+            throw invalid("The selected accessory type is not supported.");
+        }
 
         BigDecimal minPrice = parsePrice(singleValue(parameters, "minPrice"), "minPrice");
         BigDecimal maxPrice = parsePrice(singleValue(parameters, "maxPrice"), "maxPrice");
@@ -264,8 +312,15 @@ public class CatalogService {
         };
 
         List<AttributeFilter> attributes = parseAttributes(parameters.get("attribute"));
+        String saleValue = singleValue(parameters, "sale");
+        boolean saleOnly = switch (saleValue == null ? "false" : saleValue) {
+            case "true" -> true;
+            case "false" -> false;
+            default -> throw invalid("Query parameter \"sale\" must be \"true\" or \"false\".");
+        };
         return new CatalogQuery(
-                page, limit, query, type, category, brand, minPrice, maxPrice, sort, order, attributes);
+                page, limit, query, type, category, brand, minPrice, maxPrice, sort, order,
+                attributes, pcCollection, accessoryType, saleOnly);
     }
 
     private List<AttributeFilter> parseAttributes(String[] values) {

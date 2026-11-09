@@ -36,6 +36,7 @@ import org.springframework.stereotype.Repository;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ObjectNode;
 
 @Repository
 public class CatalogRepository {
@@ -47,6 +48,8 @@ public class CatalogRepository {
               p."product_name" AS "productName",
               p."short_description" AS "shortDescription",
               p."description" AS "description",
+              p."is_featured" AS "featured",
+              p."display_order" AS "displayOrder",
               p."product_status" AS "status",
               pt."type_code" AS "productType",
               pt."type_name" AS "productTypeName",
@@ -58,6 +61,7 @@ public class CatalogRepository {
                   'offerId', po."offer_id"::text,
                   'condition', po."condition_code",
                   'price', po."price",
+                  'compareAtPrice', po."compare_at_price",
                   'currency', po."currency_code",
                   'stockQuantity', po."stock_quantity",
                   'reservedQuantity', po."reserved_quantity",
@@ -66,7 +70,8 @@ public class CatalogRepository {
                   'status', po."offer_status"
                 ) ORDER BY po."price", po."offer_code")
                 FROM "product_offers" po
-                WHERE po."product_id" = p."product_id" AND po."offer_status" = 'ACTIVE'
+                WHERE po."product_id" = p."product_id"
+                  AND po."offer_status" = 'ACTIVE'
               ), '[]'::jsonb)::text AS "offersJson",
               COALESCE((
                 SELECT jsonb_object_agg(ad."attribute_code", COALESCE(
@@ -147,7 +152,31 @@ public class CatalogRepository {
                       'quantity', bom."quantity",
                       'warrantyMonths', bom."component_warranty_months",
                       'displayCategory', bom."display_category",
-                      'displayOrder', bom."display_order"
+                      'displayOrder', bom."display_order",
+                      'imageUrl', (
+                        SELECT componentImage."image_url"
+                        FROM "product_images" componentImage
+                        WHERE componentImage."product_id" = component."product_id"
+                          AND componentImage."media_type" = 'IMAGE'
+                          AND ((componentImage."image_url" COLLATE "C") ~ '^https?://[^[:space:]]+$'
+                            OR (componentImage."image_url" COLLATE "C") ~
+                               '^/api/catalog/media/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}[.](jpg|png|webp)$')
+                        ORDER BY componentImage."is_primary" DESC,
+                                 componentImage."sort_order", componentImage."image_id"
+                        LIMIT 1
+                      ),
+                      'imageAltText', (
+                        SELECT componentImage."alt_text"
+                        FROM "product_images" componentImage
+                        WHERE componentImage."product_id" = component."product_id"
+                          AND componentImage."media_type" = 'IMAGE'
+                          AND ((componentImage."image_url" COLLATE "C") ~ '^https?://[^[:space:]]+$'
+                            OR (componentImage."image_url" COLLATE "C") ~
+                               '^/api/catalog/media/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}[.](jpg|png|webp)$')
+                        ORDER BY componentImage."is_primary" DESC,
+                                 componentImage."sort_order", componentImage."image_id"
+                        LIMIT 1
+                      )
                     ) ORDER BY bom."display_order", component."product_name")
                     FROM "product_bom_components" bom
                     JOIN "products" component ON component."product_id" = bom."component_product_id"
@@ -170,11 +199,41 @@ public class CatalogRepository {
                       'warrantyMonths', CASE
                         WHEN bomDetail."item" ->> 'component_warranty_months' ~ '^(0|[1-9][0-9]{0,2})$'
                           THEN (bomDetail."item" ->> 'component_warranty_months')::integer
-                        ELSE NULL
+                        ELSE (
+                          SELECT MAX(componentOffer."warranty_months")
+                          FROM "product_offers" componentOffer
+                          WHERE componentOffer."product_id" = component."product_id"
+                            AND componentOffer."offer_status" = 'ACTIVE'
+                        )
                       END,
+                      'keySpecifications', bomDetail."item" -> 'key_specifications',
                       'displayCategory', COALESCE(
                         componentType."type_name", bomDetail."item" ->> 'component_type'),
-                      'displayOrder', bomDetail."ordinality" - 1
+                      'displayOrder', bomDetail."ordinality" - 1,
+                      'imageUrl', (
+                        SELECT componentImage."image_url"
+                        FROM "product_images" componentImage
+                        WHERE componentImage."product_id" = component."product_id"
+                          AND componentImage."media_type" = 'IMAGE'
+                          AND ((componentImage."image_url" COLLATE "C") ~ '^https?://[^[:space:]]+$'
+                            OR (componentImage."image_url" COLLATE "C") ~
+                               '^/api/catalog/media/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}[.](jpg|png|webp)$')
+                        ORDER BY componentImage."is_primary" DESC,
+                                 componentImage."sort_order", componentImage."image_id"
+                        LIMIT 1
+                      ),
+                      'imageAltText', (
+                        SELECT componentImage."alt_text"
+                        FROM "product_images" componentImage
+                        WHERE componentImage."product_id" = component."product_id"
+                          AND componentImage."media_type" = 'IMAGE'
+                          AND ((componentImage."image_url" COLLATE "C") ~ '^https?://[^[:space:]]+$'
+                            OR (componentImage."image_url" COLLATE "C") ~
+                               '^/api/catalog/media/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}[.](jpg|png|webp)$')
+                        ORDER BY componentImage."is_primary" DESC,
+                                 componentImage."sort_order", componentImage."image_id"
+                        LIMIT 1
+                      )
                     ) ORDER BY bomDetail."ordinality")
                     FROM "product_attribute_values" attributeValue
                     JOIN "product_attribute_definitions" attributeDefinition
@@ -414,7 +473,8 @@ public class CatalogRepository {
         String orderBy = query.sort() == Sort.PRICE
                 ? """
                   (SELECT MIN(po."price") FROM "product_offers" po
-                   WHERE po."product_id" = p."product_id" AND po."offer_status" = 'ACTIVE')
+                   WHERE po."product_id" = p."product_id"
+                     AND po."offer_status" = 'ACTIVE')
                   """ + direction + " NULLS LAST, p.\"product_name\" ASC"
                 : "p.\"product_name\" " + direction;
         MapSqlParameterSource parameters = new MapSqlParameterSource()
@@ -434,7 +494,7 @@ public class CatalogRepository {
                 PRODUCT_SELECT
                         + " WHERE p.\"product_status\" = 'ACTIVE' AND p.\"model_code\" = :modelCode LIMIT 1",
                 Map.of("modelCode", modelCode),
-                this::mapProduct);
+                (resultSet, rowNumber) -> mapProduct(resultSet, rowNumber, true));
         return products.stream().findFirst();
     }
 
@@ -461,6 +521,23 @@ public class CatalogRepository {
         addEquality(conditions, parameters, "pt.\"type_code\"", "type", query.type());
         addEquality(conditions, parameters, "c.\"category_code\"", "category", query.category());
         addEquality(conditions, parameters, "b.\"brand_name\"", "brand", query.brand());
+        if (query.pcCollection() != null) {
+            conditions.add(pcCollectionCondition(query.pcCollection()));
+        }
+        if (query.accessoryType() != null) {
+            conditions.add(accessoryTypeCondition(query.accessoryType()));
+        }
+        if (query.saleOnly()) {
+            conditions.add("""
+                    EXISTS (
+                      SELECT 1 FROM "product_offers" AS "saleOffer"
+                      WHERE "saleOffer"."product_id" = p."product_id"
+                        AND "saleOffer"."offer_status" = 'ACTIVE'
+                        AND "saleOffer"."stock_quantity" > "saleOffer"."reserved_quantity"
+                        AND "saleOffer"."compare_at_price" > "saleOffer"."price"
+                    )
+                    """);
+        }
 
         if (query.minPrice() != null || query.maxPrice() != null) {
             StringBuilder priceConditions = new StringBuilder(
@@ -510,6 +587,167 @@ public class CatalogRepository {
             parameters.addValue(valueParameter, jsonFilterValue(attribute.value()));
         }
         return new SqlQuery(" WHERE " + String.join(" AND ", conditions), parameters);
+    }
+
+    private String pcCollectionCondition(String collection) {
+        String targetUse = """
+                EXISTS (
+                  SELECT 1
+                  FROM "product_attribute_definitions" AS "targetDefinition"
+                  JOIN "product_attribute_values" AS "targetValue"
+                    ON "targetValue"."attribute_definition_id"
+                       = "targetDefinition"."attribute_definition_id"
+                   AND "targetValue"."product_id" = p."product_id"
+                  WHERE "targetDefinition"."product_type_id" = p."product_type_id"
+                    AND "targetDefinition"."attribute_code" = 'target_use'
+                    AND (%s)
+                )
+                """;
+        String match = switch (collection) {
+            case "gaming" -> """
+                    ("targetValue"."value_text" COLLATE "C" ILIKE '%gaming%'
+                     OR "targetValue"."value_text" COLLATE "C" ILIKE '%stream%')
+                    """;
+            case "workstation-creator" -> """
+                    ("targetValue"."value_text" COLLATE "C" ILIKE '%workstation%'
+                     OR "targetValue"."value_text" COLLATE "C" ILIKE '%creator%'
+                     OR "targetValue"."value_text" COLLATE "C" ILIKE '%render%'
+                     OR "targetValue"."value_text" COLLATE "C" ILIKE '%dựng phim%'
+                     OR "targetValue"."value_text" COLLATE "C" ILIKE '%edit video%')
+                    """;
+            case "office" -> """
+                    ("targetValue"."value_text" COLLATE "C" ILIKE '%office%'
+                     OR "targetValue"."value_text" COLLATE "C" ILIKE '%văn phòng%'
+                     OR "targetValue"."value_text" COLLATE "C" ILIKE '%học tập%')
+                    """;
+            case "ai-development" -> """
+                    ("targetValue"."value_text" COLLATE "C" ~* '(^|[^[:alnum:]])ai([^[:alnum:]]|$)'
+                     OR "targetValue"."value_text" COLLATE "C" ILIKE '%development%'
+                     OR "targetValue"."value_text" COLLATE "C" ILIKE '%developer%'
+                     OR "targetValue"."value_text" COLLATE "C" ILIKE '%phát triển%')
+                    """;
+            case "amd-gaming" -> """
+                    ("targetValue"."value_text" COLLATE "C" ILIKE '%gaming%')
+                    """;
+            default -> throw new IllegalArgumentException("Unsupported PC collection.");
+        };
+        String productNameMatch = switch (collection) {
+            case "gaming" -> """
+                    (p."product_name" COLLATE "C" ILIKE '%gaming%'
+                     OR p."product_name" COLLATE "C" ILIKE '%stream%'
+                     OR p."product_name" COLLATE "C" ILIKE '%esports%')
+                    """;
+            case "workstation-creator" -> """
+                    (p."product_name" COLLATE "C" ILIKE '%workstation%'
+                     OR p."product_name" COLLATE "C" ILIKE '%creator%'
+                     OR p."product_name" COLLATE "C" ILIKE '%render%')
+                    """;
+            case "office" -> """
+                    (p."product_name" COLLATE "C" ILIKE '%office%'
+                     OR p."product_name" COLLATE "C" ILIKE '%văn phòng%'
+                     OR p."product_name" COLLATE "C" ILIKE '%học tập%')
+                    """;
+            case "ai-development" -> """
+                    (p."product_name" COLLATE "C" ~* '(^|[^[:alnum:]])ai([^[:alnum:]]|$)'
+                     OR p."product_name" COLLATE "C" ILIKE '%development%'
+                     OR p."product_name" COLLATE "C" ILIKE '%developer%')
+                    """;
+            case "amd-gaming" -> "p.\"product_name\" COLLATE \"C\" ILIKE '%gaming%'";
+            default -> throw new IllegalArgumentException("Unsupported PC collection.");
+        };
+        String condition = "(" + targetUse.formatted(match) + " OR " + productNameMatch + ")";
+        if (!"amd-gaming".equals(collection)) return condition;
+        return condition + """
+                AND EXISTS (
+                  SELECT 1
+                  FROM "product_bom_components" AS "cpuBom"
+                  JOIN "products" AS "cpuProduct"
+                    ON "cpuProduct"."product_id" = "cpuBom"."component_product_id"
+                  JOIN "product_types" AS "cpuType"
+                    ON "cpuType"."product_type_id" = "cpuProduct"."product_type_id"
+                  WHERE "cpuBom"."parent_product_id" = p."product_id"
+                    AND "cpuType"."type_code" = 'CPU'
+                    AND ("cpuProduct"."product_name" COLLATE "C" ILIKE '%amd%'
+                         OR "cpuProduct"."product_name" COLLATE "C" ILIKE '%ryzen%')
+                )
+                """;
+    }
+
+    private String accessoryTypeCondition(String accessoryType) {
+        String monitor = """
+                (EXISTS (
+                  SELECT 1 FROM "product_attribute_definitions" AS "accessoryDefinition"
+                  JOIN "product_attribute_values" AS "accessoryValue"
+                    ON "accessoryValue"."attribute_definition_id"
+                       = "accessoryDefinition"."attribute_definition_id"
+                   AND "accessoryValue"."product_id" = p."product_id"
+                  WHERE "accessoryDefinition"."product_type_id" = p."product_type_id"
+                    AND LEFT("accessoryDefinition"."attribute_code", 8) = 'monitor_'
+                ) OR p."product_name" COLLATE "C" ILIKE '%monitor%'
+                   OR p."product_name" COLLATE "C" ILIKE '%inch%'
+                   OR p."product_name" COLLATE "C" ILIKE '%xg27%'
+                   OR p."product_name" COLLATE "C" ILIKE '%vg27%'
+                   OR p."product_name" COLLATE "C" ILIKE '%vg249%')
+                """;
+        String keyboard = """
+                (EXISTS (
+                  SELECT 1 FROM "product_attribute_definitions" AS "accessoryDefinition"
+                  JOIN "product_attribute_values" AS "accessoryValue"
+                    ON "accessoryValue"."attribute_definition_id"
+                       = "accessoryDefinition"."attribute_definition_id"
+                   AND "accessoryValue"."product_id" = p."product_id"
+                  WHERE "accessoryDefinition"."product_type_id" = p."product_type_id"
+                    AND LEFT("accessoryDefinition"."attribute_code", 9) = 'keyboard_'
+                ) OR p."product_name" COLLATE "C" ILIKE '%keyboard%'
+                   OR p."product_name" COLLATE "C" ILIKE '%blackwidow%'
+                   OR p."product_name" COLLATE "C" ILIKE '%k552%'
+                   OR p."product_name" COLLATE "C" ILIKE '%k617%'
+                   OR p."product_name" COLLATE "C" ILIKE '%k70%'
+                   OR p."product_name" COLLATE "C" ILIKE '%k8 pro%'
+                   OR p."product_name" COLLATE "C" ILIKE '%f75%'
+                   OR p."product_name" COLLATE "C" ILIKE '%s98 pro%')
+                """;
+        String mouse = """
+                (EXISTS (
+                  SELECT 1 FROM "product_attribute_definitions" AS "accessoryDefinition"
+                  JOIN "product_attribute_values" AS "accessoryValue"
+                    ON "accessoryValue"."attribute_definition_id"
+                       = "accessoryDefinition"."attribute_definition_id"
+                   AND "accessoryValue"."product_id" = p."product_id"
+                  WHERE "accessoryDefinition"."product_type_id" = p."product_type_id"
+                    AND LEFT("accessoryDefinition"."attribute_code", 6) = 'mouse_'
+                ) OR p."product_name" COLLATE "C" ILIKE '%mouse%'
+                   OR p."product_name" COLLATE "C" ILIKE '%deathadder%'
+                   OR p."product_name" COLLATE "C" ILIKE '%superlight%'
+                   OR p."product_name" COLLATE "C" ILIKE '%g102%'
+                   OR p."product_name" COLLATE "C" ILIKE '%g304%'
+                   OR p."product_name" COLLATE "C" ILIKE '%g502%'
+                   OR p."product_name" COLLATE "C" ILIKE '%viper%')
+                """;
+        String headset = """
+                (EXISTS (
+                  SELECT 1 FROM "product_attribute_definitions" AS "accessoryDefinition"
+                  JOIN "product_attribute_values" AS "accessoryValue"
+                    ON "accessoryValue"."attribute_definition_id"
+                       = "accessoryDefinition"."attribute_definition_id"
+                   AND "accessoryValue"."product_id" = p."product_id"
+                  WHERE "accessoryDefinition"."product_type_id" = p."product_type_id"
+                    AND LEFT("accessoryDefinition"."attribute_code", 8) = 'headset_'
+                ) OR p."product_name" COLLATE "C" ILIKE '%headset%'
+                   OR p."product_name" COLLATE "C" ILIKE '%blackshark%'
+                   OR p."product_name" COLLATE "C" ILIKE '%cloud iii%'
+                   OR p."product_name" COLLATE "C" ILIKE '%kraken%'
+                   OR p."product_name" COLLATE "C" ILIKE '%g733%')
+                """;
+        return switch (accessoryType) {
+            case "monitor" -> monitor;
+            case "keyboard" -> keyboard;
+            case "mouse" -> mouse;
+            case "headset" -> headset;
+            case "accessory" -> "NOT (" + monitor + " OR " + keyboard + " OR "
+                    + mouse + " OR " + headset + ")";
+            default -> throw new IllegalArgumentException("Unsupported accessory type.");
+        };
     }
 
     private void validateAttributeCodes(List<AttributeFilter> attributes, String productType) {
@@ -597,6 +835,17 @@ public class CatalogRepository {
 
     CatalogProduct mapProduct(java.sql.ResultSet resultSet, int rowNumber)
             throws java.sql.SQLException {
+        return mapProduct(resultSet, rowNumber, false);
+    }
+
+    private CatalogProduct mapProduct(
+            java.sql.ResultSet resultSet, int rowNumber, boolean includeComponentSpecifications)
+            throws java.sql.SQLException {
+        List<CatalogBomComponent> bomComponents =
+                mapBomComponents(readJson(resultSet.getString("bomComponentsJson")));
+        if (includeComponentSpecifications) {
+            bomComponents = addPublicComponentSpecifications(bomComponents);
+        }
         return new CatalogProduct(
                 resultSet.getString("productId"),
                 resultSet.getString("modelCode"),
@@ -615,8 +864,10 @@ public class CatalogRepository {
                 mapSpecificationQuality(readJson(resultSet.getString("specificationQualityJson"))),
                 mapImages(readJson(resultSet.getString("imagesJson"))),
                 resultSet.getBoolean("demoData"),
-                mapBomComponents(readJson(resultSet.getString("bomComponentsJson"))),
-                readJsonArray(resultSet.getString("contentSectionsJson")));
+                bomComponents,
+                readJsonArray(resultSet.getString("contentSectionsJson")),
+                resultSet.getBoolean("featured"),
+                resultSet.getInt("displayOrder"));
     }
 
     private List<CatalogBomComponent> mapBomComponents(JsonNode components) {
@@ -631,10 +882,75 @@ public class CatalogRepository {
                         component.path("quantity").intValue(),
                         nullableInteger(component.path("warrantyMonths")),
                         text(component, "displayCategory"),
-                        component.path("displayOrder").intValue()));
+                        component.path("displayOrder").intValue(),
+                        text(component, "imageUrl"),
+                        text(component, "imageAltText"),
+                        component.get("keySpecifications")));
             }
         }
         return List.copyOf(mapped);
+    }
+
+    private List<CatalogBomComponent> addPublicComponentSpecifications(
+            List<CatalogBomComponent> components) {
+        if (components.isEmpty()) return components;
+        List<BigDecimal> productIds = components.stream()
+                .map(CatalogBomComponent::componentProductId)
+                .filter(id -> id != null && !id.isBlank())
+                .map(BigDecimal::new)
+                .distinct()
+                .toList();
+        if (productIds.isEmpty()) return components;
+        Map<String, ObjectNode> specificationsByProduct = new LinkedHashMap<>();
+        jdbcTemplate.query("""
+                SELECT p."product_id"::text AS "productId",
+                       p."model_code" AS "modelCode",
+                       pt."type_code" AS "productType",
+                       ad."attribute_code" AS "attributeCode",
+                       COALESCE(
+                         to_jsonb(av."value_text"),
+                         to_jsonb(av."value_decimal"),
+                         to_jsonb(av."value_integer"),
+                         to_jsonb(av."value_boolean"),
+                         av."value_json"
+                       ) AS "valueJson"
+                FROM "products" p
+                JOIN "product_types" pt ON pt."product_type_id" = p."product_type_id"
+                JOIN "product_attribute_values" av ON av."product_id" = p."product_id"
+                JOIN "product_attribute_definitions" ad
+                  ON ad."attribute_definition_id" = av."attribute_definition_id"
+                 AND ad."product_type_id" = p."product_type_id"
+                WHERE p."product_id" IN (:productIds)
+                ORDER BY ad."attribute_code"
+                """, new MapSqlParameterSource("productIds", productIds), rs -> {
+            String productId = rs.getString("productId");
+            String productType = rs.getString("productType");
+            String modelCode = rs.getString("modelCode");
+            String attributeCode = rs.getString("attributeCode");
+            if (internalLedger.isPubliclyVisible(productType, modelCode, attributeCode)) {
+                JsonNode value = readJson(rs.getString("valueJson"));
+                if (value != null && !value.isNull()) {
+                    specificationsByProduct
+                            .computeIfAbsent(productId, ignored -> objectMapper.createObjectNode())
+                            .set(attributeCode, value);
+                }
+            }
+        });
+        return components.stream().map(component -> {
+            ObjectNode specifications = objectMapper.createObjectNode();
+            if (component.keySpecifications() instanceof ObjectNode existing) {
+                specifications.setAll(existing);
+            }
+            ObjectNode publicSpecifications =
+                    specificationsByProduct.get(component.componentProductId());
+            if (publicSpecifications != null) specifications.setAll(publicSpecifications);
+            return new CatalogBomComponent(
+                    component.componentProductId(), component.modelCode(), component.productName(),
+                    component.productType(), component.quantity(), component.warrantyMonths(),
+                    component.displayCategory(), component.displayOrder(), component.imageUrl(),
+                    component.imageAltText(),
+                    specifications.isEmpty() ? null : specifications);
+        }).toList();
     }
 
     private Integer nullableInteger(JsonNode value) {
@@ -684,12 +1000,23 @@ public class CatalogRepository {
                     text(offer, "offerId"),
                     text(offer, "condition"),
                     offer.path("price").decimalValue(),
+                    offer.path("price").decimalValue(),
+                    BigDecimal.ZERO,
                     text(offer, "currency"),
                     offer.path("stockQuantity").longValue(),
                     offer.path("reservedQuantity").longValue(),
                     offer.path("availableQuantity").longValue(),
                     nullableLong(offer.path("warrantyMonths")),
-                    text(offer, "status")));
+                    text(offer, "status"),
+                    0,
+                    null,
+                    null,
+                    null,
+                    List.of(),
+                    List.of(),
+                    offer.path("compareAtPrice").isNumber()
+                            ? offer.path("compareAtPrice").decimalValue()
+                            : null));
         }
         return List.copyOf(mapped);
     }

@@ -59,6 +59,20 @@ public final class CatalogCsvImporter {
             "image_alt_4",
             "image_alt_5",
             "data_note");
+    private static final Set<String> OPTIONAL_PRODUCT_HEADERS = Set.of(
+            "short_description",
+            "description",
+            "content_sections_json",
+            "tags_json",
+            "seo_title",
+            "seo_description",
+            "slug",
+            "is_featured",
+            "display_order",
+            "compare_at_price_vnd",
+            "stock_quantity",
+            "bom_summary",
+            "pc__upgrade_groups_json");
     private static final List<String> EVIDENCE_HEADERS = List.of(
             "model_code",
             "product_type",
@@ -78,27 +92,46 @@ public final class CatalogCsvImporter {
     private static final long MAX_OFFER_STOCK = 4_294_967_295L;
     static final String OFFER_UPSERT_SQL = """
             INSERT INTO "product_offers"
-              ("product_id", "offer_code", "condition_code", "price", "currency_code",
-               "stock_quantity", "reserved_quantity", "warranty_months", "offer_status")
-            VALUES (?, ?, 'NEW', ?, ?, ?, 0, ?, 'ACTIVE')
+              ("product_id", "offer_code", "condition_code", "price", "compare_at_price",
+               "currency_code", "stock_quantity", "reserved_quantity", "warranty_months", "offer_status")
+            VALUES (?, ?, 'NEW', ?, ?, ?, ?, 0, ?, 'ACTIVE')
             ON CONFLICT ("offer_code") DO UPDATE SET
               "product_id" = EXCLUDED."product_id",
               "price" = EXCLUDED."price",
+              "compare_at_price" = EXCLUDED."compare_at_price",
               "currency_code" = EXCLUDED."currency_code",
+              "stock_quantity" = CASE
+                WHEN "product_offers"."reserved_quantity" = 0 THEN EXCLUDED."stock_quantity"
+                ELSE "product_offers"."stock_quantity"
+              END,
               "warranty_months" = EXCLUDED."warranty_months",
+              "offer_status" = 'ACTIVE',
               "updated_at" = CURRENT_TIMESTAMP
             WHERE "product_offers"."offer_code" LIKE 'DEMO-%'
             """;
     static final String PRODUCT_UPSERT_SQL = """
             INSERT INTO "products"
               ("product_type_id", "category_id", "brand_id", "model_code", "product_name",
-               "product_status")
-            VALUES (?, ?, ?, ?, ?, 'ACTIVE')
+               "short_description", "description", "sku", "slug", "tags", "seo_title",
+               "seo_description", "is_featured", "display_order", "bom_summary",
+               "content_sections", "product_status")
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CAST(? AS jsonb), ?, ?, ?, ?, ?, CAST(? AS jsonb), 'ACTIVE')
             ON CONFLICT ("model_code") DO UPDATE SET
               "product_type_id" = EXCLUDED."product_type_id",
               "category_id" = EXCLUDED."category_id",
               "brand_id" = EXCLUDED."brand_id",
               "product_name" = EXCLUDED."product_name",
+              "short_description" = EXCLUDED."short_description",
+              "description" = EXCLUDED."description",
+              "sku" = EXCLUDED."sku",
+              "slug" = EXCLUDED."slug",
+              "tags" = EXCLUDED."tags",
+              "seo_title" = EXCLUDED."seo_title",
+              "seo_description" = EXCLUDED."seo_description",
+              "is_featured" = EXCLUDED."is_featured",
+              "display_order" = EXCLUDED."display_order",
+              "bom_summary" = EXCLUDED."bom_summary",
+              "content_sections" = EXCLUDED."content_sections",
               "updated_at" = CURRENT_TIMESTAMP
             """;
     static final String ATTRIBUTE_DEFINITION_UPSERT_SQL = """
@@ -199,7 +232,9 @@ public final class CatalogCsvImporter {
     public List<CatalogCsvRow> readAndValidate(Path csvPath, Path evidencePath) {
         try {
             String csv = Files.readString(csvPath, StandardCharsets.UTF_8);
-            String evidenceCsv = Files.readString(evidencePath, StandardCharsets.UTF_8);
+            String evidenceCsv = evidencePath == null
+                    ? null
+                    : Files.readString(evidencePath, StandardCharsets.UTF_8);
             List<CatalogCsvRow> rows = parseRecords(csv, evidenceCsv, objectMapper);
             validateDataset(rows);
             return rows;
@@ -258,15 +293,20 @@ public final class CatalogCsvImporter {
                         .setIgnoreEmptyLines(false)
                         .build())) {
             List<String> headers = parser.getHeaderNames();
-                if (headers.size() < BASE_HEADERS.size()
+            Set<String> nonAttributeHeaders = new HashSet<>(BASE_HEADERS);
+            nonAttributeHeaders.addAll(OPTIONAL_PRODUCT_HEADERS);
+            Set<String> candidateAttributeHeaders = new HashSet<>(headers);
+            candidateAttributeHeaders.removeAll(nonAttributeHeaders);
+            if (headers.size() < BASE_HEADERS.size()
                     || !headers.subList(0, BASE_HEADERS.size()).equals(BASE_HEADERS)
-                    || !ATTRIBUTE_HEADERS.containsAll(
-                        new HashSet<>(headers.subList(BASE_HEADERS.size(), headers.size())))
+                    || !ATTRIBUTE_HEADERS.containsAll(candidateAttributeHeaders)
+                    || !headers.containsAll(BASE_HEADERS)
                     || new HashSet<>(headers).size() != headers.size()) {
                 throw new IllegalArgumentException(
-                    "CSV header must contain the 24 canonical base columns followed by known registry attribute columns.");
+                        "CSV header must contain the 24 canonical base columns, known registry "
+                                + "attribute columns, and known product fields.");
             }
-                int expectedColumnCount = headers.size();
+            int expectedColumnCount = headers.size();
             rows = new ArrayList<>();
             for (CSVRecord record : parser) {
                 int rowNumber = Math.toIntExact(record.getRecordNumber() + 1);
@@ -437,7 +477,12 @@ public final class CatalogCsvImporter {
                     row.images(),
                     row.dataNote(),
                     row.specifications(),
-                    Map.copyOf(metadata)));
+                    Map.copyOf(metadata),
+                    row.compareAtPrice(),
+                    row.stockQuantity(),
+                    row.merchandising(),
+                    row.bomComponents(),
+                    row.upgradeGroups()));
         }
         return enrichedRows;
     }
@@ -447,8 +492,8 @@ public final class CatalogCsvImporter {
     }
 
     static void validateDataset(List<CatalogCsvRow> rows) {
-        if (rows.size() != 150) {
-            throw new IllegalArgumentException("Expected exactly 150 CSV products; found " + rows.size() + ".");
+        if (rows.isEmpty()) {
+            throw new IllegalArgumentException("Catalog CSV must contain at least one product.");
         }
         Set<String> modelCodes = new HashSet<>();
         Set<String> normalizedModelCodes = new HashSet<>();
@@ -457,6 +502,7 @@ public final class CatalogCsvImporter {
         Set<String> brands = new HashSet<>();
         Map<String, String> normalizedBrands = new HashMap<>();
         Map<String, String> productTypesByModel = new HashMap<>();
+        Map<String, CatalogCsvRow> rowsByModel = new HashMap<>();
         for (CatalogCsvRow row : rows) {
             if (!modelCodes.add(row.modelCode())
                     || !normalizedModelCodes.add(databaseNaturalKey(row.modelCode()))) {
@@ -466,6 +512,7 @@ public final class CatalogCsvImporter {
             }
             productTypes.add(row.productTypeCode());
             productTypesByModel.put(row.modelCode(), row.productTypeCode());
+            rowsByModel.put(row.modelCode(), row);
             categories.add(row.categoryCode());
             brands.add(row.brandName());
             String existingBrand = normalizedBrands.putIfAbsent(
@@ -491,12 +538,14 @@ public final class CatalogCsvImporter {
         }
         for (CatalogCsvRow row : rows) {
             validateConfigurationItems(row, productTypesByModel);
+            validateBomComponents(row, productTypesByModel);
+            validateUpgradeGroups(row, rowsByModel);
         }
-        if (modelCodes.size() != 150 || productTypes.size() != 10
-                || categories.size() != 10 || brands.size() != 41) {
+        if (productTypes.size() != PRODUCT_TYPE_NAMES.size()
+                || categories.size() != CATEGORY_NAMES.size() || brands.isEmpty()) {
             throw new IllegalArgumentException(
-                    "Catalog CSV count validation failed: expected 150 unique models, 10 types, "
-                            + "10 categories, and 41 brands; found "
+                    "Catalog CSV count validation failed: expected all supported product types/categories "
+                            + "and at least one brand; found "
                             + modelCodes.size() + ", " + productTypes.size() + ", "
                             + categories.size() + ", and " + brands.size() + ".");
         }
@@ -505,6 +554,79 @@ public final class CatalogCsvImporter {
                 || !categories.equals(CATEGORY_NAMES.keySet())) {
             throw new IllegalArgumentException(
                     "Catalog CSV contains missing or unsupported product type/category references.");
+        }
+    }
+
+    private static void validateBomComponents(
+            CatalogCsvRow row, Map<String, String> productTypesByModel) {
+        if (row.bomComponents().isEmpty()) return;
+        if (!"PC".equals(row.productTypeCode())) {
+            throw rowError(row.csvRowNumber(), "Only PC products may declare BOM components.");
+        }
+        Set<String> seen = new HashSet<>();
+        for (CatalogCsvBomComponent component : row.bomComponents()) {
+            if (component.quantity() < 1 || component.displayOrder() < 0
+                        || !seen.add(component.modelCode())) {
+                    throw rowError(row.csvRowNumber(), "BOM component quantity, order, or model is invalid.");
+            }
+            String referencedType = productTypesByModel.get(component.modelCode());
+            if (referencedType == null || !referencedType.equals(component.componentType())) {
+                    throw rowError(row.csvRowNumber(),
+                            "BOM component references a missing model or mismatched product type: "
+                                    + component.modelCode() + ".");
+            }
+        }
+    }
+
+    private static void validateUpgradeGroups(
+            CatalogCsvRow row, Map<String, CatalogCsvRow> rowsByModel) {
+        if (row.upgradeGroups().isEmpty()) return;
+        if (!"PC".equals(row.productTypeCode())) {
+            throw rowError(row.csvRowNumber(), "Only PC products may declare upgrade groups.");
+        }
+        Set<String> groupCodes = new HashSet<>();
+        Map<String, Integer> bomQuantities = row.bomComponents().stream()
+                    .collect(Collectors.toMap(
+                            CatalogCsvBomComponent::modelCode,
+                            CatalogCsvBomComponent::quantity));
+        for (CatalogCsvUpgradeGroup group : row.upgradeGroups()) {
+            if (!group.groupCode().matches("[A-Z][A-Z0-9_]{0,79}")
+                        || group.displayName().isBlank()
+                        || group.quantity() < 1
+                        || group.displayOrder() < 0
+                        || group.options().isEmpty()
+                        || !groupCodes.add(group.groupCode())
+                        || !Integer.valueOf(group.quantity()).equals(bomQuantities.get(group.defaultModelCode()))) {
+                    throw rowError(row.csvRowNumber(),
+                            "Upgrade group must have a unique code, valid quantity, and default that matches the BOM.");
+            }
+            CatalogCsvRow defaultComponent = rowsByModel.get(group.defaultModelCode());
+            if (defaultComponent == null || !group.groupCode().equals(defaultComponent.productTypeCode())) {
+                    throw rowError(row.csvRowNumber(), "Upgrade group default has a mismatched product type.");
+            }
+            Set<String> optionModels = new HashSet<>();
+            boolean includesDefault = false;
+            for (CatalogCsvUpgradeOption option : group.options()) {
+                    CatalogCsvRow optionProduct = rowsByModel.get(option.modelCode());
+                    if (option.displayOrder() < 0 || !optionModels.add(option.modelCode())
+                            || optionProduct == null
+                            || !group.groupCode().equals(optionProduct.productTypeCode())) {
+                        throw rowError(row.csvRowNumber(),
+                                "Upgrade options must be unique existing products of the group's component type.");
+                    }
+                    if (!defaultComponent.currencyCode().equals(optionProduct.currencyCode())) {
+                        throw rowError(row.csvRowNumber(),
+                                "Upgrade options and their default must use the same currency.");
+                    }
+                    if (optionProduct.price().compareTo(defaultComponent.price()) < 0) {
+                        throw rowError(row.csvRowNumber(),
+                                "Upgrade options cannot have a negative price difference from the default.");
+                    }
+                    includesDefault |= option.modelCode().equals(group.defaultModelCode());
+            }
+            if (!includesDefault) {
+                    throw rowError(row.csvRowNumber(), "Upgrade options must include their default BOM component.");
+            }
         }
     }
 
@@ -521,7 +643,7 @@ public final class CatalogCsvImporter {
         for (int index = 0; index < items.size(); index++) {
             JsonNode item = items.get(index);
             if (!item.isObject()
-                    || item.size() != 3
+                    || (item.size() != 3 && !(item.size() == 4 && item.has("quantity")))
                     || !item.has("component_type")
                     || !item.get("component_type").isTextual()
                     || item.get("component_type").textValue().isBlank()
@@ -534,8 +656,16 @@ public final class CatalogCsvImporter {
                 throw rowError(
                         row.csvRowNumber(),
                         "PC:configuration_items entry " + index
-                                + " must contain exactly non-empty component_type, model_code, and "
-                                + "product_name strings.");
+                                + " must contain non-empty component_type, model_code, and product_name "
+                                + "strings, with optional positive integer quantity.");
+            }
+            if (item.has("quantity")
+                    && (!item.get("quantity").isIntegralNumber()
+                    || !item.get("quantity").canConvertToInt()
+                    || item.get("quantity").intValue() < 1)) {
+                throw rowError(
+                        row.csvRowNumber(),
+                        "PC:configuration_items entry " + index + " quantity must be a positive integer.");
             }
             String modelCode = item.get("model_code").textValue();
             String componentType = item.get("component_type").textValue();
@@ -573,7 +703,14 @@ public final class CatalogCsvImporter {
         return transactionTemplate.execute(status -> applyInTransaction(rows, defaultStock));
     }
 
+    public ImportSummary preview(List<CatalogCsvRow> rows, long defaultStock) {
+        validateDefaultOfferStock(defaultStock);
+        validateDataset(rows);
+        return summarize(rows, existingModelCodes(rows).size(), 0);
+    }
+
     private ImportSummary applyInTransaction(List<CatalogCsvRow> rows, long defaultStock) {
+        int existingProducts = existingModelCodes(rows).size();
         Map<String, Long> typeIds = ensureProductTypes();
         Map<String, Long> categoryIds = ensureCategories();
         Map<String, Long> brandIds = ensureBrands(rows);
@@ -598,8 +735,72 @@ public final class CatalogCsvImporter {
                             row.modelCode(),
                             evidence));
         }
-        return new ImportSummary(rows.size(), typeIds.size(), categoryIds.size(), brandIds.size(),
-                rows.size(), definitionIds.size(), attributeValueCount);
+
+        int bomComponentCount = 0;
+        for (CatalogCsvRow row : rows) {
+            long productId = lookupId(
+                    "SELECT \"product_id\" FROM \"products\" WHERE \"model_code\" = ?",
+                    row.modelCode());
+            bomComponentCount += upsertBomComponents(row, productId);
+        }
+
+        int upgradeGroupCount = 0;
+        int upgradeOptionCount = 0;
+        for (CatalogCsvRow row : rows) {
+            long productId = lookupId(
+                    "SELECT \"product_id\" FROM \"products\" WHERE \"model_code\" = ?",
+                    row.modelCode());
+            int[] upgradeCounts = upsertUpgradeGroups(row, productId);
+            upgradeGroupCount += upgradeCounts[0];
+            upgradeOptionCount += upgradeCounts[1];
+        }
+        return summarize(
+                rows, existingProducts, 0,
+                typeIds.size(), categoryIds.size(), brandIds.size(),
+                definitionIds.size(), attributeValueCount,
+                bomComponentCount, upgradeGroupCount, upgradeOptionCount);
+    }
+
+    private ImportSummary summarize(List<CatalogCsvRow> rows, int existingProducts, int failed) {
+        return summarize(rows, existingProducts, failed,
+                PRODUCT_TYPE_NAMES.size(), CATEGORY_NAMES.size(),
+                (int) rows.stream().map(CatalogCsvRow::brandName).distinct().count(),
+                AttributeDefinitionRegistry.all().size(),
+                rows.stream().mapToInt(row -> row.specifications().size()).sum(),
+                rows.stream().mapToInt(row -> row.bomComponents().size()).sum(),
+                rows.stream().mapToInt(row -> row.upgradeGroups().size()).sum(),
+                rows.stream().flatMap(row -> row.upgradeGroups().stream())
+                        .mapToInt(group -> group.options().size()).sum());
+    }
+
+    private ImportSummary summarize(
+            List<CatalogCsvRow> rows,
+            int existingProducts,
+            int failed,
+            int productTypes,
+            int categories,
+            int brands,
+            int attributeDefinitions,
+            int attributeValues,
+            int bomComponents,
+            int upgradeGroups,
+            int upgradeOptions) {
+        int inserted = Math.max(0, rows.size() - existingProducts);
+        return new ImportSummary(
+                rows.size(), inserted, existingProducts, 0, failed,
+                productTypes, categories, brands, rows.size(), bomComponents,
+                upgradeGroups, upgradeOptions, attributeDefinitions, attributeValues);
+    }
+
+    private Set<String> existingModelCodes(List<CatalogCsvRow> rows) {
+        if (rows.isEmpty()) return Set.of();
+        String placeholders = String.join(",", java.util.Collections.nCopies(rows.size(), "?"));
+        Object[] modelCodes = rows.stream().map(CatalogCsvRow::modelCode).toArray();
+        return new HashSet<>(jdbcTemplate.queryForList(
+                "SELECT \"model_code\" FROM \"products\" WHERE \"model_code\" IN ("
+                        + placeholders + ")",
+                String.class,
+                modelCodes));
     }
 
     Map<String, Long> ensureProductTypes() {
@@ -608,7 +809,7 @@ public final class CatalogCsvImporter {
             jdbcTemplate.update("""
                     INSERT INTO "product_types"
                       ("type_code", "type_name", "description", "is_build_component", "is_active")
-                    VALUES (?, ?, 'Demo catalog product type', ?, TRUE)
+                    VALUES (?, ?, 'Danh mục sản phẩm máy tính', ?, TRUE)
                     ON CONFLICT ("type_code") DO UPDATE SET
                       "type_name" = EXCLUDED."type_name",
                       "description" = EXCLUDED."description",
@@ -627,7 +828,7 @@ public final class CatalogCsvImporter {
         for (Map.Entry<String, String> category : CATEGORY_NAMES.entrySet()) {
             jdbcTemplate.update("""
                     INSERT INTO "categories" ("category_code", "category_name", "description", "is_active")
-                    VALUES (?, ?, 'Danh mục demo catalog PC Builder Store', TRUE)
+                    VALUES (?, ?, 'Danh mục sản phẩm và linh kiện máy tính', TRUE)
                     ON CONFLICT ("category_code") DO NOTHING
                     """, category.getKey(), category.getValue());
             ids.put(category.getKey(), lookupId(
@@ -696,7 +897,20 @@ public final class CatalogCsvImporter {
                 categoryIds.get(row.categoryCode()),
                 brandIds.get(row.brandName()),
                 row.modelCode(),
-                row.productName());
+                row.productName(),
+                row.merchandising().shortDescription(),
+                row.merchandising().description(),
+                row.modelCode(),
+                row.merchandising().slug(),
+                row.merchandising().tags() == null
+                        ? "[]" : row.merchandising().tags().toString(),
+                row.merchandising().seoTitle(),
+                row.merchandising().seoDescription(),
+                row.merchandising().featured(),
+                row.merchandising().displayOrder(),
+                row.merchandising().bomSummary(),
+                row.merchandising().contentSections() == null
+                        ? "[]" : row.merchandising().contentSections().toString());
         return lookupId("SELECT \"product_id\" FROM \"products\" WHERE \"model_code\" = ?", row.modelCode());
     }
 
@@ -706,8 +920,10 @@ public final class CatalogCsvImporter {
                 productId,
                 offerCode(row.modelCode()),
                 row.price(),
+                row.compareAtPrice(),
                 row.currencyCode(),
-                BigDecimal.valueOf(defaultStock),
+                BigDecimal.valueOf(row.stockQuantity() == null
+                        ? defaultStock : row.stockQuantity()),
                 BigDecimal.valueOf(row.warrantyMonths()));
     }
 
@@ -717,7 +933,7 @@ public final class CatalogCsvImporter {
                         SELECT "image_id", "image_url", "is_primary"
                           FROM "product_images"
                          WHERE "product_id" = ?
-                         ORDER BY "is_primary" DESC, "sort_order", "image_id"
+                         ORDER BY "sort_order", "image_id"
                         """,
                         productId).stream()
                 .map(image -> new ExistingProductImage(
@@ -726,27 +942,24 @@ public final class CatalogCsvImporter {
                         (Boolean) image.get("is_primary")))
                 .toList();
         existingImages.forEach(image -> existingByUrl.putIfAbsent(image.url(), image));
-        boolean hasPrimary = existingImages.stream().anyMatch(ExistingProductImage::primary);
+        boolean hasExistingPrimary = existingImages.stream().anyMatch(ExistingProductImage::primary);
         for (int imageIndex = 0; imageIndex < row.images().size(); imageIndex++) {
             CatalogCsvImage image = row.images().get(imageIndex);
             ExistingProductImage existing = existingByUrl.get(image.url());
             if (existing != null) {
-                boolean promoteToPrimary = !hasPrimary && imageIndex == 0;
                 jdbcTemplate.update("""
                         UPDATE "product_images"
                            SET "alt_text" = COALESCE(?, "alt_text"),
                                "sort_order" = ?,
-                               "is_primary" = CASE WHEN ? THEN TRUE ELSE "is_primary" END
+                               "is_primary" = ?
                          WHERE "image_id" = ?
                         """,
                         image.altText(),
                         image.sortOrder(),
-                        promoteToPrimary,
+                        existing.primary() || (!hasExistingPrimary && imageIndex == 0),
                         existing.id());
-                hasPrimary |= promoteToPrimary;
                 continue;
             }
-            boolean primary = !hasPrimary && imageIndex == 0;
             jdbcTemplate.update("""
                     INSERT INTO "product_images"
                       ("product_id", "image_url", "alt_text", "is_primary", "sort_order")
@@ -755,10 +968,167 @@ public final class CatalogCsvImporter {
                     productId,
                     image.url(),
                     image.altText(),
-                    primary,
+                    !hasExistingPrimary && imageIndex == 0,
                     image.sortOrder());
-            hasPrimary |= primary;
         }
+    }
+
+    private int upsertBomComponents(CatalogCsvRow row, long productId) {
+        if ("PC".equals(row.productTypeCode())) {
+            List<Long> componentProductIds = row.bomComponents().stream()
+                    .map(component -> lookupId(
+                            "SELECT \"product_id\" FROM \"products\" WHERE \"model_code\" = ?",
+                            component.modelCode()))
+                    .toList();
+            if (componentProductIds.isEmpty()) {
+                jdbcTemplate.update(
+                        "DELETE FROM \"product_bom_components\" WHERE \"parent_product_id\" = ?",
+                        productId);
+            } else {
+                String placeholders = String.join(
+                        ",", java.util.Collections.nCopies(componentProductIds.size(), "?"));
+                Object[] parameters = new Object[componentProductIds.size() + 1];
+                parameters[0] = productId;
+                for (int index = 0; index < componentProductIds.size(); index++) {
+                    parameters[index + 1] = componentProductIds.get(index);
+                }
+                jdbcTemplate.update(
+                        "DELETE FROM \"product_bom_components\" WHERE \"parent_product_id\" = ? "
+                                + "AND \"component_product_id\" NOT IN (" + placeholders + ")",
+                        parameters);
+            }
+        }
+        int persisted = 0;
+        for (CatalogCsvBomComponent component : row.bomComponents()) {
+            long componentProductId = lookupId(
+                    "SELECT \"product_id\" FROM \"products\" WHERE \"model_code\" = ?",
+                    component.modelCode());
+            jdbcTemplate.update("""
+                    INSERT INTO "product_bom_components" (
+                        "parent_product_id", "component_product_id", "quantity",
+                        "component_warranty_months", "display_category", "display_order",
+                        "customer_visible"
+                    ) VALUES (?, ?, ?, NULL, ?, ?, TRUE)
+                    ON CONFLICT ("parent_product_id", "component_product_id")
+                    DO UPDATE SET "quantity" = EXCLUDED."quantity",
+                                  "display_category" = EXCLUDED."display_category",
+                                  "display_order" = EXCLUDED."display_order",
+                                  "customer_visible" = EXCLUDED."customer_visible",
+                                  "updated_at" = CURRENT_TIMESTAMP
+                    """, productId, componentProductId, component.quantity(),
+                    component.componentType(), component.displayOrder());
+            persisted++;
+        }
+        return persisted;
+    }
+
+    private int[] upsertUpgradeGroups(CatalogCsvRow row, long productId) {
+        if (!"PC".equals(row.productTypeCode())) {
+            return new int[] {0, 0};
+        }
+        if (row.upgradeGroups().isEmpty()) {
+            jdbcTemplate.update("""
+                    UPDATE "product_upgrade_groups"
+                       SET "is_enabled" = FALSE, "updated_at" = CURRENT_TIMESTAMP
+                     WHERE "product_id" = ?
+                    """, productId);
+            jdbcTemplate.update("""
+                    UPDATE "product_upgrade_options"
+                       SET "is_enabled" = FALSE
+                     WHERE "upgrade_group_id" IN (
+                         SELECT "upgrade_group_id" FROM "product_upgrade_groups"
+                         WHERE "product_id" = ?
+                     )
+                    """, productId);
+            return new int[] {0, 0};
+        }
+        String groupPlaceholders = String.join(
+                ",", java.util.Collections.nCopies(row.upgradeGroups().size(), "?"));
+        Object[] groupParameters = new Object[row.upgradeGroups().size() + 1];
+        groupParameters[0] = productId;
+        for (int index = 0; index < row.upgradeGroups().size(); index++) {
+            groupParameters[index + 1] = row.upgradeGroups().get(index).groupCode();
+        }
+        jdbcTemplate.update(
+                "UPDATE \"product_upgrade_groups\" SET \"is_enabled\" = FALSE, "
+                        + "\"updated_at\" = CURRENT_TIMESTAMP WHERE \"product_id\" = ? "
+                        + "AND \"group_code\" NOT IN (" + groupPlaceholders + ")",
+                groupParameters);
+        jdbcTemplate.update(
+                "UPDATE \"product_upgrade_options\" SET \"is_enabled\" = FALSE "
+                        + "WHERE \"upgrade_group_id\" IN (SELECT \"upgrade_group_id\" "
+                        + "FROM \"product_upgrade_groups\" WHERE \"product_id\" = ? "
+                        + "AND \"is_enabled\" = FALSE)",
+                productId);
+
+        int optionCount = 0;
+        for (CatalogCsvUpgradeGroup group : row.upgradeGroups()) {
+            jdbcTemplate.update("""
+                    INSERT INTO "product_upgrade_groups" (
+                        "product_id", "group_code", "display_name", "description",
+                        "is_required", "display_order", "is_enabled"
+                    ) VALUES (?, ?, ?, ?, FALSE, ?, TRUE)
+                    ON CONFLICT ("product_id", "group_code")
+                    DO UPDATE SET "display_name" = EXCLUDED."display_name",
+                                  "description" = EXCLUDED."description",
+                                  "display_order" = EXCLUDED."display_order",
+                                  "is_required" = FALSE,
+                                  "is_enabled" = TRUE,
+                                  "updated_at" = CURRENT_TIMESTAMP
+                    """, productId, group.groupCode(), group.displayName(),
+                    group.description(), group.displayOrder());
+            long groupId = lookupId("""
+                    SELECT "upgrade_group_id" FROM "product_upgrade_groups"
+                    WHERE "product_id" = ? AND "group_code" = ?
+                    """, productId, group.groupCode());
+            long defaultOfferId = lookupId(
+                    "SELECT \"offer_id\" FROM \"product_offers\" WHERE \"offer_code\" = ?",
+                    offerCode(group.defaultModelCode()));
+            BigDecimal defaultPrice = jdbcTemplate.queryForObject(
+                    "SELECT \"price\" FROM \"product_offers\" WHERE \"offer_id\" = ?",
+                    BigDecimal.class,
+                    defaultOfferId);
+            if (defaultPrice == null) {
+                throw new IllegalStateException("Upgrade default offer has no stored price.");
+            }
+            jdbcTemplate.update(
+                    "UPDATE \"product_upgrade_options\" SET \"is_enabled\" = FALSE "
+                            + "WHERE \"upgrade_group_id\" = ?",
+                    groupId);
+            for (CatalogCsvUpgradeOption option : group.options()) {
+                long offerId = lookupId(
+                        "SELECT \"offer_id\" FROM \"product_offers\" WHERE \"offer_code\" = ?",
+                        offerCode(option.modelCode()));
+                String productName = jdbcTemplate.queryForObject(
+                        "SELECT \"product_name\" FROM \"products\" WHERE \"model_code\" = ?",
+                        String.class,
+                        option.modelCode());
+                BigDecimal optionPrice = jdbcTemplate.queryForObject(
+                        "SELECT \"price\" FROM \"product_offers\" WHERE \"offer_id\" = ?",
+                        BigDecimal.class,
+                        offerId);
+                jdbcTemplate.update("""
+                        INSERT INTO "product_upgrade_options" (
+                            "upgrade_group_id", "offer_id", "price_delta", "display_name",
+                            "description", "is_default", "minimum_quantity", "maximum_quantity",
+                            "display_order", "is_enabled"
+                        ) VALUES (?, ?, ?, ?, NULL, ?, ?, ?, ?, TRUE)
+                        ON CONFLICT ("upgrade_group_id", "offer_id")
+                        DO UPDATE SET "price_delta" = EXCLUDED."price_delta",
+                                      "display_name" = EXCLUDED."display_name",
+                                      "description" = EXCLUDED."description",
+                                      "is_default" = EXCLUDED."is_default",
+                                      "minimum_quantity" = EXCLUDED."minimum_quantity",
+                                      "maximum_quantity" = EXCLUDED."maximum_quantity",
+                                      "display_order" = EXCLUDED."display_order",
+                                      "is_enabled" = TRUE
+                        """, groupId, offerId, optionPrice.subtract(defaultPrice),
+                        productName, option.modelCode().equals(group.defaultModelCode()),
+                        group.quantity(), group.quantity(), option.displayOrder());
+                optionCount++;
+            }
+        }
+        return new int[] {row.upgradeGroups().size(), optionCount};
     }
 
     void upsertVerificationMetadata(
@@ -826,7 +1196,8 @@ public final class CatalogCsvImporter {
         String productType = requiredCode(record, "product_type_code", 60, rowNumber);
         String productName = requiredText(record, "product_name", 240, rowNumber);
         String brandName = requiredText(record, "brand_name", 120, rowNumber);
-        String category = requiredCode(record, "category_code", 60, rowNumber);
+        String category = normalizeCategory(
+                requiredCode(record, "category_code", 60, rowNumber), productType, rowNumber);
         String currencyCode = requiredText(record, "currency_code", 3, rowNumber);
         if (currencyCode.length() != 3) {
             throw rowError(rowNumber, "currency_code must contain exactly 3 characters.");
@@ -864,6 +1235,18 @@ public final class CatalogCsvImporter {
             validateDefinitionValue(value, definition, rowNumber);
             attributes.put(definition.code(), value);
         }
+        BigDecimal compareAtPrice = optionalPrice(record, "compare_at_price_vnd", rowNumber);
+        if (compareAtPrice != null && compareAtPrice.compareTo(price) < 0) {
+            throw rowError(rowNumber, "compare_at_price_vnd cannot be lower than price_vnd.");
+        }
+        Long stockQuantity = optionalUnsignedInteger(record, "stock_quantity", rowNumber);
+        CatalogCsvMerchandising merchandising = parseMerchandising(record, rowNumber, objectMapper);
+        List<CatalogCsvBomComponent> bomComponents =
+                parseBomComponents(attributes.get("component_details"),
+                        attributes.get("configuration_items"), rowNumber);
+        List<CatalogCsvUpgradeGroup> upgradeGroups =
+                parseUpgradeGroups(optionalColumn(record, "pc__upgrade_groups_json"),
+                        rowNumber, objectMapper);
         return new CatalogCsvRow(
                 rowNumber,
                 modelCode,
@@ -882,7 +1265,232 @@ public final class CatalogCsvImporter {
                 List.copyOf(images),
                 dataNote,
                 Map.copyOf(attributes),
-                Map.of());
+                Map.of(),
+                compareAtPrice,
+                stockQuantity,
+                merchandising,
+                bomComponents,
+                upgradeGroups);
+    }
+
+    private static String normalizeCategory(String category, String productType, int rowNumber) {
+        if ("MOTHERBOARD".equals(productType) && "MOTHERBOARD".equals(category)) {
+            return "MAINBOARD";
+        }
+        if ("PC".equals(productType) && "PC".equals(category)) {
+            return "PREBUILT_PC";
+        }
+        if (!category.equals(CATEGORY_CODES.get(productType))) {
+            throw rowError(rowNumber, "category_code " + category
+                    + " is not mapped to product_type_code " + productType + ".");
+        }
+        return category;
+    }
+
+    private static CatalogCsvMerchandising parseMerchandising(
+            CSVRecord record, int rowNumber, ObjectMapper objectMapper) {
+        String shortDescription = optionalColumn(record, "short_description");
+        validateOptionalLength(shortDescription, 500, "short_description", rowNumber);
+        String description = optionalColumn(record, "description");
+        validateOptionalLength(description, 100_000, "description", rowNumber);
+        String slug = optionalColumn(record, "slug");
+        validateOptionalLength(slug, 180, "slug", rowNumber);
+        String seoTitle = optionalColumn(record, "seo_title");
+        validateOptionalLength(seoTitle, 255, "seo_title", rowNumber);
+        String seoDescription = optionalColumn(record, "seo_description");
+        validateOptionalLength(seoDescription, 500, "seo_description", rowNumber);
+        String bomSummary = optionalColumn(record, "bom_summary");
+        validateOptionalLength(bomSummary, 4000, "bom_summary", rowNumber);
+        JsonNode tags = parseOptionalJson(optionalColumn(record, "tags_json"),
+                "tags_json", rowNumber, objectMapper);
+        if (tags != null && (!tags.isArray()
+                || tags.valueStream().anyMatch(value -> !value.isTextual() || value.asString().isBlank()))) {
+            throw rowError(rowNumber, "tags_json must be an array of non-empty strings.");
+        }
+        JsonNode contentSections = parseOptionalJson(
+                optionalColumn(record, "content_sections_json"),
+                "content_sections_json", rowNumber, objectMapper);
+        validateContentSections(contentSections, rowNumber);
+        boolean featured = optionalColumn(record, "is_featured") == null
+                ? false
+                : parseBoolean(optionalColumn(record, "is_featured"), "is_featured", rowNumber);
+        int displayOrder = optionalColumn(record, "display_order") == null
+                ? 0
+                : Math.toIntExact(parseUnsignedInteger(
+                        optionalColumn(record, "display_order"), 10, "display_order", rowNumber));
+        return new CatalogCsvMerchandising(
+                blankToNull(shortDescription),
+                blankToNull(description),
+                blankToNull(slug),
+                tags,
+                blankToNull(seoTitle),
+                blankToNull(seoDescription),
+                featured,
+                displayOrder,
+                blankToNull(bomSummary),
+                contentSections);
+    }
+
+    private static void validateContentSections(JsonNode sections, int rowNumber) {
+        if (sections == null) return;
+        if (!sections.isArray()) {
+            throw rowError(rowNumber, "content_sections_json must be a JSON array.");
+        }
+        for (JsonNode section : sections) {
+            JsonNode heading = section.get("heading");
+            JsonNode body = section.get("body");
+            if (!section.isObject() || heading == null || !heading.isTextual()
+                    || heading.asString().isBlank() || heading.asString().length() > 180
+                    || body == null || !body.isTextual() || body.asString().isBlank()
+                    || body.asString().length() > 10_000) {
+                throw rowError(rowNumber,
+                        "Each content section must have a non-empty heading and body.");
+            }
+        }
+    }
+
+    private static List<CatalogCsvBomComponent> parseBomComponents(
+            JsonNode componentDetails, JsonNode configurationItems, int rowNumber) {
+        JsonNode components = componentDetails != null ? componentDetails : configurationItems;
+        if (components == null) return List.of();
+        if (!components.isArray()) {
+            throw rowError(rowNumber, "PC component details must be a JSON array.");
+        }
+        List<CatalogCsvBomComponent> result = new ArrayList<>();
+        Map<String, Integer> quantitiesByModel = new LinkedHashMap<>();
+        Map<String, String> typeByModel = new HashMap<>();
+        for (JsonNode component : components) {
+            String type = textualField(component, "component_type", rowNumber);
+            String model = textualField(component, "model_code", rowNumber);
+            int quantity = component.has("quantity")
+                    ? Math.toIntExact(parseJsonUnsignedInteger(component.get("quantity"), "quantity", rowNumber))
+                    : 1;
+            Integer total = quantitiesByModel.merge(model, quantity, Integer::sum);
+            String priorType = typeByModel.putIfAbsent(model, type);
+            if (priorType != null && !priorType.equals(type)) {
+                throw rowError(rowNumber, "A BOM model code cannot have multiple component types.");
+            }
+        }
+        int displayOrder = 0;
+        for (Map.Entry<String, Integer> component : quantitiesByModel.entrySet()) {
+            result.add(new CatalogCsvBomComponent(
+                    typeByModel.get(component.getKey()),
+                    component.getKey(),
+                    component.getValue(),
+                    displayOrder++));
+        }
+        return List.copyOf(result);
+    }
+
+    private static List<CatalogCsvUpgradeGroup> parseUpgradeGroups(
+            String raw, int rowNumber, ObjectMapper objectMapper) {
+        JsonNode groups = parseOptionalJson(raw, "pc__upgrade_groups_json", rowNumber, objectMapper);
+        if (groups == null) return List.of();
+        if (!groups.isArray()) {
+            throw rowError(rowNumber, "pc__upgrade_groups_json must be a JSON array.");
+        }
+        List<CatalogCsvUpgradeGroup> result = new ArrayList<>();
+        for (JsonNode group : groups) {
+            String code = textualField(group, "group_code", rowNumber).toUpperCase(Locale.ROOT);
+            String displayName = textualField(group, "display_name", rowNumber);
+            String description = optionalJsonText(group, "description", rowNumber);
+            String defaultModelCode = textualField(group, "default_model_code", rowNumber);
+            int quantity = Math.toIntExact(parseJsonUnsignedInteger(
+                    group.get("quantity"), "quantity", rowNumber));
+            int groupOrder = group.has("display_order")
+                    ? Math.toIntExact(parseJsonUnsignedInteger(
+                            group.get("display_order"), "display_order", rowNumber))
+                    : result.size();
+            JsonNode options = group.get("options");
+            if (options == null || !options.isArray()) {
+                throw rowError(rowNumber, "Each upgrade group must include an options array.");
+            }
+            List<CatalogCsvUpgradeOption> parsedOptions = new ArrayList<>();
+            for (JsonNode option : options) {
+                String modelCode = textualField(option, "model_code", rowNumber);
+                int order = option.has("display_order")
+                        ? Math.toIntExact(parseJsonUnsignedInteger(
+                                option.get("display_order"), "display_order", rowNumber))
+                        : parsedOptions.size();
+                parsedOptions.add(new CatalogCsvUpgradeOption(modelCode, order));
+            }
+            result.add(new CatalogCsvUpgradeGroup(
+                    code, displayName, description, defaultModelCode, quantity,
+                    List.copyOf(parsedOptions), groupOrder));
+        }
+        return List.copyOf(result);
+    }
+
+    private static String textualField(JsonNode object, String field, int rowNumber) {
+        JsonNode value = object == null ? null : object.get(field);
+        if (value == null || !value.isTextual() || value.asString().isBlank()) {
+            throw rowError(rowNumber, "JSON field " + field + " must be a non-empty string.");
+        }
+        return value.asString().trim();
+    }
+
+    private static String optionalJsonText(JsonNode object, String field, int rowNumber) {
+        JsonNode value = object == null ? null : object.get(field);
+        if (value == null || value.isNull()) return null;
+        if (!value.isTextual()) {
+            throw rowError(rowNumber, "JSON field " + field + " must be a string.");
+        }
+        return value.asString().trim();
+    }
+
+    private static long parseJsonUnsignedInteger(JsonNode value, String field, int rowNumber) {
+        if (value == null || !value.isIntegralNumber() || value.longValue() < 0) {
+            throw rowError(rowNumber, "JSON field " + field + " must be a non-negative integer.");
+        }
+        return value.longValue();
+    }
+
+    private static JsonNode parseOptionalJson(
+            String raw, String field, int rowNumber, ObjectMapper objectMapper) {
+        if (raw == null || raw.isBlank()) return null;
+        try {
+            return objectMapper.readTree(raw);
+        } catch (JacksonException exception) {
+            throw rowError(rowNumber, field + " must contain valid JSON.");
+        }
+    }
+
+    private static BigDecimal optionalPrice(CSVRecord record, String column, int rowNumber) {
+        String value = optionalColumn(record, column);
+        if (value == null) return null;
+        try {
+            BigDecimal price = new BigDecimal(value).setScale(2, RoundingMode.UNNECESSARY);
+            if (price.signum() < 0 || price.precision() > 15) {
+                throw rowError(rowNumber, column + " is outside DECIMAL(15,2) bounds.");
+            }
+            return price;
+        } catch (NumberFormatException | ArithmeticException exception) {
+            throw rowError(rowNumber, column + " must be a non-negative decimal with at most 2 places.");
+        }
+    }
+
+    private static Long optionalUnsignedInteger(CSVRecord record, String column, int rowNumber) {
+        String value = optionalColumn(record, column);
+        return value == null
+                ? null
+                : parseUnsignedInteger(value, 10, column, rowNumber);
+    }
+
+    private static String optionalColumn(CSVRecord record, String column) {
+        if (!record.isMapped(column)) return null;
+        String value = record.get(column);
+        return value == null || value.isBlank() ? null : value.trim();
+    }
+
+    private static void validateOptionalLength(
+            String value, int maxLength, String column, int rowNumber) {
+        if (value != null && value.length() > maxLength) {
+            throw rowError(rowNumber, column + " exceeds " + maxLength + " characters.");
+        }
+    }
+
+    private static String blankToNull(String value) {
+        return value == null || value.isBlank() ? null : value;
     }
 
     private static JsonNode parseAttributeValue(
@@ -904,6 +1512,15 @@ public final class CatalogCsvImporter {
                         rowNumber,
                         definition.productType() + ":" + definition.code() + " is not valid DECIMAL data.");
             }
+        }
+        if ("BOOLEAN".equals(definition.dataType())) {
+            return switch (value.toLowerCase(Locale.ROOT)) {
+                case "true" -> objectMapper.getNodeFactory().booleanNode(true);
+                case "false" -> objectMapper.getNodeFactory().booleanNode(false);
+                default -> throw rowError(
+                        rowNumber,
+                        definition.productType() + ":" + definition.code() + " is not valid BOOLEAN data.");
+            };
         }
         try {
             return objectMapper.readTree(value);
@@ -1077,10 +1694,17 @@ public final class CatalogCsvImporter {
 
     public record ImportSummary(
             int products,
+            int insertedProducts,
+            int updatedProducts,
+            int skippedProducts,
+            int failedProducts,
             int productTypes,
             int categories,
             int brands,
             int offers,
+            int bomComponents,
+            int upgradeGroups,
+            int upgradeOptions,
             int attributeDefinitions,
             int attributeValues) {
     }

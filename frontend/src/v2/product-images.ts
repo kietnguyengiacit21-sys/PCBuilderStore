@@ -9,6 +9,14 @@ export function uniqueProductImages(images: CatalogImage[]): CatalogImage[] {
   }, []);
 }
 
+export function displayProductImages(images: CatalogImage[], productType: string): CatalogImage[] {
+  const uniqueImages = uniqueProductImages(images);
+  if (productType !== "ACCESSORY") return uniqueImages;
+  const modelImages = uniqueImages.filter((image) =>
+    !/hình minh họa sản phẩm/iu.test(image.altText ?? ""));
+  return modelImages.length > 0 ? modelImages : [];
+}
+
 export function availableProductImages(images: CatalogImage[], failedUrls: ReadonlySet<string>): CatalogImage[] {
   return images.filter((image) => !failedUrls.has(image.url));
 }

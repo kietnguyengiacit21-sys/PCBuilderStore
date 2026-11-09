@@ -1,0 +1,151 @@
+﻿model_code,product_type,subtype,product_name,v13_applicable_fields,v13_fields_populated,v13_fields_missing,cumulative_populated_technical_fields,cumulative_public_allowlisted_values,v13_delta_values,notes
+BX8071512100F,CPU,,Core i3-12100F,6,6,0,25,22,6,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+BX8071512400F,CPU,,Core i5-12400F,6,6,0,25,22,6,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+BX8071513400F,CPU,,Core i5-13400F,6,6,0,25,22,6,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+BX8071514400F,CPU,,Core i5-14400F,6,6,0,25,22,6,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+BX8071514500,CPU,,Core i5-14500,6,6,0,25,22,6,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+BX8071514600K,CPU,,Core i5-14600K,6,6,0,25,22,6,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+BX8071514600KF,CPU,,Core i5-14600KF,6,6,0,25,22,6,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+BX8071513700K,CPU,,Core i7-13700K,6,6,0,25,22,6,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+BX8071514700K,CPU,,Core i7-14700K,6,6,0,25,22,6,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+BX8071514900K,CPU,,Core i9-14900K,6,6,0,25,22,6,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+100-100000927BOX,CPU,,Ryzen 5 5600,6,6,0,25,24,6,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+100-100000065BOX,CPU,,Ryzen 5 5600X,6,6,0,25,21,6,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+100-100001015BOX,CPU,,Ryzen 5 7600,6,6,0,25,24,6,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+100-100000592BOX,CPU,,Ryzen 7 7700,6,6,0,25,24,6,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+100-100000910WOF,CPU,,Ryzen 7 7800X3D,6,6,0,25,24,6,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+DUAL-RTX4060-O8G,GPU,,Dual GeForce RTX 4060 OC 8GB,8,8,0,46,30,8,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+RTX4060VENTUS2XBLACK8GOC,GPU,,GeForce RTX 4060 Ventus 2X Black 8G OC,8,8,0,46,30,8,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+GV-N4060WF2OC-8GD,GPU,,GeForce RTX 4060 Windforce OC 8G,8,8,0,46,30,8,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+ZT-D40600E-10M,GPU,,Gaming GeForce RTX 4060 Twin Edge 8GB,8,8,0,46,34,8,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+DUAL-RTX4060TI-O8G,GPU,,Dual GeForce RTX 4060 Ti OC 8GB,8,8,0,46,30,8,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+RTX4060TIVENTUS2XBLACK8GOC,GPU,,GeForce RTX 4060 Ti Ventus 2X Black 8G OC,8,8,0,46,22,8,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+GV-N406TEAGLE-OC-8GD,GPU,,GeForce RTX 4060 Ti Eagle OC 8G,8,8,0,46,30,8,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+DUAL-RTX4070S-O12G,GPU,,Dual GeForce RTX 4070 SUPER OC 12GB,8,8,0,46,30,8,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+RTX4070SUPERVENTUS2X12GOC,GPU,,GeForce RTX 4070 SUPER Ventus 2X OC,8,8,0,46,30,8,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+GV-N407SWF3OC-12GD,GPU,,GeForce RTX 4070 SUPER Windforce OC 12G,8,8,0,46,30,8,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+11324-01-20G,GPU,,Pulse Radeon RX 7600 8GB,8,8,0,46,34,8,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+RX7600-8G-F,GPU,,Fighter Radeon RX 7600 8GB,8,8,0,46,22,8,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+11335-04-20G,GPU,,Pulse Radeon RX 7700 XT 12GB,8,8,0,46,34,8,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+RX7800XT-SL-16GO,GPU,,Radeon RX 7800 XT Steel Legend 16GB,8,8,0,46,34,8,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+11330-01-20G,GPU,,Nitro+ Radeon RX 7800 XT 16GB,8,8,0,46,34,8,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+PRIME-B760M-A-D4,MOTHERBOARD,,PRIME B760M-A D4,14,14,0,33,24,14,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+PRO-B760M-A-WIFI-DDR4,MOTHERBOARD,,PRO B760M-A WIFI DDR4,14,14,0,33,28,14,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+B760M-DS3H-DDR4,MOTHERBOARD,,B760M DS3H DDR4,14,14,0,33,14,14,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+B760M-PRO-RS-D4,MOTHERBOARD,,B760M Pro RS/D4,14,14,0,33,26,14,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+TUF-B760-PLUS-WIFI-D4,MOTHERBOARD,,TUF Gaming B760-PLUS WIFI D4,14,14,0,33,28,14,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+MAG-B760-TOMAHAWK-WIFI,MOTHERBOARD,,MAG B760 Tomahawk WIFI,14,14,0,33,28,14,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+B760-AORUS-ELITE-AX,MOTHERBOARD,,B760 AORUS ELITE AX,14,14,0,33,14,14,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+TUF-Z790-PLUS-WIFI,MOTHERBOARD,,TUF Gaming Z790-PLUS WIFI,14,14,0,33,28,14,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+PRO-Z790-A-MAX-WIFI,MOTHERBOARD,,PRO Z790-A MAX WIFI,14,14,0,33,28,14,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+Z790-STEEL-LEGEND-WIFI,MOTHERBOARD,,Z790 Steel Legend WiFi,14,14,0,33,28,14,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+PRIME-B650M-A-WIFI-II,MOTHERBOARD,,PRIME B650M-A WIFI II,14,14,0,33,28,14,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+PRO-B650M-A-WIFI,MOTHERBOARD,,PRO B650M-A WIFI,14,14,0,33,28,14,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+B650-AORUS-ELITE-AX,MOTHERBOARD,,B650 AORUS ELITE AX,14,14,0,33,14,14,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+B650M-PRO-RS,MOTHERBOARD,,B650M Pro RS,14,14,0,33,26,14,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+TUF-X670E-PLUS-WIFI,MOTHERBOARD,,TUF Gaming X670E-PLUS WIFI,14,14,0,33,28,14,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+KF432C16BB/8,RAM,,FURY Beast DDR4 8GB 3200,6,6,0,22,20,6,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+KF432C16BB/16,RAM,,FURY Beast DDR4 16GB 3200,6,6,0,22,20,6,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+KF432C16BBK2/32,RAM,,FURY Beast DDR4 32GB Kit,6,6,0,22,20,6,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+CMK16GX4M1E3200C16,RAM,,Vengeance LPX DDR4 16GB 3200,6,6,0,22,18,6,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+CMK32GX4M2E3200C16,RAM,,Vengeance LPX DDR4 32GB Kit,6,6,0,22,18,6,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+F4-3200C16S-16GVK,RAM,,Ripjaws V DDR4 16GB 3200,6,6,0,22,20,6,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+F4-3200C16D-32GVK,RAM,,Ripjaws V DDR4 32GB Kit,6,6,0,22,7,6,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+TLZGD416G3200HC16F01,RAM,,T-Force Vulcan Z DDR4 16GB,6,6,0,22,19,6,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+TF3D432G3200HC16CDC01,RAM,,T-Force Delta RGB DDR4 32GB Kit,6,6,0,22,20,6,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+CP2K16G4DFRA32A,RAM,,Pro DDR4 32GB Kit,6,6,0,22,7,6,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+KF556C40BB-16,RAM,,FURY Beast DDR5 16GB 5600,6,6,0,22,20,6,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+KF560C36BBEK2-32,RAM,,FURY Beast DDR5 32GB 6000 Kit,6,6,0,22,20,6,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+CMK32GX5M2E6000C36,RAM,,Vengeance DDR5 32GB 6000 Kit,6,6,0,22,18,6,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+CMH32GX5M2B6000C36,RAM,,Vengeance RGB DDR5 32GB Kit,6,6,0,22,15,6,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+F5-6000J3636F16GX2-FX5,RAM,,Flare X5 DDR5 32GB 6000 Kit,6,6,0,22,19,6,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+F5-6000J3038F16GX2-TZ5NR,RAM,,Trident Z5 Neo RGB DDR5 32GB Kit,6,6,0,22,20,6,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+FF3D532G6000HC38ADC01,RAM,,T-Force Delta RGB DDR5 32GB Kit,6,6,0,22,20,6,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+AX5U6000C4016G-DCLABK,RAM,,XPG Lancer DDR5 16GB 6000,6,6,0,22,18,6,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+CP2K16G56C46U5,RAM,,Pro DDR5 32GB 5600 Kit,6,6,0,22,7,6,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+PVV532G600C36K,RAM,,Viper Venom DDR5 32GB 6000 Kit,6,6,0,22,15,6,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+MZ-V9S1T0B/AM,STORAGE,,990 EVO Plus 1TB,6,6,0,24,21,6,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+MZ-V9S2T0B/AM,STORAGE,,990 EVO Plus 2TB,6,6,0,24,21,6,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+MZ-V9P1T0B/AM,STORAGE,,990 PRO 1TB,6,6,0,25,22,6,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+MZ-V9P2T0B/AM,STORAGE,,990 PRO 2TB,6,6,0,25,22,6,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+WDS100T2X0E,STORAGE,,WD_BLACK SN850X 1TB,6,6,0,25,17,6,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+WDS200T2X0E,STORAGE,,WD_BLACK SN850X 2TB,6,6,0,25,17,6,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+SKC3000S/1024G,STORAGE,,KC3000 1TB,6,6,0,25,22,6,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+SKC3000D/2048G,STORAGE,,KC3000 2TB,6,6,0,25,22,6,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+SNV3S/1000G,STORAGE,,NV3 1TB,6,6,0,25,18,6,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+SNV3S/2000G,STORAGE,,NV3 2TB,6,6,0,25,18,6,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+CT1000P3PSSD8,STORAGE,,P3 Plus 1TB,6,6,0,25,16,6,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+CT2000P3PSSD8,STORAGE,,P3 Plus 2TB,6,6,0,25,16,6,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+CT1000T500SSD8,STORAGE,,T500 1TB,6,6,0,25,16,6,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+CT2000T500SSD8,STORAGE,,T500 2TB,6,6,0,25,16,6,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+ALEG-960M-1TCS,STORAGE,,LEGEND 960 MAX 1TB,6,6,0,25,15,6,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+ALEG-960M-2TCS,STORAGE,,LEGEND 960 MAX 2TB,6,6,0,25,15,6,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+LNM790X001T-RNNNG,STORAGE,,NM790 1TB,6,6,0,25,20,6,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+LNM790X002T-RNNNG,STORAGE,,NM790 2TB,6,6,0,25,20,6,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+ZP1000GM3A013,STORAGE,,FireCuda 530 1TB,6,6,0,25,21,6,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+ZP2000GM3A013,STORAGE,,FireCuda 530 2TB,6,6,0,25,21,6,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+CP-9020248,PSU,,RM750e 750W Gold,8,8,0,23,19,8,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+CP-9020263,PSU,,RM850e 850W Gold,8,8,0,23,17,8,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+MAG-A650BN,PSU,,MAG A650BN 650W Bronze,8,8,0,23,18,8,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+MAG-A750GL-PCIE5,PSU,,MAG A750GL PCIE5 750W Gold,8,8,0,23,18,8,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+MAG-A850GL-PCIE5,PSU,,MAG A850GL PCIE5 850W Gold,8,8,0,23,16,8,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+MPE-6501-ACAAB,PSU,,MWE 650 Bronze V2,8,8,0,23,8,8,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+MPE-7501-AFAAG,PSU,,MWE Gold 750 V2 Full Modular,8,8,0,23,8,8,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+MPE-8501-AFAAG,PSU,,MWE Gold 850 V2 Full Modular,8,8,0,23,12,8,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+R-PK650D-FA0B,PSU,,PK650D 650W Bronze,8,8,0,23,8,8,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+R-PM750D-FA0B,PSU,,PM750D 750W Gold,8,8,0,23,16,8,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+R-PX850G-FC0B,PSU,,PX850G 850W Gold,8,8,0,23,18,8,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+FOCUS-GX-750,PSU,,FOCUS GX-750,8,8,0,23,17,8,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+FOCUS-GX-850,PSU,,FOCUS GX-850,8,8,0,23,17,8,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+HG2-750,PSU,,Hydro G Pro 750W,8,8,0,23,8,8,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+PS-TPD-0850FNFAGU-L,PSU,,Toughpower GF A3 850W,8,8,0,23,19,8,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+R-CH560-BKAPE4-G-1,CASE,,CH560,8,8,0,22,22,8,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+R-CH360-BKAPE3-G-1,CASE,,CH360,8,8,0,22,22,8,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+CC-H52FB-01,CASE,,H5 Flow 2024,8,8,0,22,21,8,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+CC-H61FB-01,CASE,,H6 Flow,8,8,0,22,22,8,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+CC-9011200-WW,CASE,,4000D Airflow,8,8,0,22,21,8,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+CC-9011251-WW,CASE,,3000D Airflow,8,8,0,22,19,8,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+LANCOOL-216RX,CASE,,LANCOOL 216,8,8,0,22,19,8,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+O11DEW,CASE,,O11 Dynamic EVO,8,8,0,22,19,8,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+TD500V2-KGNN-S00,CASE,,MasterBox TD500 Mesh V2,8,8,0,22,21,8,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+MCB-NR600-KGNN-S00,CASE,,MasterBox NR600,8,8,0,22,20,8,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+FD-C-POA1A-02,CASE,,Pop Air,8,8,0,22,22,8,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+FD-C-NOR1C-01,CASE,,North,8,8,0,22,22,8,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+AIR-903-MAX,CASE,,AIR 903 MAX,8,8,0,22,20,8,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+NX410,CASE,,NX410,8,8,0,22,21,8,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+GT502-PLUS,CASE,,TUF Gaming GT502,8,8,0,22,21,8,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+R-AK620-BKNNMT-G,COOLER,,AK620,8,8,0,22,21,8,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+R-AK400-BKNNMN-G,COOLER,,AK400,8,8,0,22,21,8,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+R-AG400-BKNNMN-G,COOLER,,AG400,8,8,0,22,21,8,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+PA120-SE,COOLER,,Peerless Assassin 120 SE,8,8,0,22,19,8,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+PS120-SE,COOLER,,Phantom Spirit 120 SE,8,8,0,22,19,8,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+FN240-BLACK,COOLER,,Frozen Notte 240,8,8,0,21,16,8,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+NH-D15-CH-BK,COOLER,,NH-D15 chromax.black,8,8,0,22,21,8,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+NH-U12S-REDUX,COOLER,,NH-U12S redux,8,8,0,22,21,8,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+RR-S4KK-20PA-R1,COOLER,,Hyper 212 Halo Black,8,8,0,22,20,8,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+MLW-D24M-A18PK-R1,COOLER,,MasterLiquid 240L Core,8,8,0,21,8,8,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+ACFRE00134A,COOLER,,Liquid Freezer III 240,8,8,0,21,19,8,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+ACFRE00136A,COOLER,,Liquid Freezer III 360,8,8,0,21,19,8,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+CW-9060058-WW,COOLER,,iCUE H100i RGB ELITE,8,8,0,21,19,8,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+SE-224-XTS-BLACK,COOLER,,SE-224-XTS,8,8,0,22,21,8,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+FROZN-A620-PRO-SE,COOLER,,FROZN A620 PRO SE,8,8,0,22,21,8,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+PBC-PC-OFFICE-001,PC,,Starter Office PC Ryzen 5 7600,8,8,0,16,14,8,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+PBC-PC-GAME-002,PC,,Entry Gaming PC RTX 4060,8,8,0,16,14,8,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+PBC-PC-GAME-003,PC,,Budget Gaming PC RX 7600,8,8,0,16,14,8,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+PBC-PC-GAME-004,PC,,Gaming PC RTX 4060,8,8,0,16,14,8,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+PBC-PC-GAME-005,PC,,Gaming PC RTX 4060 Ti,8,8,0,16,14,8,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+PBC-PC-GAME-006,PC,,Gaming PC RX 7700 XT,8,8,0,16,14,8,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+PBC-PC-GAME-007,PC,,Gaming PC RTX 4070 SUPER,8,8,0,16,14,8,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+PBC-PC-CREATOR-008,PC,,Creator PC Ryzen 7,8,8,0,16,14,8,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+PBC-PC-GAME-009,PC,,High-end Gaming PC,8,8,0,16,14,8,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+PBC-PC-WORK-010,PC,,Workstation PC,8,8,0,16,14,8,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+910-005802,ACCESSORY,MOUSE,G102 LIGHTSYNC Gaming Mouse,1,1,0,16,15,1,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+910-005472,ACCESSORY,MOUSE,G502 HERO Gaming Mouse,1,1,0,16,13,1,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+910-006630,ACCESSORY,MOUSE,G PRO X Superlight 2,1,1,0,17,14,1,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+RZ01-03850100,ACCESSORY,MOUSE,DeathAdder Essential,1,1,0,17,14,1,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+RZ03-03541900,ACCESSORY,KEYBOARD,BlackWidow V3,1,1,0,18,12,1,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+AULA-F75,ACCESSORY,KEYBOARD,F75 Mechanical Keyboard,1,1,0,20,19,1,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+K8P,ACCESSORY,KEYBOARD,K8 Pro Mechanical Keyboard,1,1,0,19,18,1,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+24G2SP,ACCESSORY,MONITOR,24G2SP Gaming Monitor,5,5,0,49,48,5,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+VG27AQ1A,ACCESSORY,MONITOR,TUF Gaming VG27AQ1A,5,5,0,49,48,5,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.
+727A8AA,ACCESSORY,HEADSET,Cloud III Gaming Headset,1,1,0,25,24,1,Trường subtype khác không được tính là thiếu. Các giá trị ước tính phải hiển thị nhãn Ước tính / Tham khảo.

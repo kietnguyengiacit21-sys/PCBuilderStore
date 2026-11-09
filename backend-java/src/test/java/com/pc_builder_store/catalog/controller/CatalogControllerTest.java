@@ -7,6 +7,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -21,8 +22,10 @@ import com.pc_builder_store.catalog.dto.CatalogImage;
 import com.pc_builder_store.catalog.dto.CatalogOffer;
 import com.pc_builder_store.catalog.dto.CatalogOption;
 import com.pc_builder_store.catalog.dto.CatalogProduct;
+import com.pc_builder_store.catalog.dto.PcBuilderCompatibilityResponse;
 import com.pc_builder_store.catalog.dto.CatalogVerificationStatus;
 import com.pc_builder_store.catalog.repository.CatalogRepository;
+import com.pc_builder_store.catalog.service.PcBuilderCompatibilityService;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
@@ -48,6 +51,9 @@ class CatalogControllerTest {
     private CatalogRepository catalogRepository;
 
     @MockitoBean
+    private PcBuilderCompatibilityService compatibilityService;
+
+    @MockitoBean
     private PlatformTransactionManager transactionManager;
 
     @Test
@@ -68,6 +74,30 @@ class CatalogControllerTest {
                 .andExpect(jsonPath("$.data.categories[0].label").value("Memory"))
                 .andExpect(jsonPath("$.data.brands[0].value").value("Acme"))
                 .andExpect(jsonPath("$.data.attributes[0].values[0].value").value("16"));
+    }
+
+    @Test
+    void acceptsCsrfProtectedPublicPcBuilderCompatibilityRequests() throws Exception {
+        when(compatibilityService.validate(argThat(request ->
+                request.components().equals(Map.of("CPU", "CPU-001")))))
+                .thenReturn(new PcBuilderCompatibilityResponse(
+                        "INSUFFICIENT_DATA",
+                        List.of(new PcBuilderCompatibilityResponse.Check(
+                                "CPU_MOTHERBOARD_SOCKET",
+                                "Socket CPU và bo mạch chủ",
+                                "INSUFFICIENT_DATA",
+                                "Thiếu bo mạch chủ để đối chiếu.")),
+                        List.of("Thiếu thông số để xác nhận.")));
+
+        mockMvc.perform(post("/api/catalog/pc-builder/compatibility")
+                        .with(csrf())
+                        .contentType("application/json")
+                        .content("""
+                                {"components":{"CPU":"CPU-001"}}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("INSUFFICIENT_DATA"))
+                .andExpect(jsonPath("$.checks[0].code").value("CPU_MOTHERBOARD_SOCKET"));
     }
 
     @Test

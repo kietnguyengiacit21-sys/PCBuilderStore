@@ -2,7 +2,6 @@ package com.pc_builder_store.catalog.dto;
 
 import java.util.List;
 import java.util.Map;
-import java.util.List;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import tools.jackson.databind.JsonNode;
@@ -28,7 +27,9 @@ public record CatalogProduct(
         @JsonIgnore
         boolean demoData,
         List<CatalogBomComponent> bomComponents,
-        JsonNode contentSections) {
+        JsonNode contentSections,
+        boolean featured,
+        int displayOrder) {
 
     public CatalogProduct(
             String productId,
@@ -50,7 +51,7 @@ public record CatalogProduct(
             boolean demoData) {
         this(productId, modelCode, productName, shortDescription, description, status, productType,
                 productTypeName, categoryCode, categoryName, brandName, offers, specifications,
-                verificationMetadata, specificationQuality, images, demoData, List.of(), null);
+                verificationMetadata, specificationQuality, images, demoData, List.of(), null, false, 0);
     }
 
     public CatalogProduct(
@@ -72,7 +73,7 @@ public record CatalogProduct(
             boolean demoData) {
         this(productId, modelCode, productName, shortDescription, description, status, productType,
                 productTypeName, categoryCode, categoryName, brandName, offers, specifications,
-                verificationMetadata, Map.of(), images, demoData, List.of(), null);
+                verificationMetadata, Map.of(), images, demoData, List.of(), null, false, 0);
     }
 
     public CatalogProduct(
@@ -93,6 +94,6 @@ public record CatalogProduct(
             boolean demoData) {
         this(productId, modelCode, productName, shortDescription, description, status, productType,
                 productTypeName, categoryCode, categoryName, brandName, offers, specifications,
-            Map.of(), Map.of(), images, demoData, List.of(), null);
+                Map.of(), Map.of(), images, demoData, List.of(), null, false, 0);
     }
 }

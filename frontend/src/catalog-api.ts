@@ -1,4 +1,4 @@
-export { canPurchaseOffer, customerVisibleOffers } from "./catalog-offers";
+export { canPurchaseOffer, customerVisibleOffers, offerOriginalPrice } from "./catalog-offers";
 export type { CatalogOffer } from "./catalog-offers";
 
 import type { CatalogOffer } from "./catalog-offers";
@@ -20,6 +20,9 @@ export interface CatalogBomComponent {
   warrantyMonths: number | null;
   displayCategory: string;
   displayOrder: number;
+  imageUrl?: string | null;
+  imageAltText?: string | null;
+  keySpecifications?: Record<string, unknown> | null;
 }
 
 export type CatalogVerificationStatus =
@@ -52,6 +55,8 @@ export interface CatalogProduct {
   categoryCode: string;
   categoryName: string;
   brandName: string | null;
+  featured?: boolean;
+  displayOrder?: number;
   offers: CatalogOffer[];
   specifications: Record<string, unknown>;
   specificationQuality?: Record<string, CatalogAttributeQuality>;
@@ -214,6 +219,9 @@ export interface CatalogProductFilters {
   q?: string;
   type?: string;
   category?: string;
+  pcCollection?: string;
+  accessoryType?: string;
+  sale?: boolean;
   brand?: string;
   minPrice?: string;
   maxPrice?: string;
@@ -225,6 +233,39 @@ export interface CatalogProductFilters {
 export interface CatalogProductPage {
   data: CatalogProduct[];
   pagination: { page: number; limit: number; total: number; totalPages: number };
+}
+
+export interface StorefrontHomepageLink {
+  label: string;
+  href: string;
+}
+
+export interface StorefrontHomepageSection {
+  key: string;
+  title: string;
+  eyebrow: string;
+  href: string;
+  variant: string;
+  productCount: number;
+  links: StorefrontHomepageLink[];
+  products: CatalogProduct[];
+}
+
+export interface StorefrontHomepage {
+  sections: StorefrontHomepageSection[];
+}
+
+export interface PcBuilderCompatibilityCheck {
+  code: string;
+  label: string;
+  status: "COMPATIBLE" | "INCOMPATIBLE" | "INSUFFICIENT_DATA";
+  detail: string;
+}
+
+export interface PcBuilderCompatibilityResult {
+  status: "COMPATIBLE" | "INCOMPATIBLE" | "INSUFFICIENT_DATA";
+  checks: PcBuilderCompatibilityCheck[];
+  warnings: string[];
 }
 
 export interface UpgradeChoice {
@@ -301,6 +342,31 @@ export interface PublicUpgradeConfiguration {
   relatedProducts: UpgradeRelatedProduct[];
 }
 
+export interface GamingPerformanceEstimate {
+  resolution: "1080p" | "1440p" | "2160p";
+  quality: "LOW" | "MEDIUM" | "HIGH" | "ULTRA";
+  games: {
+    gameId: string;
+    name: string;
+    category: "AAA" | "ESPORTS";
+    resolution: string;
+    quality: string;
+    estimatedFps: number;
+    classification: string;
+    explanation: string;
+    targetMet: boolean;
+  }[];
+  aaa: { gamesMeetingTarget: number; totalGames: number; status: string };
+  esports: { gamesMeetingTarget: number; totalGames: number; status: string };
+}
+
+export interface GamingPerformanceRequest {
+  offerId: string;
+  resolution: GamingPerformanceEstimate["resolution"];
+  quality: GamingPerformanceEstimate["quality"];
+  upgrades: { groupId: string; optionId: string; quantity: number }[];
+}
+
 export interface AdminUpgradeConfiguration extends PublicUpgradeConfiguration {
   groups: AdminUpgradeGroup[];
   bundles: AdminUpgradeBundle[];
@@ -344,12 +410,13 @@ export interface UpgradeConfigurationSelection {
 
 const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "/api").replace(/\/$/, "");
 
-async function fetchPayload<T>(
+async function fetchPayloadAt<T>(
   path: string,
   signal?: AbortSignal,
   credentials?: RequestCredentials,
+  requireDataEnvelope = true,
 ): Promise<T> {
-  const response = await fetch(`${apiBaseUrl}/catalog${path}`, {
+  const response = await fetch(`${apiBaseUrl}${path}`, {
     headers: { Accept: "application/json" },
     credentials,
     signal,
@@ -375,10 +442,22 @@ async function fetchPayload<T>(
         : "Không thể tải dữ liệu sản phẩm.";
     throw new Error(message);
   }
-  if (!("data" in record)) {
+  if (requireDataEnvelope && !("data" in record)) {
     throw new Error("Catalog API returned an invalid response.");
   }
   return payload as T;
+}
+
+async function fetchPayload<T>(
+  path: string,
+  signal?: AbortSignal,
+  credentials?: RequestCredentials,
+): Promise<T> {
+  return fetchPayloadAt<T>(`/catalog${path}`, signal, credentials);
+}
+
+export function fetchStorefrontHomepage(signal?: AbortSignal): Promise<StorefrontHomepage> {
+  return fetchPayloadAt<StorefrontHomepage>("/storefront/homepage", signal, undefined, false);
 }
 
 export function fetchCatalogProducts(
@@ -425,6 +504,53 @@ export async function fetchProductUpgrades(
   return response.data;
 }
 
+export async function estimateGamingPerformance(
+  modelCode: string,
+  request: GamingPerformanceRequest,
+  signal?: AbortSignal,
+): Promise<GamingPerformanceEstimate> {
+  const csrfResponse = await fetch(`${apiBaseUrl}/auth/csrf`, {
+    credentials: "include",
+    headers: { Accept: "application/json" },
+    signal,
+  });
+  let csrfPayload: unknown;
+  try {
+    csrfPayload = await csrfResponse.json();
+  } catch {
+    throw new Error("Không thể xác thực yêu cầu ước tính hiệu năng.");
+  }
+  if (!csrfResponse.ok || typeof csrfPayload !== "object" || csrfPayload === null
+      || !("token" in csrfPayload) || typeof csrfPayload.token !== "string") {
+    throw new Error("Không thể xác thực yêu cầu ước tính hiệu năng.");
+  }
+  const response = await fetch(`${apiBaseUrl}/catalog/products/${encodeURIComponent(modelCode)}/gaming-performance`, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      "X-XSRF-TOKEN": csrfPayload.token,
+    },
+    body: JSON.stringify(request),
+    signal,
+  });
+  let payload: unknown;
+  try {
+    payload = await response.json();
+  } catch {
+    throw new Error(`Catalog API returned an invalid response (HTTP ${response.status}).`);
+  }
+  if (!response.ok) {
+    const body = payload as { message?: unknown; detail?: unknown; error?: { message?: unknown } };
+    const message = typeof body.error?.message === "string" ? body.error.message
+      : typeof body.detail === "string" ? body.detail
+        : typeof body.message === "string" ? body.message : "Không thể ước tính hiệu năng cấu hình.";
+    throw new Error(message);
+  }
+  return payload as GamingPerformanceEstimate;
+}
+
 export async function fetchAdminCatalogProduct(
   modelCode: string,
   signal?: AbortSignal,
@@ -448,6 +574,52 @@ export function fetchCatalogAttributeDefinitions(
   signal?: AbortSignal,
 ): Promise<{ data: PublicCatalogAttributeDefinition[] }> {
   return fetchPayload<{ data: PublicCatalogAttributeDefinition[] }>("/attribute-definitions", signal);
+}
+
+export async function validatePcBuilderCompatibility(
+  components: Record<string, string>,
+  signal?: AbortSignal,
+): Promise<PcBuilderCompatibilityResult> {
+  const csrfResponse = await fetch(`${apiBaseUrl}/auth/csrf`, {
+    credentials: "include",
+    headers: { Accept: "application/json" },
+    signal,
+  });
+  const csrfPayload: unknown = await csrfResponse.json();
+  if (!csrfResponse.ok || typeof csrfPayload !== "object" || csrfPayload === null
+      || !("token" in csrfPayload) || typeof csrfPayload.token !== "string") {
+    throw new Error("Không thể xác thực yêu cầu kiểm tra tương thích.");
+  }
+  const response = await fetch(`${apiBaseUrl}/catalog/pc-builder/compatibility`, {
+    method: "POST",
+    credentials: "include",
+    signal,
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      "X-XSRF-TOKEN": csrfPayload.token,
+    },
+    body: JSON.stringify({ components }),
+  });
+  let payload: unknown;
+  try {
+    payload = await response.json();
+  } catch {
+    throw new Error(`Dịch vụ tương thích trả về phản hồi không hợp lệ (HTTP ${response.status}).`);
+  }
+  if (!response.ok) {
+    const message = typeof payload === "object" && payload !== null
+      && "error" in payload && typeof payload.error === "object" && payload.error !== null
+      && "message" in payload.error && typeof payload.error.message === "string"
+      ? payload.error.message
+      : `Không thể kiểm tra tương thích (HTTP ${response.status}).`;
+    throw new Error(message);
+  }
+  if (typeof payload !== "object" || payload === null || !("checks" in payload)
+      || !Array.isArray(payload.checks) || !("status" in payload)) {
+    throw new Error("Dịch vụ tương thích trả về dữ liệu không đúng định dạng.");
+  }
+  return payload as PcBuilderCompatibilityResult;
 }
 
 export function fetchAdminCatalogAttributeDefinitions(

@@ -1,4 +1,3 @@
-import { Link } from "react-router-dom";
 import { Component } from "react";
 import type { ErrorInfo, ReactNode } from "react";
 import type { ScreenRoute } from "../pages";
@@ -22,11 +21,13 @@ import {
   PartsPage,
   ProductPage,
 } from "./CatalogScreens";
+import { PcBuilderPage } from "./PcBuilderPage";
 import {
   AccountPage,
   CartPage,
   CheckoutPage,
   LoginPage,
+  GuestOrderLookupPage,
   OrderDetailPage,
   OrderHistoryPage,
   OrderResultPage,
@@ -75,16 +76,6 @@ function AdminScreen({
     </AdminLayout></RoleGate>;
 }
 
-function ComingSoonPage() {
-  return <CustomerLayout><div className="v2-page v2-coming-page">
-    <span className="v2-coming-illustration" aria-hidden="true">PC</span>
-    <p className="v2-eyebrow">PC tùy chỉnh</p>
-    <h1>Cấu hình PC</h1>
-    <p>Tính năng cấu hình PC hiện chưa khả dụng. Bạn có thể tiếp tục tìm linh kiện riêng lẻ.</p>
-    <Link className="v2-button v2-button-secondary" to="/customer/parts">Tiếp tục tìm linh kiện</Link>
-  </div></CustomerLayout>;
-}
-
 function screenContent(path: string): ReactNode {
   switch (path) {
     case "/customer/home": return <CustomerLayout><HomePage /></CustomerLayout>;
@@ -93,6 +84,7 @@ function screenContent(path: string): ReactNode {
     case "/customer/cart": return <CustomerLayout><CartPage /></CustomerLayout>;
     case "/customer/checkout": return <CustomerLayout><CheckoutPage /></CustomerLayout>;
     case "/customer/order-result": return <CustomerLayout><OrderResultPage /></CustomerLayout>;
+    case "/customer/guest-order-lookup": return <CustomerLayout><GuestOrderLookupPage /></CustomerLayout>;
     case "/customer/register": return <CustomerLayout><RegisterPage /></CustomerLayout>;
     case "/login": return <LoginPage />;
     case "/customer/account": return <CustomerLayout><RoleGate audience="customer"><AccountPage /></RoleGate></CustomerLayout>;
@@ -110,7 +102,7 @@ function screenContent(path: string): ReactNode {
     case "/admin/customers": return <AdminScreen title="Tra cứu khách hàng"><CustomerLookupPage /></AdminScreen>;
     case "/admin/staff": return <AdminScreen title="Nhân viên và vai trò"><StaffRolesPage /></AdminScreen>;
     default:
-      return path.startsWith("/build-pc/") ? <ComingSoonPage /> : <CustomerLayout><FacetManagementPage kind="categories" /></CustomerLayout>;
+      return path.startsWith("/build-pc/") ? <CustomerLayout><PcBuilderPage /></CustomerLayout> : <CustomerLayout><FacetManagementPage kind="categories" /></CustomerLayout>;
   }
 }
 

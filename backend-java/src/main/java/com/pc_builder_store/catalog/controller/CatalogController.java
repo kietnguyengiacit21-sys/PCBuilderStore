@@ -6,12 +6,16 @@ import com.pc_builder_store.catalog.dto.CatalogProduct;
 import com.pc_builder_store.catalog.dto.CatalogProductPage;
 import com.pc_builder_store.catalog.dto.CatalogProductResponse;
 import com.pc_builder_store.catalog.dto.PublicCatalogAttributeDefinitionsResponse;
+import com.pc_builder_store.catalog.dto.PcBuilderCompatibilityRequest;
+import com.pc_builder_store.catalog.dto.PcBuilderCompatibilityResponse;
 import com.pc_builder_store.catalog.dto.UpdateGpuSpecificationsRequest;
 import com.pc_builder_store.catalog.service.CatalogService;
+import com.pc_builder_store.catalog.service.PcBuilderCompatibilityService;
 import jakarta.servlet.http.HttpServletRequest;
 import java.nio.charset.StandardCharsets;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -23,9 +27,13 @@ import org.springframework.web.util.UriUtils;
 public class CatalogController {
 
     private final CatalogService catalogService;
+    private final PcBuilderCompatibilityService compatibilityService;
 
-    public CatalogController(CatalogService catalogService) {
+    public CatalogController(
+            CatalogService catalogService,
+            PcBuilderCompatibilityService compatibilityService) {
         this.catalogService = catalogService;
+        this.compatibilityService = compatibilityService;
     }
 
     @GetMapping("/facets")
@@ -52,6 +60,12 @@ public class CatalogController {
     @GetMapping("/products")
     public CatalogProductPage products(HttpServletRequest request) {
         return catalogService.getProducts(request.getParameterMap());
+    }
+
+    @PostMapping("/pc-builder/compatibility")
+    public PcBuilderCompatibilityResponse validatePcConfiguration(
+            @RequestBody PcBuilderCompatibilityRequest request) {
+        return compatibilityService.validate(request);
     }
 
     @GetMapping({"/products/{modelCode}", "/products/{*modelCode}"})

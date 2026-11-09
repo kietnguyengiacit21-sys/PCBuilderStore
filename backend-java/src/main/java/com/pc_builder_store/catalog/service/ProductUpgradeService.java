@@ -141,22 +141,31 @@ public class ProductUpgradeService {
         }
         BaseOffer baseOffer = findBaseOffer(product.id(), baseOfferId);
         List<PublicUpgradeGroup> publicGroups = groups(product.id(), false).stream()
-                .map(group -> new PublicUpgradeGroup(
-                        group.groupId(), group.groupCode(), group.displayName(), group.description(),
-                        group.required(), group.displayOrder(),
-                        group.options().stream()
-                                .filter(option -> option.enabled()
-                                        && "NEW".equals(option.condition())
-                                        && baseOffer.currency().equals(option.currency())
-                                        && option.availableQuantity() > 0)
-                                .map(option -> new PublicUpgradeOption(
-                                        option.optionId(), option.offerId(), option.productId(),
-                                        option.modelCode(), option.productName(), option.productType(),
-                                        option.price(), option.currency(), option.availableQuantity(),
-                                        option.priceDifference(), option.displayName(), option.description(),
-                                        option.defaultOption(), option.minimumQuantity(),
-                                        option.maximumQuantity(), option.displayOrder()))
-                                .toList()))
+                .map(group -> {
+                    UpgradeOption defaultOption = group.options().stream()
+                            .filter(UpgradeOption::defaultOption).findFirst()
+                            .orElseThrow(() -> badRequest(
+                                    "Nhóm nâng cấp chưa có linh kiện mặc định."));
+                    return new PublicUpgradeGroup(
+                            group.groupId(), group.groupCode(), group.displayName(), group.description(),
+                            group.required(), group.displayOrder(),
+                            group.options().stream()
+                                    .filter(option -> option.enabled()
+                                            && "NEW".equals(option.condition())
+                                            && baseOffer.currency().equals(option.currency())
+                                            && option.availableQuantity() > 0)
+                                    .map(option -> new PublicUpgradeOption(
+                                            option.optionId(), option.offerId(), option.productId(),
+                                            option.modelCode(), option.productName(), option.productType(),
+                                            option.price(), option.currency(), option.availableQuantity(),
+                                            option.price().multiply(BigDecimal.valueOf(option.minimumQuantity()))
+                                                    .subtract(defaultOption.price().multiply(
+                                                            BigDecimal.valueOf(defaultOption.minimumQuantity()))),
+                                            option.displayName(), option.description(),
+                                            option.defaultOption(), option.minimumQuantity(),
+                                            option.maximumQuantity(), option.displayOrder()))
+                                    .toList());
+                })
                 .filter(group -> !group.options().isEmpty())
                 .toList();
         List<PublicBundle> publicBundles = bundles(product.id(), false, baseOffer.currency()).stream()
@@ -619,7 +628,8 @@ public class ProductUpgradeService {
                 JOIN "product_types" pt ON pt."product_type_id" = p."product_type_id"
                 WHERE item."bundle_id" = ? AND (? OR item."is_enabled")
                   AND (CAST(? AS TEXT) IS NULL OR po."currency_code" = CAST(? AS TEXT))
-                  AND (? OR (po."offer_status" = 'ACTIVE' AND p."product_status" = 'ACTIVE'))
+                  AND (? OR (po."offer_status" = 'ACTIVE'
+                             AND p."product_status" = 'ACTIVE'))
                 ORDER BY item."display_order", po."offer_id"
                 """, (rs, row) -> new BundleItem(
                 rs.getString("offer_id"), rs.getString("product_id"), rs.getString("model_code"),

@@ -68,6 +68,15 @@ export interface CheckoutRequest {
   items: { offerId: string; quantity: number }[];
 }
 
+export interface GuestCheckoutRequest extends CheckoutRequest {
+  customerEmail: string;
+}
+
+export interface GuestOrderLookupRequest {
+  orderNumber: string;
+  customerPhone: string;
+}
+
 const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "/api").replace(/\/$/, "");
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
@@ -209,6 +218,32 @@ export function createOrder(
   idempotencyKey: string,
 ): Promise<OrderDetail> {
   return mutateWithIdempotency("/orders", "POST", checkout, idempotencyKey);
+}
+
+export function createGuestOrder(
+  checkout: GuestCheckoutRequest,
+  idempotencyKey: string,
+): Promise<OrderDetail> {
+  return mutateWithIdempotency("/orders/guest", "POST", checkout, idempotencyKey);
+}
+
+export function lookupGuestOrder(
+  lookup: GuestOrderLookupRequest,
+): Promise<OrderDetail> {
+  return mutate("/orders/guest/lookup", "POST", lookup);
+}
+
+export function processGuestOrderPayment(
+  orderNumber: string,
+  customerPhone: string,
+  idempotencyKey: string,
+): Promise<OrderDetail> {
+  return mutateWithIdempotency(
+    `/orders/guest/${encodeURIComponent(orderNumber)}/payments`,
+    "POST",
+    { customerPhone },
+    idempotencyKey,
+  );
 }
 
 async function mutateWithIdempotency<T>(

@@ -1,0 +1,151 @@
+﻿model_code,product_type,product_name,applicable_attribute_fields,populated_attribute_fields_v11,public_populated_attribute_fields_v11,verified_evidence_rows_v11,missing_applicable_fields,missing_attribute_codes,prebuilt_pc_component_count,coverage_note
+BX8071512100F,CPU,Core i3-12100F,18,18,15,15,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+BX8071512400F,CPU,Core i5-12400F,18,18,15,15,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+BX8071513400F,CPU,Core i5-13400F,18,18,15,15,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+BX8071514400F,CPU,Core i5-14400F,18,18,15,15,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+BX8071514500,CPU,Core i5-14500,18,18,15,15,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+BX8071514600K,CPU,Core i5-14600K,18,18,15,15,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+BX8071514600KF,CPU,Core i5-14600KF,18,18,15,15,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+BX8071513700K,CPU,Core i7-13700K,18,18,15,15,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+BX8071514700K,CPU,Core i7-14700K,18,18,15,15,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+BX8071514900K,CPU,Core i9-14900K,18,18,15,15,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+100-100000927BOX,CPU,Ryzen 5 5600,18,18,17,17,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+100-100000065BOX,CPU,Ryzen 5 5600X,18,18,14,14,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+100-100001015BOX,CPU,Ryzen 5 7600,18,18,17,17,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+100-100000592BOX,CPU,Ryzen 7 7700,18,18,17,17,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+100-100000910WOF,CPU,Ryzen 7 7800X3D,18,18,17,17,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+DUAL-RTX4060-O8G,GPU,Dual GeForce RTX 4060 OC 8GB,37,36,20,20,1,max_display_refresh_rate_hz,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+RTX4060VENTUS2XBLACK8GOC,GPU,GeForce RTX 4060 Ventus 2X Black 8G OC,37,36,20,20,1,max_display_refresh_rate_hz,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+GV-N4060WF2OC-8GD,GPU,GeForce RTX 4060 Windforce OC 8G,37,36,20,20,1,max_display_refresh_rate_hz,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+ZT-D40600E-10M,GPU,Gaming GeForce RTX 4060 Twin Edge 8GB,37,36,24,24,1,max_display_refresh_rate_hz,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+DUAL-RTX4060TI-O8G,GPU,Dual GeForce RTX 4060 Ti OC 8GB,37,36,20,20,1,max_display_refresh_rate_hz,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+RTX4060TIVENTUS2XBLACK8GOC,GPU,GeForce RTX 4060 Ti Ventus 2X Black 8G OC,37,36,12,12,1,max_display_refresh_rate_hz,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+GV-N406TEAGLE-OC-8GD,GPU,GeForce RTX 4060 Ti Eagle OC 8G,37,36,20,20,1,max_display_refresh_rate_hz,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+DUAL-RTX4070S-O12G,GPU,Dual GeForce RTX 4070 SUPER OC 12GB,37,36,20,20,1,max_display_refresh_rate_hz,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+RTX4070SUPERVENTUS2X12GOC,GPU,GeForce RTX 4070 SUPER Ventus 2X OC,37,36,20,20,1,max_display_refresh_rate_hz,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+GV-N407SWF3OC-12GD,GPU,GeForce RTX 4070 SUPER Windforce OC 12G,37,36,20,20,1,max_display_refresh_rate_hz,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+11324-01-20G,GPU,Pulse Radeon RX 7600 8GB,37,36,24,24,1,max_display_refresh_rate_hz,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+RX7600-8G-F,GPU,Fighter Radeon RX 7600 8GB,37,36,12,12,1,max_display_refresh_rate_hz,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+11335-04-20G,GPU,Pulse Radeon RX 7700 XT 12GB,37,36,24,24,1,max_display_refresh_rate_hz,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+RX7800XT-SL-16GO,GPU,Radeon RX 7800 XT Steel Legend 16GB,37,36,24,24,1,max_display_refresh_rate_hz,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+11330-01-20G,GPU,Nitro+ Radeon RX 7800 XT 16GB,37,36,24,24,1,max_display_refresh_rate_hz,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+PRIME-B760M-A-D4,MOTHERBOARD,PRIME B760M-A D4,19,19,10,10,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+PRO-B760M-A-WIFI-DDR4,MOTHERBOARD,PRO B760M-A WIFI DDR4,19,19,14,14,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+B760M-DS3H-DDR4,MOTHERBOARD,B760M DS3H DDR4,19,19,0,0,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+B760M-PRO-RS-D4,MOTHERBOARD,B760M Pro RS/D4,19,19,12,12,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+TUF-B760-PLUS-WIFI-D4,MOTHERBOARD,TUF Gaming B760-PLUS WIFI D4,19,19,14,14,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+MAG-B760-TOMAHAWK-WIFI,MOTHERBOARD,MAG B760 Tomahawk WIFI,19,19,14,14,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+B760-AORUS-ELITE-AX,MOTHERBOARD,B760 AORUS ELITE AX,19,19,0,0,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+TUF-Z790-PLUS-WIFI,MOTHERBOARD,TUF Gaming Z790-PLUS WIFI,19,19,14,14,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+PRO-Z790-A-MAX-WIFI,MOTHERBOARD,PRO Z790-A MAX WIFI,19,19,14,14,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+Z790-STEEL-LEGEND-WIFI,MOTHERBOARD,Z790 Steel Legend WiFi,19,19,14,14,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+PRIME-B650M-A-WIFI-II,MOTHERBOARD,PRIME B650M-A WIFI II,19,19,14,14,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+PRO-B650M-A-WIFI,MOTHERBOARD,PRO B650M-A WIFI,19,19,14,14,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+B650-AORUS-ELITE-AX,MOTHERBOARD,B650 AORUS ELITE AX,19,19,0,0,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+B650M-PRO-RS,MOTHERBOARD,B650M Pro RS,19,19,12,12,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+TUF-X670E-PLUS-WIFI,MOTHERBOARD,TUF Gaming X670E-PLUS WIFI,19,19,14,14,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+KF432C16BB/8,RAM,FURY Beast DDR4 8GB 3200,15,15,13,13,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+KF432C16BB/16,RAM,FURY Beast DDR4 16GB 3200,15,15,13,13,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+KF432C16BBK2/32,RAM,FURY Beast DDR4 32GB Kit,15,15,13,13,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+CMK16GX4M1E3200C16,RAM,Vengeance LPX DDR4 16GB 3200,15,15,11,11,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+CMK32GX4M2E3200C16,RAM,Vengeance LPX DDR4 32GB Kit,15,15,11,11,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+F4-3200C16S-16GVK,RAM,Ripjaws V DDR4 16GB 3200,15,15,13,13,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+F4-3200C16D-32GVK,RAM,Ripjaws V DDR4 32GB Kit,15,15,0,0,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+TLZGD416G3200HC16F01,RAM,T-Force Vulcan Z DDR4 16GB,15,15,12,12,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+TF3D432G3200HC16CDC01,RAM,T-Force Delta RGB DDR4 32GB Kit,15,15,13,13,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+CP2K16G4DFRA32A,RAM,Pro DDR4 32GB Kit,15,15,0,0,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+KF556C40BB-16,RAM,FURY Beast DDR5 16GB 5600,15,15,13,13,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+KF560C36BBEK2-32,RAM,FURY Beast DDR5 32GB 6000 Kit,15,15,13,13,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+CMK32GX5M2E6000C36,RAM,Vengeance DDR5 32GB 6000 Kit,15,15,11,11,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+CMH32GX5M2B6000C36,RAM,Vengeance RGB DDR5 32GB Kit,15,15,8,8,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+F5-6000J3636F16GX2-FX5,RAM,Flare X5 DDR5 32GB 6000 Kit,15,15,12,12,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+F5-6000J3038F16GX2-TZ5NR,RAM,Trident Z5 Neo RGB DDR5 32GB Kit,15,15,13,13,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+FF3D532G6000HC38ADC01,RAM,T-Force Delta RGB DDR5 32GB Kit,15,15,13,13,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+AX5U6000C4016G-DCLABK,RAM,XPG Lancer DDR5 16GB 6000,15,15,11,11,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+CP2K16G56C46U5,RAM,Pro DDR5 32GB 5600 Kit,15,15,0,0,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+PVV532G600C36K,RAM,Viper Venom DDR5 32GB 6000 Kit,15,15,8,8,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+MZ-V9S1T0B/AM,STORAGE,990 EVO Plus 1TB,19,17,15,15,2,rpm|cache_mb,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+MZ-V9S2T0B/AM,STORAGE,990 EVO Plus 2TB,19,17,15,15,2,rpm|cache_mb,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+MZ-V9P1T0B/AM,STORAGE,990 PRO 1TB,19,18,16,16,1,rpm,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+MZ-V9P2T0B/AM,STORAGE,990 PRO 2TB,19,18,16,16,1,rpm,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+WDS100T2X0E,STORAGE,WD_BLACK SN850X 1TB,19,18,11,11,1,rpm,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+WDS200T2X0E,STORAGE,WD_BLACK SN850X 2TB,19,18,11,11,1,rpm,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+SKC3000S/1024G,STORAGE,KC3000 1TB,19,18,16,16,1,rpm,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+SKC3000D/2048G,STORAGE,KC3000 2TB,19,18,16,16,1,rpm,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+SNV3S/1000G,STORAGE,NV3 1TB,19,18,12,12,1,rpm,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+SNV3S/2000G,STORAGE,NV3 2TB,19,18,12,12,1,rpm,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+CT1000P3PSSD8,STORAGE,P3 Plus 1TB,19,18,10,10,1,rpm,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+CT2000P3PSSD8,STORAGE,P3 Plus 2TB,19,18,10,10,1,rpm,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+CT1000T500SSD8,STORAGE,T500 1TB,19,18,10,10,1,rpm,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+CT2000T500SSD8,STORAGE,T500 2TB,19,18,10,10,1,rpm,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+ALEG-960M-1TCS,STORAGE,LEGEND 960 MAX 1TB,19,18,9,9,1,rpm,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+ALEG-960M-2TCS,STORAGE,LEGEND 960 MAX 2TB,19,18,9,9,1,rpm,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+LNM790X001T-RNNNG,STORAGE,NM790 1TB,19,18,14,14,1,rpm,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+LNM790X002T-RNNNG,STORAGE,NM790 2TB,19,18,14,14,1,rpm,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+ZP1000GM3A013,STORAGE,FireCuda 530 1TB,19,18,15,15,1,rpm,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+ZP2000GM3A013,STORAGE,FireCuda 530 2TB,19,18,15,15,1,rpm,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+CP-9020248,PSU,RM750e 750W Gold,15,15,11,11,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+CP-9020263,PSU,RM850e 850W Gold,15,15,9,9,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+MAG-A650BN,PSU,MAG A650BN 650W Bronze,15,15,10,10,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+MAG-A750GL-PCIE5,PSU,MAG A750GL PCIE5 750W Gold,15,15,10,10,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+MAG-A850GL-PCIE5,PSU,MAG A850GL PCIE5 850W Gold,15,15,8,8,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+MPE-6501-ACAAB,PSU,MWE 650 Bronze V2,15,15,0,0,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+MPE-7501-AFAAG,PSU,MWE Gold 750 V2 Full Modular,15,15,0,0,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+MPE-8501-AFAAG,PSU,MWE Gold 850 V2 Full Modular,15,15,4,4,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+R-PK650D-FA0B,PSU,PK650D 650W Bronze,15,15,0,0,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+R-PM750D-FA0B,PSU,PM750D 750W Gold,15,15,8,8,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+R-PX850G-FC0B,PSU,PX850G 850W Gold,15,15,10,10,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+FOCUS-GX-750,PSU,FOCUS GX-750,15,15,9,9,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+FOCUS-GX-850,PSU,FOCUS GX-850,15,15,9,9,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+HG2-750,PSU,Hydro G Pro 750W,15,15,0,0,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+PS-TPD-0850FNFAGU-L,PSU,Toughpower GF A3 850W,15,15,11,11,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+R-CH560-BKAPE4-G-1,CASE,CH560,14,14,14,14,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+R-CH360-BKAPE3-G-1,CASE,CH360,14,14,14,14,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+CC-H52FB-01,CASE,H5 Flow 2024,14,14,13,13,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+CC-H61FB-01,CASE,H6 Flow,14,14,14,14,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+CC-9011200-WW,CASE,4000D Airflow,14,14,13,13,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+CC-9011251-WW,CASE,3000D Airflow,14,14,11,11,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+LANCOOL-216RX,CASE,LANCOOL 216,14,14,11,11,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+O11DEW,CASE,O11 Dynamic EVO,14,14,11,11,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+TD500V2-KGNN-S00,CASE,MasterBox TD500 Mesh V2,14,14,13,13,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+MCB-NR600-KGNN-S00,CASE,MasterBox NR600,14,14,12,12,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+FD-C-POA1A-02,CASE,Pop Air,14,14,14,14,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+FD-C-NOR1C-01,CASE,North,14,14,14,14,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+AIR-903-MAX,CASE,AIR 903 MAX,14,14,12,12,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+NX410,CASE,NX410,14,14,13,13,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+GT502-PLUS,CASE,TUF Gaming GT502,14,14,13,13,0,,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+R-AK620-BKNNMT-G,COOLER,AK620,14,13,12,12,1,radiator_dimensions_mm,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+R-AK400-BKNNMN-G,COOLER,AK400,14,13,12,12,1,radiator_dimensions_mm,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+R-AG400-BKNNMN-G,COOLER,AG400,14,13,12,12,1,radiator_dimensions_mm,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+PA120-SE,COOLER,Peerless Assassin 120 SE,14,13,10,10,1,radiator_dimensions_mm,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+PS120-SE,COOLER,Phantom Spirit 120 SE,14,13,10,10,1,radiator_dimensions_mm,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+FN240-BLACK,COOLER,Frozen Notte 240,14,13,8,8,1,cooler_height_mm,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+NH-D15-CH-BK,COOLER,NH-D15 chromax.black,14,13,12,12,1,radiator_dimensions_mm,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+NH-U12S-REDUX,COOLER,NH-U12S redux,14,13,12,12,1,radiator_dimensions_mm,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+RR-S4KK-20PA-R1,COOLER,Hyper 212 Halo Black,14,13,11,11,1,radiator_dimensions_mm,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+MLW-D24M-A18PK-R1,COOLER,MasterLiquid 240L Core,14,13,0,0,1,cooler_height_mm,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+ACFRE00134A,COOLER,Liquid Freezer III 240,14,13,11,11,1,cooler_height_mm,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+ACFRE00136A,COOLER,Liquid Freezer III 360,14,13,11,11,1,cooler_height_mm,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+CW-9060058-WW,COOLER,iCUE H100i RGB ELITE,14,13,11,11,1,cooler_height_mm,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+SE-224-XTS-BLACK,COOLER,SE-224-XTS,14,13,12,12,1,radiator_dimensions_mm,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+FROZN-A620-PRO-SE,COOLER,FROZN A620 PRO SE,14,13,12,12,1,radiator_dimensions_mm,,Existing V10 specifications retained; this V11 package extends accessory subtype coverage.
+PBC-PC-OFFICE-001,PC,Starter Office PC Ryzen 5 7600,4,4,2,0,0,,7,PC configuration values are curated reference builds; show clearly as reference/demo.
+PBC-PC-GAME-002,PC,Entry Gaming PC RTX 4060,4,4,2,0,0,,8,PC configuration values are curated reference builds; show clearly as reference/demo.
+PBC-PC-GAME-003,PC,Budget Gaming PC RX 7600,4,4,2,0,0,,8,PC configuration values are curated reference builds; show clearly as reference/demo.
+PBC-PC-GAME-004,PC,Gaming PC RTX 4060,4,4,2,0,0,,8,PC configuration values are curated reference builds; show clearly as reference/demo.
+PBC-PC-GAME-005,PC,Gaming PC RTX 4060 Ti,4,4,2,0,0,,8,PC configuration values are curated reference builds; show clearly as reference/demo.
+PBC-PC-GAME-006,PC,Gaming PC RX 7700 XT,4,4,2,0,0,,8,PC configuration values are curated reference builds; show clearly as reference/demo.
+PBC-PC-GAME-007,PC,Gaming PC RTX 4070 SUPER,4,4,2,0,0,,8,PC configuration values are curated reference builds; show clearly as reference/demo.
+PBC-PC-CREATOR-008,PC,Creator PC Ryzen 7,4,4,2,0,0,,9,PC configuration values are curated reference builds; show clearly as reference/demo.
+PBC-PC-GAME-009,PC,High-end Gaming PC,4,4,2,0,0,,8,PC configuration values are curated reference builds; show clearly as reference/demo.
+PBC-PC-WORK-010,PC,Workstation PC,4,4,2,0,0,,9,PC configuration values are curated reference builds; show clearly as reference/demo.
+910-005802,ACCESSORY,G102 LIGHTSYNC Gaming Mouse,15,5,2,2,10,mouse_sensor_model|mouse_max_acceleration_g|mouse_max_speed_ips|mouse_switch_lifecycle_million|mouse_weight_g|mouse_dimensions_mm|mouse_cable_length_m|mouse_onboard_memory|mouse_battery_life_h|mouse_sensor_type,,Public technical values are shown only where the V11 policy allowlists them.
+910-005472,ACCESSORY,G502 HERO Gaming Mouse,15,11,8,8,4,mouse_switch_lifecycle_million|mouse_dimensions_mm|mouse_battery_life_h|mouse_sensor_type,,Public technical values are shown only where the V11 policy allowlists them.
+910-006630,ACCESSORY,G PRO X Superlight 2,15,12,9,9,3,mouse_switch_lifecycle_million|mouse_cable_length_m|mouse_sensor_type,,Public technical values are shown only where the V11 policy allowlists them.
+RZ01-03850100,ACCESSORY,DeathAdder Essential,15,11,8,8,4,mouse_sensor_model|mouse_onboard_memory|mouse_battery_life_h|mouse_sensor_type,,Public technical values are shown only where the V11 policy allowlists them.
+RZ03-03541900,ACCESSORY,BlackWidow V3,18,12,6,6,6,keyboard_battery_capacity_mah|keyboard_bluetooth_version|keyboard_frame_material|keyboard_keycap_material|keyboard_hot_swappable|keyboard_battery_life_h,,Public technical values are shown only where the V11 policy allowlists them.
+AULA-F75,ACCESSORY,F75 Mechanical Keyboard,18,13,12,12,5,keyboard_anti_ghosting|keyboard_bluetooth_version|keyboard_frame_material|keyboard_keycap_material|keyboard_backlight_type,,Public technical values are shown only where the V11 policy allowlists them.
+K8P,ACCESSORY,K8 Pro Mechanical Keyboard,18,14,13,13,4,keyboard_anti_ghosting|keyboard_hot_swappable|keyboard_weight_g|keyboard_battery_life_h,,Public technical values are shown only where the V11 policy allowlists them.
+24G2SP,ACCESSORY,24G2SP Gaming Monitor,40,37,36,36,3,monitor_color_accuracy_delta_e|monitor_hdr_support|monitor_speaker_power_w,,Public technical values are shown only where the V11 policy allowlists them.
+VG27AQ1A,ACCESSORY,TUF Gaming VG27AQ1A,40,33,32,32,7,monitor_dynamic_contrast_ratio|monitor_color_gamut_ntsc_percent|monitor_color_accuracy_delta_e|monitor_usb_hub|monitor_height_adjustment_mm|monitor_pivot_support|monitor_audio_output,,Public technical values are shown only where the V11 policy allowlists them.
+727A8AA,ACCESSORY,Cloud III Gaming Headset,22,22,21,21,0,,,Public technical values are shown only where the V11 policy allowlists them.

@@ -1,12 +1,15 @@
 package com.pc_builder_store.catalog.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.pc_builder_store.catalog.CatalogInternalLedger;
 import com.pc_builder_store.catalog.dto.CatalogImage;
+import com.pc_builder_store.catalog.dto.CatalogOffer;
 import com.pc_builder_store.catalog.dto.CatalogProduct;
 import com.pc_builder_store.catalog.dto.CatalogQuery;
 import com.pc_builder_store.catalog.exception.InvalidCatalogQueryException;
@@ -19,6 +22,7 @@ import java.util.Map;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.io.ClassPathResource;
+import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.json.JsonMapper;
 
 class CatalogServiceTest {
@@ -39,6 +43,29 @@ class CatalogServiceTest {
         assertEquals(20, query.limit());
         assertEquals(CatalogQuery.Sort.NAME, query.sort());
         assertEquals(CatalogQuery.Direction.ASC, query.order());
+    }
+
+    @Test
+    void parsesHomepageCollectionAndSaleFiltersAndRejectsUnsupportedValues() {
+        CatalogQuery query = service.parseQuery(Map.of(
+                "type", new String[]{"PC"},
+                "pcCollection", new String[]{"amd-gaming"},
+                "sale", new String[]{"true"}));
+
+        assertEquals("amd-gaming", query.pcCollection());
+        assertTrue(query.saleOnly());
+        assertInvalid(Map.of("pcCollection", new String[]{"gaming"}));
+        assertInvalid(Map.of(
+                "type", new String[]{"PC"},
+                "pcCollection", new String[]{"unknown"}));
+        CatalogQuery accessoryQuery = service.parseQuery(Map.of(
+                "type", new String[]{"ACCESSORY"},
+                "accessoryType", new String[]{"monitor"}));
+        assertEquals("monitor", accessoryQuery.accessoryType());
+        assertInvalid(Map.of(
+                "type", new String[]{"PC"},
+                "accessoryType", new String[]{"monitor"}));
+        assertInvalid(Map.of("sale", new String[]{"yes"}));
     }
 
     @Test
@@ -69,6 +96,66 @@ class CatalogServiceTest {
         assertInvalid(Map.of("q", new String[]{"x".repeat(201)}));
         assertInvalid(Map.of("sort", new String[]{"created"}));
         assertInvalid(Map.of("order", new String[]{"sideways"}));
+    }
+
+    @Test
+    void removesInternalDemoCopyFromPublicDescriptionsAndContentSections() throws Exception {
+        CatalogRepository repository = mock(CatalogRepository.class);
+        ObjectMapper mapper = JsonMapper.builder().build();
+        CatalogService catalogService = new CatalogService(
+                repository,
+                new CatalogInternalLedger(new ClassPathResource(
+                        "catalog-internal/catalog-attribute-internal-ledger.csv")),
+                mapper,
+                mock(ComponentInventoryService.class),
+                mock(PromotionPricingService.class));
+        CatalogProduct source = new CatalogProduct(
+                "1", "PC-001", "PC", "Bản dựng sẵn.", "Cấu hình dành cho công việc. "
+                        + "Giá trong catalog là dữ liệu demo.",
+                "ACTIVE", "PC", "PC", "PREBUILT_PC", "PC", null, List.of(),
+                mapper.readTree("{}"), Map.of(), Map.of(), List.of(), true, List.of(),
+                mapper.readTree("[{\"heading\":\"Cấu hình\",\"body\":\"Thông tin hữu ích.\"},"
+                        + "{\"heading\":\"Giá demo\",\"body\":\"Dữ liệu demo.\"}]"),
+                false, 0);
+        when(repository.findActiveProduct("PC-001")).thenReturn(Optional.of(source));
+
+        CatalogProduct result = catalogService.getProduct("PC-001");
+
+        assertEquals("Cấu hình dành cho công việc.", result.description());
+        assertEquals(1, result.contentSections().size());
+        assertFalse(result.contentSections().toString().toLowerCase().contains("demo"));
+        assertFalse(result.featured());
+    }
+
+    @Test
+    void exposesActiveCatalogOffersAsPurchasableOffers() throws Exception {
+        CatalogRepository repository = mock(CatalogRepository.class);
+        ObjectMapper mapper = JsonMapper.builder().build();
+        PromotionPricingService promotions = mock(PromotionPricingService.class);
+        when(promotions.price(
+                new BigDecimal("1"), "NEW", new BigDecimal("8390000"), "VND"))
+                .thenReturn(PromotionPricingService.Pricing.fullPrice(new BigDecimal("8390000"), "VND"));
+        CatalogService catalogService = new CatalogService(
+                repository,
+                new CatalogInternalLedger(new ClassPathResource(
+                        "catalog-internal/catalog-attribute-internal-ledger.csv")),
+                mapper,
+                mock(ComponentInventoryService.class),
+                promotions);
+        CatalogOffer offer = new CatalogOffer(
+                "44", "NEW", new BigDecimal("8390000"), "VND", 5, 0, 5, 36L, "ACTIVE");
+        CatalogProduct source = new CatalogProduct(
+                "1", "GPU-REF-001", "GPU tham khảo", null, null, "ACTIVE",
+                "GPU", "GPU", "GPU", "GPU", null, List.of(offer),
+                mapper.readTree("{}"), Map.of(), Map.of(), List.of(), true,
+                List.of(), null, false, 0);
+        when(repository.findActiveProduct("GPU-REF-001")).thenReturn(Optional.of(source));
+
+        CatalogProduct result = catalogService.getProduct("GPU-REF-001");
+
+        assertEquals(1, result.offers().size());
+        assertEquals(offer.offerId(), result.offers().getFirst().offerId());
+        assertEquals(0, offer.price().compareTo(result.offers().getFirst().price()));
     }
 
     @Test

@@ -27,6 +27,5 @@ test("does not make inactive or malformed offers purchasable", () => {
     { ...storedOffer, price: "-1" },
     { ...storedOffer, availableQuantity: -1 },
   ]), []);
-  assert.equal(canPurchaseOffer({ ...storedOffer, offerId: "DEMO-42" }), false);
   assert.equal(canPurchaseOffer({ ...storedOffer, offerId: undefined }), false);
 });

@@ -10,6 +10,7 @@ export interface CatalogOffer {
   warrantyMonths: number | null;
   status: string;
   basePrice?: number | string;
+  compareAtPrice?: number | string | null;
   discountAmount?: number | string;
   promotionDisplayCopy?: string | null;
   saleBadge?: string | null;
@@ -23,6 +24,16 @@ export interface CatalogOffer {
     availableQuantity: number;
     active: boolean;
   }[];
+}
+
+export function offerOriginalPrice(offer: CatalogOffer): number {
+  const price = Number(offer.price);
+  const compareAtPrice = Number(offer.compareAtPrice);
+  if (offer.compareAtPrice != null && Number.isFinite(compareAtPrice) && compareAtPrice > price) {
+    return compareAtPrice;
+  }
+  const basePrice = Number(offer.basePrice ?? offer.price);
+  return Number.isFinite(basePrice) && basePrice > price ? basePrice : 0;
 }
 
 export function customerVisibleOffers(offers: CatalogOffer[]): CatalogOffer[] {

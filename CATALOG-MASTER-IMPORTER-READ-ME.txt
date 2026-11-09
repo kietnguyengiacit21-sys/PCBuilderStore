@@ -1,0 +1,52 @@
+PC BUILDER STORE — CATALOG MASTER DEMO V2
+========================================
+
+PRIMARY FILE
+  catalog-import-full-demo-v2.csv
+
+WHAT IS INCLUDED
+- 200 product rows across all 10 existing product types.
+- 385 CSV columns in total:
+  - 24 original base/import columns
+  - all 348 registered technical attribute columns from catalog-attribute-definitions.csv
+  - 13 merchandising / inventory / upgrade columns
+- 41 brands.
+- 14 prebuilt PCs with 111 BOM component entries.
+- 83 PC upgrade groups, including GPU, storage, RAM, CPU, PSU and cooler choices.
+- GPU catalogue includes RTX 5050, RTX 5070 and RTX 5070 Ti examples.
+- Storage catalogue includes several 500GB / 512GB SSD entries as well as 1TB, 2TB and higher capacities.
+- Every row has a short description, long description, content sections, tags, SEO title/description, slug, featured flag, display order, estimated price, compare-at price and stock quantity.
+- All JSON, Boolean, integer and decimal values passed a local format check. All PC BOM and upgrade references point to model codes present in the same CSV.
+
+IMPORTANT DEMO DATA NOTICE
+This is intentionally a rich demo catalogue, not a verified live-price feed. All prices are marked price_is_estimate=true. Product descriptions and specifications are plausible demo content. Product image URLs are category-level illustrative imagery and are not guaranteed to be photographs of the exact SKU. Replace prices, imagery and specifications with verified supplier information before taking real orders.
+
+DATABASE
+No new database is required. Keep the current PostgreSQL database. The existing migration
+  scripts/migrations/20261108_admin_product_management.sql
+must be applied to that database before importing the merchandising/BOM/upgrade fields. It creates or adds the relevant products, product_offers, product_bom_components, product_upgrade_groups and product_upgrade_options structures.
+
+DO NOT RUN THIS CSV THROUGH THE CURRENT IMPORTER YET
+The current importer on migration/java-spring-boot only accepts the 24 base columns followed by registered technical-attribute columns. This V2 file also contains 13 additional columns. The importer also hardcodes 150 products, expects exactly three properties in each PC configuration item, ignores the new merchandising fields, uses a stale default CSV path, and does not normalize PC BOMs or create upgrade groups/options from CSV.
+
+REQUIRED IMPORTER ADAPTATION (ONE MASTER CSV, NO SEPARATE SEED SQL)
+1. Accept the original 24 base columns, all registered technical columns, and these 13 explicit extra columns:
+   short_description, description, content_sections_json, tags_json, seo_title,
+   seo_description, slug, is_featured, display_order, compare_at_price_vnd,
+   stock_quantity, bom_summary, pc__upgrade_groups_json.
+2. Add these fields to CatalogCsvRow and parse them in CatalogCsvImporter.parseRow. Parse the JSON columns with Jackson and validate expected array/object shapes.
+3. Remove the fixed 150-row / 41-brand count assumptions. Keep uniqueness, supported product type/category coverage and all foreign-reference validations.
+4. Allow optional positive `quantity` in each PC `pc__configuration_items` entry (the current validator only accepts exactly three fields).
+5. Persist product merchandising fields to products (including short_description, description, slug, tags, SEO, featured/display order, bom_summary and content_sections). Persist CSV stock_quantity and compare_at_price_vnd to product_offers.
+6. Upsert all products and offers first. Then resolve model_code -> product_id / offer_id and normalize every PC's configuration_items into product_bom_components.
+7. For each PC, create/update product_upgrade_groups and product_upgrade_options from pc__upgrade_groups_json. Calculate each option price_delta from its offer price minus the default BOM component offer price; use the same product type/currency and keep the BOM default quantity. Do not insert options with negative deltas or missing offers.
+8. Update CatalogRepository's offer JSON SELECT and mapOffers to expose product_offers.compare_at_price as CatalogOffer.basePrice, so sale/old-price UI can render.
+9. Update CatalogImportRunner's default CSV path to ../catalog-import-full-demo-v2.csv (relative to the backend working directory), keep the LOCAL_DEV_ONLY and local-development-database safety checks, and make preview counts dynamic.
+10. Run preview first. Then run the DB integration/import checks against the existing local development PostgreSQL database only. Do not import into a hosted database without explicit approval.
+
+CURRENT STATE / WHAT HAS NOT BEEN DONE
+- The CSV file has been created and locally checked as described above.
+- No PostgreSQL import was executed.
+- No database migration was executed by this task.
+- No repository file was edited, committed or pushed as part of producing this CSV.
+- The current GitHub importer remains incompatible until the adaptations above are implemented and tested.

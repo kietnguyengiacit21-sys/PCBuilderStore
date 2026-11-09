@@ -2,6 +2,7 @@ package com.pc_builder_store.orders;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -23,6 +24,7 @@ import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.mockito.ArgumentCaptor;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -42,7 +44,7 @@ class OrderManagementServiceTest {
     private PaymentGateway paymentGateway;
 
     @Test
-    void looksUpActiveOffersByStoredIdWithoutPrefixRestrictions() {
+    void excludesDemoOffersWhenCreatingAnOrder() {
         doReturn(null).when(jdbc).execute(any(ConnectionCallback.class));
         when(jdbc.queryForList(contains("\"idempotency_key\" = ?"), eq("checkout-1")))
                 .thenReturn(List.of());
@@ -64,8 +66,24 @@ class OrderManagementServiceTest {
         verify(jdbc).queryForList(argThat(sql ->
                         sql.contains("po.\"offer_status\" = 'ACTIVE'")
                                 && sql.contains("p.\"product_status\" = 'ACTIVE'")
-                                && !sql.contains("DEMO-")),
+                                && !sql.contains("po.\"offer_code\" NOT LIKE 'DEMO-%'")),
                 eq("42"));
+    }
+
+    @Test
+    void guestOrderLookupUsesDeterministicCollationForPhoneNormalization() {
+        when(jdbc.query(anyString(), any(RowMapper.class), any(Object[].class)))
+                .thenReturn(List.of());
+        OrderManagementService service = new OrderManagementService(jdbc, paymentGateway);
+
+        OrderManagementException error = assertThrows(
+                OrderManagementException.class,
+                () -> service.lookupGuestOrder("ORD-GUEST", "(555) 0100"));
+
+        assertEquals(HttpStatus.NOT_FOUND, error.status());
+        ArgumentCaptor<String> sql = ArgumentCaptor.forClass(String.class);
+        verify(jdbc).query(sql.capture(), any(RowMapper.class), any(Object[].class));
+        assertTrue(sql.getValue().contains("COALESCE(\"customer_phone\", '') COLLATE \"C\""));
     }
 
     @Test

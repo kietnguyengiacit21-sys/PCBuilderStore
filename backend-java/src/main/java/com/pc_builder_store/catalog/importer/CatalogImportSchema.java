@@ -8,26 +8,41 @@ import org.springframework.jdbc.core.JdbcTemplate;
 
 final class CatalogImportSchema {
 
-    private static final Map<String, Set<String>> REQUIRED_COLUMNS = Map.of(
-            "product_types", Set.of(
-                    "product_type_id", "type_code", "type_name", "description", "is_build_component", "is_active"),
-            "categories", Set.of(
-                    "category_id", "category_code", "category_name", "description", "is_active"),
-            "brands", Set.of("brand_id", "brand_name", "is_active"),
-            "products", Set.of(
+    private static final Map<String, Set<String>> REQUIRED_COLUMNS = Map.ofEntries(
+            Map.entry("product_types", Set.of(
+                    "product_type_id", "type_code", "type_name", "description", "is_build_component", "is_active")),
+            Map.entry("categories", Set.of(
+                    "category_id", "category_code", "category_name", "description", "is_active")),
+            Map.entry("brands", Set.of("brand_id", "brand_name", "is_active")),
+            Map.entry("products", Set.of(
                     "product_id", "product_type_id", "category_id", "brand_id", "model_code",
-                    "product_name", "short_description", "description", "product_status"),
-            "product_offers", Set.of(
+                    "product_name", "short_description", "description", "product_status",
+                    "sku", "slug", "tags", "seo_title", "seo_description", "is_featured",
+                    "display_order", "bom_summary", "content_sections")),
+            Map.entry("product_offers", Set.of(
                     "product_id", "offer_code", "condition_code", "price", "currency_code",
-                    "stock_quantity", "reserved_quantity", "warranty_months", "offer_status"),
-            "product_attribute_definitions", Set.of(
+                    "compare_at_price", "stock_quantity", "reserved_quantity",
+                    "warranty_months", "offer_status")),
+            Map.entry("product_attribute_definitions", Set.of(
                     "attribute_definition_id", "product_type_id", "attribute_code", "attribute_name",
-                    "data_type", "unit", "is_filterable", "is_build_critical", "validation_json"),
-            "product_attribute_values", Set.of(
+                    "data_type", "unit", "is_filterable", "is_build_critical", "validation_json")),
+            Map.entry("product_attribute_values", Set.of(
                     "product_id", "attribute_definition_id", "value_text", "value_decimal",
-                    "value_integer", "value_boolean", "value_json"),
-            "product_images", Set.of(
-                    "image_id", "product_id", "image_url", "alt_text", "is_primary", "sort_order"));
+                    "value_integer", "value_boolean", "value_json")),
+            Map.entry("product_images", Set.of(
+                    "image_id", "product_id", "image_url", "alt_text", "caption",
+                    "is_primary", "sort_order")),
+            Map.entry("product_bom_components", Set.of(
+                    "parent_product_id", "component_product_id", "quantity",
+                    "component_warranty_months", "display_category", "display_order",
+                    "customer_visible")),
+            Map.entry("product_upgrade_groups", Set.of(
+                    "upgrade_group_id", "product_id", "group_code", "display_name",
+                    "description", "is_required", "display_order", "is_enabled")),
+            Map.entry("product_upgrade_options", Set.of(
+                    "upgrade_option_id", "upgrade_group_id", "offer_id", "price_delta",
+                    "display_name", "description", "is_default", "minimum_quantity",
+                    "maximum_quantity", "display_order", "is_enabled")));
     private static final Set<String> REQUIRED_UNIQUE_CONSTRAINTS = Set.of(
             "uq_product_types_code",
             "uq_categories_code",
@@ -40,15 +55,6 @@ final class CatalogImportSchema {
     }
 
     static void validate(JdbcTemplate jdbcTemplate) {
-        Integer tableCount = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM information_schema.tables "
-                        + "WHERE table_schema = 'public' AND table_type = 'BASE TABLE'",
-                Integer.class);
-        if (tableCount == null || tableCount != 35) {
-            throw new IllegalStateException(
-                    "Expected the existing 35-table public schema; found " + tableCount + ".");
-        }
-
         Set<String> actualColumns = new HashSet<>(jdbcTemplate.query(
                 "SELECT table_name, column_name FROM information_schema.columns "
                         + "WHERE table_schema = 'public'",
