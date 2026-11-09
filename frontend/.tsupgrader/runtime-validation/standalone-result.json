@@ -1,7 +1,7 @@
 {
   "planHash": "f07b917fe5ea0c59aa23c5baa0dbdff967c3ff73145544489b9ffac17556427a",
   "phase": "standalone",
-  "recordedAtUtc": "2026-11-07T06:21:58.9893912Z",
+  "recordedAtUtc": "2026-11-07T12:28:51.4444301Z",
   "retryCount": 0,
   "resetBaseline": false,
   "complete": true,
@@ -19,8 +19,8 @@
         "skipped": false,
         "skippedReason": null,
         "exitCode": 0,
-        "outputSample": "\r\n\u003E build\r\n\u003E tsc --noEmit \u0026\u0026 vite build\r\n\r\n\u001B[36mvite v7.3.7 \u001B[32mbuilding client environment for production...\u001B[36m\u001B[39m\r\ntransforming...\r\n\u001B[32m\u2713\u001B[39m 100 modules transformed.\r\nrendering chunks...\r\ncomputing gzip size...\r\n\u001B[2mdist/\u001B[22m\u001B[32mindex.html                 \u001B[39m\u001B[1m\u001B[2m  0.48 kB\u001B[22m\u001B[1m\u001B[22m\u001B[2m \u2502 gzip:   0.30 kB\u001B[22m\r\n\u001B[2mdist/\u001B[22m\u001B[35massets/index-Bj208ghj.css  \u001B[39m\u001B[1m\u001B[2m153.40 kB\u001B[22m\u001B[1m\u001B[22m\u001B[2m \u2502 gzip:  25.66 kB\u001B[22m\r\n\u001B[2mdist/\u001B[22m\u001B[36massets/index-CtFW7cAy.js   \u001B[39m\u001B[1m\u001B[2m430.48 kB\u001B[22m\u001B[1m\u001B[22m\u001B[2m \u2502 gzip: 126.77 kB\u001B[22m\r\n\u001B[32m\u2713 built in 2.78s\u001B[39m\r\n",
-        "durationMs": 6079
+        "outputSample": "\r\n\u003E build\r\n\u003E tsc --noEmit \u0026\u0026 vite build\r\n\r\n\u001B[36mvite v7.3.7 \u001B[32mbuilding client environment for production...\u001B[36m\u001B[39m\r\ntransforming...\r\n\u001B[32m\u2713\u001B[39m 101 modules transformed.\r\nrendering chunks...\r\ncomputing gzip size...\r\n\u001B[2mdist/\u001B[22m\u001B[32mindex.html                 \u001B[39m\u001B[1m\u001B[2m  0.48 kB\u001B[22m\u001B[1m\u001B[22m\u001B[2m \u2502 gzip:   0.30 kB\u001B[22m\r\n\u001B[2mdist/\u001B[22m\u001B[35massets/index-Bj208ghj.css  \u001B[39m\u001B[1m\u001B[2m153.40 kB\u001B[22m\u001B[1m\u001B[22m\u001B[2m \u2502 gzip:  25.66 kB\u001B[22m\r\n\u001B[2mdist/\u001B[22m\u001B[36massets/index-DdTi5E0_.js   \u001B[39m\u001B[1m\u001B[2m431.23 kB\u001B[22m\u001B[1m\u001B[22m\u001B[2m \u2502 gzip: 127.00 kB\u001B[22m\r\n\u001B[32m\u2713 built in 3.28s\u001B[39m\r\n",
+        "durationMs": 7346
       },
       {
         "name": "tests-pass",
@@ -31,8 +31,8 @@
         "skipped": false,
         "skippedReason": null,
         "exitCode": 0,
-        "outputSample": "\r\n\u003E test\r\n\u003E node --test tests/*.test.mjs\r\n\r\n\u2714 parses structured and serialized BOM data without losing order or repeated items (1.0904ms)\r\n\u2714 formats the recorded dimension tuple in its original order (0.1649ms)\r\n\u2714 translates BOM status independently from attribute verification (0.1318ms)\r\n\u2139 tests 3\r\n\u2139 suites 0\r\n\u2139 pass 3\r\n\u2139 fail 0\r\n\u2139 cancelled 0\r\n\u2139 skipped 0\r\n\u2139 todo 0\r\n\u2139 duration_ms 94.7522\r\n",
-        "durationMs": 748,
+        "outputSample": "\r\n\u003E test\r\n\u003E node --test tests/*.test.mjs\r\n\r\n\u2714 parses structured and serialized BOM data without losing order or repeated items (2.0832ms)\r\n\u2714 formats the recorded dimension tuple in its original order (0.322ms)\r\n\u2714 translates BOM status independently from attribute verification (0.2634ms)\r\n\u2714 deduplicates image URLs while preserving the primary image metadata (1.108ms)\r\n\u2714 uses remaining real images after failures and exposes no gallery images when all fail (0.5164ms)\r\n\u2139 tests 5\r\n\u2139 suites 0\r\n\u2139 pass 5\r\n\u2139 fail 0\r\n\u2139 cancelled 0\r\n\u2139 skipped 0\r\n\u2139 todo 0\r\n\u2139 duration_ms 125.4002\r\n",
+        "durationMs": 843,
         "testResults": {
           "testFramework": "unknown",
           "runnerDetectedFrom": "none",
@@ -52,8 +52,8 @@
         "skipped": false,
         "skippedReason": null,
         "exitCode": null,
-        "outputSample": "HTTP 200\n\u003C!doctype html\u003E\r\n\u003Chtml lang=\u0022vi\u0022 class=\u0022dark\u0022\u003E\r\n  \u003Chead\u003E\n    \u003Cscript type=\u0022module\u0022\u003Eimport { injectIntoGlobalHook } from \u0022/@react-refresh\u0022;\ninjectIntoGlobalHook(window);\nwindow.$RefreshReg$ = () =\u003E {};\nwindow.$RefreshSig$ = () =\u003E (type) =\u003E type;\u003C/script\u003E\n\n    \u003Cscript type=\u0022module\u0022 src=\u0022/@vite/client\u0022\u003E\u003C/script\u003E\n\r\n    \u003Cmeta charset=\u0022UTF-8\u0022 /\u003E\r\n    \u003Cmeta name=\u0022viewport\u0022 content=\u0022width=device-width, initial-scale=1.0\u0022 /\u003E\r\n    \u003Cmeta name=\u0022theme-color\u0022 content=\u0022#111317\u0022 /\u003E\r\n    \u003Ctitle\u003EPC Builder Store\u003C/title\u003E\r\n  \u003C/head\u003E\r\n  \u003Cbody\u003E\r\n    \u003Cdiv id=\u0022root\u0022\u003E\u003C/div\u003E\r\n    \u003Cscript type=\u0022module\u0022 src=\u0022/src/main.tsx\u0022\u003E\u003C/script\u003E\r\n  \u003C/body\u003E\r\n\u003C/html\u003E\r\n\n--- server output ---\n\r\n\u003E dev\r\n\u003E vite --host 0.0.0.0 --host 127.0.0.1\r\n\r\n\r\n  \u001B[32m\u001B[1mVITE\u001B[22m v7.3.7\u001B[39m  \u001B[2mready in \u001B[0m\u001B[1m310\u001B[22m\u001B[2m\u001B[0m ms\u001B[22m\r\n\r\n  \u001B[32m\u279C\u001B[39m  \u001B[1mLocal\u001B[22m:   \u001B[36mhttp://127.0.0.1:\u001B[1m5173\u001B[22m/\u001B[39m\r\n",
-        "durationMs": 1685
+        "outputSample": "HTTP 200\n\u003C!doctype html\u003E\r\n\u003Chtml lang=\u0022vi\u0022 class=\u0022dark\u0022\u003E\r\n  \u003Chead\u003E\n    \u003Cscript type=\u0022module\u0022\u003Eimport { injectIntoGlobalHook } from \u0022/@react-refresh\u0022;\ninjectIntoGlobalHook(window);\nwindow.$RefreshReg$ = () =\u003E {};\nwindow.$RefreshSig$ = () =\u003E (type) =\u003E type;\u003C/script\u003E\n\n    \u003Cscript type=\u0022module\u0022 src=\u0022/@vite/client\u0022\u003E\u003C/script\u003E\n\r\n    \u003Cmeta charset=\u0022UTF-8\u0022 /\u003E\r\n    \u003Cmeta name=\u0022viewport\u0022 content=\u0022width=device-width, initial-scale=1.0\u0022 /\u003E\r\n    \u003Cmeta name=\u0022theme-color\u0022 content=\u0022#111317\u0022 /\u003E\r\n    \u003Ctitle\u003EPC Builder Store\u003C/title\u003E\r\n  \u003C/head\u003E\r\n  \u003Cbody\u003E\r\n    \u003Cdiv id=\u0022root\u0022\u003E\u003C/div\u003E\r\n    \u003Cscript type=\u0022module\u0022 src=\u0022/src/main.tsx?t=1794054164288\u0022\u003E\u003C/script\u003E\r\n  \u003C/body\u003E\r\n\u003C/html\u003E\r\n",
+        "durationMs": 168
       }
     ],
     "executions": [
