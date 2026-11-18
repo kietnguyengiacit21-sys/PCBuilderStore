@@ -225,7 +225,7 @@ export interface CatalogProductFilters {
   brand?: string;
   minPrice?: string;
   maxPrice?: string;
-  sort?: "name" | "price";
+  sort?: "name" | "price" | "relevance";
   order?: "asc" | "desc";
   attributes?: { code: string; value: string }[];
 }

@@ -52,13 +52,16 @@ class CatalogRepositoryTest {
 
         CatalogRepository.SqlQuery where = repository.productWhere(query);
 
-        assertTrue(where.sql().contains(":search"));
+        assertTrue(where.sql().contains(":searchWord0"));
         assertTrue(where.sql().contains(":type"));
         assertTrue(where.sql().contains(":brand"));
         assertTrue(where.sql().contains("p.\"model_code\" IN (:publicModelCodes0)"));
         assertTrue(where.sql().contains("CAST(:attributeValue0 AS jsonb)"));
         assertFalse(where.sql().contains("unsafe"));
-        assertEquals("%unsafe%' OR TRUE --%", where.parameters().getValue("search"));
+        assertFalse(where.sql().contains("TRUE --"));
+        assertEquals("%unsafe%", where.parameters().getValue("searchWord0"));
+        assertEquals("%or%", where.parameters().getValue("searchWord1"));
+        assertEquals("%true%", where.parameters().getValue("searchWord2"));
         assertEquals("8", where.parameters().getValue("attributeValue0"));
         assertTrue(((List<?>) where.parameters().getValue("publicModelCodes0"))
                 .contains("DUAL-RTX4060-O8G"));
@@ -169,10 +172,10 @@ class CatalogRepositoryTest {
                 org.mockito.ArgumentCaptor.forClass(SqlParameterSource.class);
         org.mockito.Mockito.verify(jdbcTemplate).queryForObject(
                 sqlCaptor.capture(), parametersCaptor.capture(), eq(Long.class));
-        assertTrue(sqlCaptor.getValue().contains(":search"));
+        assertTrue(sqlCaptor.getValue().contains(":searchWord0"));
         assertTrue(sqlCaptor.getValue().contains(":minPrice"));
         assertFalse(sqlCaptor.getValue().contains("10.00"));
-        assertEquals("%model%", parametersCaptor.getValue().getValue("search"));
+        assertEquals("%model%", parametersCaptor.getValue().getValue("searchWord0"));
         assertEquals("GPU", parametersCaptor.getValue().getValue("type"));
     }
 

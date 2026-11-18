@@ -55,7 +55,9 @@ public record CatalogQuery(
 
     public enum Sort {
         NAME,
-        PRICE
+        PRICE,
+        /** Best text match first; only meaningful together with a search query. */
+        RELEVANCE
     }
 
     public enum Direction {

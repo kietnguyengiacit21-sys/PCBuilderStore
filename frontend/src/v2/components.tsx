@@ -8,6 +8,9 @@ import { Link, NavLink, useNavigate } from "react-router-dom";
 import { fetchCatalogFacets } from "../catalog-api";
 import type { CatalogFacets } from "../catalog-api";
 import { useAuth } from "./auth";
+import { HeaderSearch } from "./HeaderSearch";
+import { MegaMenu } from "./MegaMenu";
+import { FloatingContact } from "./FloatingContact";
 import { ComparisonTray, useComparison } from "./comparison-store";
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement>;
@@ -423,17 +426,6 @@ export function LoadingState({ message = "Đang tải…" }: { message?: string 
   return <div className="v2-state" role="status"><p className="v2-state-message">{message}</p></div>;
 }
 
-function findMenuCategory(
-  categories: CatalogFacets["categories"],
-  terms: readonly string[],
-) {
-  const normalize = (value: string) => value.toLocaleLowerCase("vi-VN").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[_-]+/g, " ");
-  return categories.find((category) => {
-    const text = normalize(`${category.value} ${category.label}`);
-    return terms.some((term) => text.includes(normalize(term)));
-  });
-}
-
 export function ErrorState({ title = "Đã xảy ra lỗi", message }: { title?: string; message: string }) {
   return (
     <div className="v2-state v2-state-error" role="alert">
@@ -447,28 +439,35 @@ export function CustomerHeader() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const [logoutError, setLogoutError] = useState("");
-  const [query, setQuery] = useState("");
-  const [menuOpen, setMenuOpen] = useState(false);
   const [catalogFacets, setCatalogFacets] = useState<CatalogFacets>();
-  const [catalogFacetError, setCatalogFacetError] = useState("");
-  const menuTriggerRef = useRef<HTMLButtonElement>(null);
-  const menuPanelRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLElement>(null);
+  const [headerHeight, setHeaderHeight] = useState<number>();
+
+  // The header is position: fixed (a sticky header makes Chrome scroll the page while
+  // typing in the search box). A spacer keeps page content below it; its height follows
+  // the header's real height, which changes with breakpoints and the error banner.
+  // Dropdowns/menus are absolutely positioned, so they do not affect the measurement.
+  useEffect(() => {
+    const header = headerRef.current;
+    if (!header || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(() => setHeaderHeight(Math.round(header.getBoundingClientRect().height)));
+    observer.observe(header);
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
     void fetchCatalogFacets(controller.signal).then(
       (response) => setCatalogFacets(response.data),
-      (reason: unknown) => {
-        if (!controller.signal.aborted) {
-          setCatalogFacetError(reason instanceof Error ? reason.message : "Không thể tải danh mục sản phẩm.");
-        }
-      },
+      // Facets only populate the search category filter; search still works without them.
+      () => undefined,
     );
     return () => controller.abort();
   }, []);
 
   return (
-    <header className="v2-customer-header" data-shared-component="v2-customer-header">
+    <>
+    <header ref={headerRef} className="v2-customer-header" data-shared-component="v2-customer-header">
       <div className="v2-customer-announcement">
         <div className="v2-customer-announcement-inner">
           <span>Khám phá phần cứng PC và thông tin kỹ thuật chi tiết</span>
@@ -482,45 +481,11 @@ export function CustomerHeader() {
         </Link>
         <nav className="v2-customer-nav" aria-label="Điều hướng cửa hàng">
           <NavLink to="/customer/home">Trang chủ</NavLink>
-          <button
-            ref={menuTriggerRef}
-            className="v2-header-link v2-product-menu-trigger"
-            type="button"
-            aria-expanded={menuOpen}
-            aria-controls="v2-product-category-menu"
-            onClick={() => {
-              const nextOpen = !menuOpen;
-              setMenuOpen(nextOpen);
-              if (nextOpen) window.requestAnimationFrame(() => menuPanelRef.current?.querySelector<HTMLElement>("a")?.focus());
-            }}
-            onKeyDown={(event) => {
-              if (event.key === "Escape") {
-                setMenuOpen(false);
-                menuTriggerRef.current?.focus();
-              }
-            }}
-          >
-            Danh mục sản phẩm <span aria-hidden="true">⌄</span>
-          </button>
+          <MegaMenu />
           <NavLink to="/customer/compare">So sánh</NavLink>
           <NavLink to="/build-pc/start">Tự cấu hình PC</NavLink>
         </nav>
-        <form
-          className="v2-header-search"
-          role="search"
-          onSubmit={(event) => {
-            event.preventDefault();
-            const search = query.trim();
-            navigate(`/customer/parts${search ? `?q=${encodeURIComponent(search)}` : ""}`);
-          }}
-        >
-          <SearchInput
-            aria-label="Tìm kiếm sản phẩm"
-            placeholder="Tìm kiếm sản phẩm"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-          />
-        </form>
+        <HeaderSearch facets={catalogFacets} />
         <div className="v2-header-actions">
           <Link className="v2-header-link" to="/customer/cart">Giỏ hàng</Link>
           {user ? (
@@ -536,62 +501,14 @@ export function CustomerHeader() {
           ) : <Link className="v2-header-link" to="/login">Đăng nhập</Link>}
         </div>
       </div>
-      {menuOpen && <div
-        ref={menuPanelRef}
-        className="v2-product-category-menu"
-        id="v2-product-category-menu"
-        onKeyDown={(event) => {
-          if (event.key === "Escape") {
-            setMenuOpen(false);
-            menuTriggerRef.current?.focus();
-          }
-        }}
-      >
-        <div className="v2-product-category-menu-inner">
-          <section>
-            <h2>Máy tính bộ</h2>
-            {catalogFacets?.productTypes.some((type) => type.value === "PC")
-              ? <Link to="/customer/parts?type=PC" onClick={() => setMenuOpen(false)}>Tất cả máy tính bộ</Link>
-              : <span className="is-unavailable">Máy tính bộ · chưa có dữ liệu danh mục</span>}
-            {([
-              { label: "PC Gaming", terms: ["gaming"], searchTerm: "gaming" },
-              { label: "PC AI", terms: ["pc ai", "ai pc"] },
-              { label: "PC Workstation / Đồ họa", terms: ["workstation", "do hoa"], searchTerm: "workstation" },
-              { label: "PC Creator / Streaming", terms: ["creator", "streaming"], searchTerm: "creator" },
-              { label: "PC Văn phòng", terms: ["van phong", "office"], searchTerm: "văn phòng" },
-              { label: "PC Mini", terms: ["pc mini", "mini pc"] },
-              { label: "PC AMD Gaming", terms: ["amd gaming", "pc amd"] },
-            ]).map((item) => {
-              const category = catalogFacets && findMenuCategory(catalogFacets.categories, item.terms);
-              const destination = category
-                ? `/customer/parts?type=PC&category=${encodeURIComponent(category.value)}`
-                : item.searchTerm
-                  ? `/customer/parts?type=PC&q=${encodeURIComponent(item.searchTerm)}`
-                  : undefined;
-              return destination
-                ? <Link key={item.label} to={destination} onClick={() => setMenuOpen(false)}>{item.label}</Link>
-                : null;
-            })}
-          </section>
-          <section>
-            <h2>Linh kiện</h2>
-            {(catalogFacets?.productTypes ?? []).filter((type) => type.value !== "PC").map((type) => (
-              <Link key={type.value} to={`/customer/parts?type=${encodeURIComponent(type.value)}`} onClick={() => setMenuOpen(false)}>
-                {type.value === "MOTHERBOARD" ? "Mainboard" : type.value === "STORAGE" ? "Storage / SSD" : type.value === "PSU" ? "Nguồn" : type.value === "CASE" ? "Case" : type.value === "COOLER" ? "Tản nhiệt" : type.value === "GPU" ? "Card đồ họa" : type.value === "CPU" ? "CPU" : type.value === "RAM" ? "RAM" : type.value === "ACCESSORY" ? "Phụ kiện" : type.label}
-              </Link>
-            ))}
-            {!catalogFacets?.productTypes.length && !catalogFacetError && <span className="is-unavailable">Đang tải danh mục…</span>}
-            {catalogFacetError && <span className="v2-inline-error" role="alert">{catalogFacetError}</span>}
-          </section>
-          <section>
-            <h2>Khám phá</h2>
-            <Link to="/customer/parts" onClick={() => setMenuOpen(false)}>Tất cả sản phẩm</Link>
-            <Link to="/customer/compare" onClick={() => setMenuOpen(false)}>So sánh sản phẩm</Link>
-          </section>
-        </div>
-      </div>}
       {logoutError && <p className="v2-header-error" role="alert">{logoutError}</p>}
     </header>
+    <div
+      className="v2-customer-header-spacer"
+      aria-hidden="true"
+      style={headerHeight ? { height: headerHeight } : undefined}
+    />
+    </>
   );
 }
 
@@ -637,6 +554,7 @@ export function CustomerLayout({
       <main className={`v2-customer-main${items.length ? ` has-comparison-selection${collapsed ? " is-comparison-collapsed" : ""}` : ""}`}>{children}</main>
       <CustomerFooter />
       <ComparisonTray />
+      <FloatingContact />
     </div>
   );
 }

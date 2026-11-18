@@ -8,9 +8,9 @@ import { ComparisonProvider } from "./v2/comparison-store";
 
 function NotFound() {
   return (
-    <main className="mx-auto max-w-3xl p-8 text-center">
-      <h1 className="mb-4 text-3xl font-bold">Không tìm thấy trang</h1>
-      <a className="text-primary underline" href="/customer/home">
+    <main className="v2-theme p-8 text-center">
+      <h1 className="mb-4 text-3xl font-bold" style={{ color: "var(--v2-plum)" }}>Không tìm thấy trang</h1>
+      <a className="underline" style={{ color: "var(--v2-primary)" }} href="/customer/home">
         Quay lại trang chủ
       </a>
     </main>

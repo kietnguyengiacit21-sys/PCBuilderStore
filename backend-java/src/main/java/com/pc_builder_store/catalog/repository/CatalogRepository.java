@@ -470,13 +470,22 @@ public class CatalogRepository {
                 Long.class);
 
         String direction = query.order() == Direction.ASC ? "ASC" : "DESC";
-        String orderBy = query.sort() == Sort.PRICE
-                ? """
+        String orderBy;
+        if (query.sort() == Sort.PRICE) {
+            orderBy = """
                   (SELECT MIN(po."price") FROM "product_offers" po
                    WHERE po."product_id" = p."product_id"
                      AND po."offer_status" = 'ACTIVE')
-                  """ + direction + " NULLS LAST, p.\"product_name\" ASC"
-                : "p.\"product_name\" " + direction;
+                  """ + direction + " NULLS LAST, p.\"product_name\" ASC";
+        } else if (query.sort() == Sort.RELEVANCE && where.parameters().hasValue("searchRankPrefix")) {
+            orderBy = """
+                  CASE WHEN %1$s LIKE :searchRankPrefix THEN 0
+                       WHEN %1$s LIKE :searchRankPhrase THEN 1
+                       ELSE 2 END ASC, p."product_name" ASC
+                  """.formatted(foldedSql("p.\"product_name\""));
+        } else {
+            orderBy = "p.\"product_name\" " + (query.sort() == Sort.RELEVANCE ? "ASC" : direction);
+        }
         MapSqlParameterSource parameters = new MapSqlParameterSource()
                 .addValues(where.parameters().getValues())
                 .addValue("limit", query.limit())
@@ -512,11 +521,7 @@ public class CatalogRepository {
         MapSqlParameterSource parameters = new MapSqlParameterSource();
         conditions.add("p.\"product_status\" = 'ACTIVE'");
         if (query.query() != null) {
-            conditions.add("""
-                    (p."product_name" COLLATE "C" ILIKE :search COLLATE "C"
-                     OR p."model_code" COLLATE "C" ILIKE :search COLLATE "C")
-                    """);
-            parameters.addValue("search", "%" + query.query() + "%");
+            addSearchConditions(conditions, parameters, query.query());
         }
         addEquality(conditions, parameters, "pt.\"type_code\"", "type", query.type());
         addEquality(conditions, parameters, "c.\"category_code\"", "category", query.category());
@@ -671,6 +676,77 @@ public class CatalogRepository {
                          OR "cpuProduct"."product_name" COLLATE "C" ILIKE '%ryzen%')
                 )
                 """;
+    }
+
+    /**
+     * Accent/case-insensitive search across name, model code, brand, type and category.
+     * Every word must match; recognised type phrases ("chuột", "card màn hình") also
+     * match products of that type. All user text is bound as parameters.
+     */
+    private void addSearchConditions(
+            List<String> conditions, MapSqlParameterSource parameters, String rawQuery) {
+        CatalogSearchTerms.Parsed parsed = CatalogSearchTerms.parse(rawQuery);
+        if (parsed.isEmpty()) {
+            conditions.add("FALSE");
+            return;
+        }
+        parameters.addValue("searchAccents", CatalogSearchTerms.ACCENTED_CHARACTERS);
+        parameters.addValue("searchFolded", CatalogSearchTerms.FOLDED_CHARACTERS);
+        // Prebuilt PCs are also searchable by their BOM component names, so "RTX 4060"
+        // or "Ryzen 7" finds PCs built with those parts even when the PC name omits them.
+        String document = foldedSql("""
+                CONCAT_WS(' ', p."product_name" COLLATE "C", p."model_code" COLLATE "C",
+                          b."brand_name" COLLATE "C", pt."type_name" COLLATE "C",
+                          c."category_name" COLLATE "C",
+                          (SELECT STRING_AGG("searchComponent"."product_name" COLLATE "C", ' ')
+                             FROM "product_bom_components" AS "searchBom"
+                             JOIN "products" AS "searchComponent"
+                               ON "searchComponent"."product_id" = "searchBom"."component_product_id"
+                            WHERE "searchBom"."parent_product_id" = p."product_id"))""");
+
+        for (int index = 0; index < parsed.words().size(); index++) {
+            String name = "searchWord" + index;
+            conditions.add(document + " LIKE :" + name);
+            parameters.addValue(name, "%" + parsed.words().get(index) + "%");
+        }
+        for (int index = 0; index < parsed.phrases().size(); index++) {
+            CatalogSearchTerms.PhraseTerm phrase = parsed.phrases().get(index);
+            String textName = "searchPhrase" + index;
+            parameters.addValue(textName, "%" + phrase.phrase() + "%");
+            List<String> alternatives = new ArrayList<>();
+            alternatives.add(document + " LIKE :" + textName);
+            List<String> typeCodes = phrase.hints().stream()
+                    .map(CatalogSearchTerms.TypeHint::productType)
+                    .filter(java.util.Objects::nonNull)
+                    .sorted()
+                    .toList();
+            if (!typeCodes.isEmpty()) {
+                String typesName = "searchPhraseTypes" + index;
+                alternatives.add("pt.\"type_code\" IN (:" + typesName + ")");
+                parameters.addValue(typesName, typeCodes);
+            }
+            phrase.hints().stream()
+                    .map(CatalogSearchTerms.TypeHint::accessoryType)
+                    .filter(java.util.Objects::nonNull)
+                    .sorted()
+                    .forEach(subtype -> alternatives.add(
+                            "(pt.\"type_code\" = 'ACCESSORY' AND " + accessoryTypeCondition(subtype) + ")"));
+            conditions.add("(" + String.join(" OR ", alternatives) + ")");
+        }
+
+        String folded = CatalogSearchTerms.normalize(rawQuery);
+        parameters.addValue("searchRankPrefix", folded + "%");
+        parameters.addValue("searchRankPhrase", "%" + folded + "%");
+    }
+
+    /**
+     * SQL expression mirroring CatalogSearchTerms.normalize: diacritics and case folded,
+     * punctuation collapsed to single spaces ("Core i5-12400" -> "core i5 12400",
+     * "23.8 inch" -> "23 8 inch") so quoted phrases match the same way the query is read.
+     */
+    private static String foldedSql(String expression) {
+        return "REGEXP_REPLACE(LOWER(TRANSLATE((" + expression + ") COLLATE \"C\", "
+                + ":searchAccents, :searchFolded)), '[^a-z0-9]+', ' ', 'g')";
     }
 
     private String accessoryTypeCondition(String accessoryType) {

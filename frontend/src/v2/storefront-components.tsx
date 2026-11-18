@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import type { CatalogImage, CatalogProduct } from "../catalog-api";
+import { customerVisibleOffers } from "../catalog-offers";
+import { money } from "../demo/demo-store";
 import { ChevronIcon, CloseIcon, IconButton } from "./components";
 import { availableProductImages, displayProductImages, preferredProductImage } from "./product-images";
 
@@ -60,58 +62,58 @@ function AccessoryIllustration({ productName }: { productName: string }) {
   const name = productName.toLocaleLowerCase();
   if (/monitor|vg\d{3}|xg\d{2}|odyssey|g24f|24g2/.test(name)) {
     return <svg viewBox="0 0 360 220" aria-hidden="true" focusable="false">
-      <rect x="44" y="24" width="272" height="154" rx="14" fill="#302542" />
-      <rect x="57" y="37" width="246" height="128" rx="8" fill="#eee8fa" />
-      <path d="M180 178v22m-44 0h88" stroke="#8d65e8" strokeWidth="10" strokeLinecap="round" />
-      <path d="M73 144 132 91l36 32 41-47 66 68" fill="none" stroke="#6d4aff" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" />
+      <rect x="44" y="24" width="272" height="154" rx="14" fill="#162c4c" />
+      <rect x="57" y="37" width="246" height="128" rx="8" fill="#e8f0fa" />
+      <path d="M180 178v22m-44 0h88" stroke="#1e65c9" strokeWidth="10" strokeLinecap="round" />
+      <path d="M73 144 132 91l36 32 41-47 66 68" fill="none" stroke="#1161d2" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" />
     </svg>;
   }
   if (/keyboard|blackwidow|kumara|fizz|aula|k70|k8 pro/.test(name)) {
     return <svg viewBox="0 0 360 220" aria-hidden="true" focusable="false">
-      <path d="M37 67a13 13 0 0 1 13-13h260a13 13 0 0 1 13 13v100a13 13 0 0 1-13 13H50a13 13 0 0 1-13-13z" fill="#302542" />
-      <path d="M57 77h246v10H57zm0 22h246v10H57zm0 22h246v10H57zm0 22h158v10H57z" fill="#bda8e8" />
-      <path d="M225 143h78v10h-78z" fill="#6d4aff" />
+      <path d="M37 67a13 13 0 0 1 13-13h260a13 13 0 0 1 13 13v100a13 13 0 0 1-13 13H50a13 13 0 0 1-13-13z" fill="#162c4c" />
+      <path d="M57 77h246v10H57zm0 22h246v10H57zm0 22h246v10H57zm0 22h158v10H57z" fill="#a8c3e8" />
+      <path d="M225 143h78v10h-78z" fill="#1161d2" />
     </svg>;
   }
   if (/headset|headphone|cloud|blackshark|kraken|g733/.test(name)) {
     return <svg viewBox="0 0 360 220" aria-hidden="true" focusable="false">
-      <path d="M72 125V96a108 108 0 0 1 216 0v29" fill="none" stroke="#302542" strokeWidth="24" strokeLinecap="round" />
-      <rect x="48" y="109" width="66" height="78" rx="24" fill="#6d4aff" />
-      <rect x="246" y="109" width="66" height="78" rx="24" fill="#6d4aff" />
-      <path d="M276 178q-17 26-55 20" fill="none" stroke="#8d65e8" strokeWidth="8" strokeLinecap="round" />
+      <path d="M72 125V96a108 108 0 0 1 216 0v29" fill="none" stroke="#162c4c" strokeWidth="24" strokeLinecap="round" />
+      <rect x="48" y="109" width="66" height="78" rx="24" fill="#1161d2" />
+      <rect x="246" y="109" width="66" height="78" rx="24" fill="#1161d2" />
+      <path d="M276 178q-17 26-55 20" fill="none" stroke="#1e65c9" strokeWidth="8" strokeLinecap="round" />
     </svg>;
   }
   if (/microphone|micro\b|am8|k688|webcam/.test(name)) {
     return <svg viewBox="0 0 360 220" aria-hidden="true" focusable="false">
-      <rect x="137" y="26" width="86" height="119" rx="42" fill="#302542" />
-      <path d="M119 100v20a61 61 0 0 0 122 0v-20m-61 81v22m-43 0h86" fill="none" stroke="#6d4aff" strokeWidth="11" strokeLinecap="round" />
-      <path d="M157 61h46m-46 17h46m-46 17h46" stroke="#bda8e8" strokeWidth="6" strokeLinecap="round" />
+      <rect x="137" y="26" width="86" height="119" rx="42" fill="#162c4c" />
+      <path d="M119 100v20a61 61 0 0 0 122 0v-20m-61 81v22m-43 0h86" fill="none" stroke="#1161d2" strokeWidth="11" strokeLinecap="round" />
+      <path d="M157 61h46m-46 17h46m-46 17h46" stroke="#a8c3e8" strokeWidth="6" strokeLinecap="round" />
     </svg>;
   }
   if (/controller|dualsense|xbox/.test(name)) {
     return <svg viewBox="0 0 360 220" aria-hidden="true" focusable="false">
-      <path d="M82 78q10-20 34-20h128q24 0 34 20l28 75q8 23-8 31-15 8-29-7l-30-31H121l-30 31q-14 15-29 7-16-8-8-31z" fill="#302542" />
-      <path d="M113 104v42m-21-21h42" stroke="#bda8e8" strokeWidth="10" strokeLinecap="round" />
-      <circle cx="244" cy="111" r="8" fill="#6d4aff" /><circle cx="267" cy="133" r="8" fill="#8d65e8" />
+      <path d="M82 78q10-20 34-20h128q24 0 34 20l28 75q8 23-8 31-15 8-29-7l-30-31H121l-30 31q-14 15-29 7-16-8-8-31z" fill="#162c4c" />
+      <path d="M113 104v42m-21-21h42" stroke="#a8c3e8" strokeWidth="10" strokeLinecap="round" />
+      <circle cx="244" cy="111" r="8" fill="#1161d2" /><circle cx="267" cy="133" r="8" fill="#1e65c9" />
     </svg>;
   }
   if (/stream deck|streamdeck/.test(name)) {
     return <svg viewBox="0 0 360 220" aria-hidden="true" focusable="false">
-      <rect x="63" y="35" width="234" height="151" rx="20" fill="#302542" />
+      <rect x="63" y="35" width="234" height="151" rx="20" fill="#162c4c" />
       {[0, 1, 2].map((column) => [0, 1].map((row) =>
-        <rect key={`${column}-${row}`} x={84 + column * 64} y={57 + row * 57} width="48" height="43" rx="7" fill="#8d65e8" />))}
+        <rect key={`${column}-${row}`} x={84 + column * 64} y={57 + row * 57} width="48" height="43" rx="7" fill="#1e65c9" />))}
     </svg>;
   }
   if (/mouse|deathadder|viper|g102|g304|g502|superlight/.test(name)) {
     return <svg viewBox="0 0 360 220" aria-hidden="true" focusable="false">
-      <path d="M180 27c-48 0-77 37-77 90v24c0 41 31 65 77 65s77-24 77-65v-24c0-53-29-90-77-90z" fill="#302542" />
-      <path d="M180 30v61m-18-50v42h36V41" fill="none" stroke="#bda8e8" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M180 92v26" stroke="#6d4aff" strokeWidth="8" strokeLinecap="round" />
+      <path d="M180 27c-48 0-77 37-77 90v24c0 41 31 65 77 65s77-24 77-65v-24c0-53-29-90-77-90z" fill="#162c4c" />
+      <path d="M180 30v61m-18-50v42h36V41" fill="none" stroke="#a8c3e8" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M180 92v26" stroke="#1161d2" strokeWidth="8" strokeLinecap="round" />
     </svg>;
   }
   return <svg viewBox="0 0 360 220" aria-hidden="true" focusable="false">
-    <rect x="86" y="43" width="188" height="134" rx="24" fill="#302542" />
-    <path d="M119 79h122m-122 31h122m-122 31h82" stroke="#8d65e8" strokeWidth="12" strokeLinecap="round" />
+    <rect x="86" y="43" width="188" height="134" rx="24" fill="#162c4c" />
+    <path d="M119 79h122m-122 31h122m-122 31h82" stroke="#1e65c9" strokeWidth="12" strokeLinecap="round" />
   </svg>;
 }
 
@@ -119,12 +121,12 @@ function HardwareIllustration({ productType, productName }: { productType: strin
   if (productType === "ACCESSORY") return <AccessoryIllustration productName={productName} />;
   if (productType === "GPU") {
     return <svg viewBox="0 0 360 220" aria-hidden="true" focusable="false">
-      <rect x="28" y="52" width="298" height="118" rx="18" fill="#302542" />
-      <rect x="42" y="66" width="270" height="88" rx="12" fill="#493b62" />
-      <circle cx="132" cy="110" r="31" fill="#f0ecf8" />
-      <circle cx="222" cy="110" r="31" fill="#f0ecf8" />
-      <circle cx="132" cy="110" r="9" fill="#8d65e8" />
-      <circle cx="222" cy="110" r="9" fill="#8d65e8" />
+      <rect x="28" y="52" width="298" height="118" rx="18" fill="#162c4c" />
+      <rect x="42" y="66" width="270" height="88" rx="12" fill="#224474" />
+      <circle cx="132" cy="110" r="31" fill="#ecf1f8" />
+      <circle cx="222" cy="110" r="31" fill="#ecf1f8" />
+      <circle cx="132" cy="110" r="9" fill="#1e65c9" />
+      <circle cx="222" cy="110" r="9" fill="#1e65c9" />
       <path d="M56 178h196v15H56zM271 171h22v22h-22z" fill="#d9ad62" />
       <path d="M87 80h20M177 140h16M266 80h20" stroke="#d9ad62" strokeWidth="5" strokeLinecap="round" />
     </svg>;
@@ -132,71 +134,71 @@ function HardwareIllustration({ productType, productName }: { productType: strin
   if (productType === "CPU") {
     return <svg viewBox="0 0 360 220" aria-hidden="true" focusable="false">
       <rect x="100" y="35" width="160" height="150" rx="20" fill="#d9ad62" />
-      <rect x="116" y="51" width="128" height="118" rx="14" fill="#493b62" />
-      <rect x="139" y="72" width="82" height="76" rx="10" fill="#f0ecf8" />
-      <path d="M80 62h20m-20 32h20m-20 32h20m-20 32h20m160-100h20m-20 32h20m-20 32h20m-20 32h20M128 15v20m34-20v20m34-20v20m34-20v20m-102 150v20m34-20v20m34-20v20m34-20v20" stroke="#8d65e8" strokeWidth="8" strokeLinecap="round" />
-      <path d="M155 96h50M155 112h50M155 128h30" stroke="#6d4aff" strokeWidth="6" strokeLinecap="round" />
+      <rect x="116" y="51" width="128" height="118" rx="14" fill="#224474" />
+      <rect x="139" y="72" width="82" height="76" rx="10" fill="#ecf1f8" />
+      <path d="M80 62h20m-20 32h20m-20 32h20m-20 32h20m160-100h20m-20 32h20m-20 32h20m-20 32h20M128 15v20m34-20v20m34-20v20m34-20v20m-102 150v20m34-20v20m34-20v20m34-20v20" stroke="#1e65c9" strokeWidth="8" strokeLinecap="round" />
+      <path d="M155 96h50M155 112h50M155 128h30" stroke="#1161d2" strokeWidth="6" strokeLinecap="round" />
     </svg>;
   }
   if (productType === "RAM") {
     return <svg viewBox="0 0 360 220" aria-hidden="true" focusable="false">
-      <rect x="36" y="66" width="288" height="92" rx="16" fill="#302542" />
-      <rect x="52" y="80" width="256" height="62" rx="10" fill="#493b62" />
-      <rect x="72" y="94" width="46" height="34" rx="6" fill="#f0ecf8" />
-      <rect x="133" y="94" width="46" height="34" rx="6" fill="#f0ecf8" />
-      <rect x="194" y="94" width="46" height="34" rx="6" fill="#f0ecf8" />
-      <rect x="255" y="94" width="34" height="34" rx="6" fill="#f0ecf8" />
+      <rect x="36" y="66" width="288" height="92" rx="16" fill="#162c4c" />
+      <rect x="52" y="80" width="256" height="62" rx="10" fill="#224474" />
+      <rect x="72" y="94" width="46" height="34" rx="6" fill="#ecf1f8" />
+      <rect x="133" y="94" width="46" height="34" rx="6" fill="#ecf1f8" />
+      <rect x="194" y="94" width="46" height="34" rx="6" fill="#ecf1f8" />
+      <rect x="255" y="94" width="34" height="34" rx="6" fill="#ecf1f8" />
       <path d="M70 166v18m32-18v18m32-18v18m32-18v18m32-18v18m32-18v18m32-18v18m32-18v18" stroke="#d9ad62" strokeWidth="8" strokeLinecap="round" />
     </svg>;
   }
   if (productType === "STORAGE") {
     return <svg viewBox="0 0 360 220" aria-hidden="true" focusable="false">
-      <path d="M72 54h218l24 24v92H48V78z" fill="#302542" />
-      <path d="M82 68h197l14 14v72H64V84z" fill="#493b62" />
+      <path d="M72 54h218l24 24v92H48V78z" fill="#162c4c" />
+      <path d="M82 68h197l14 14v72H64V84z" fill="#224474" />
       <circle cx="93" cy="111" r="8" fill="#d9ad62" />
-      <rect x="122" y="91" width="48" height="40" rx="6" fill="#f0ecf8" />
-      <rect x="184" y="91" width="70" height="40" rx="6" fill="#f0ecf8" />
+      <rect x="122" y="91" width="48" height="40" rx="6" fill="#ecf1f8" />
+      <rect x="184" y="91" width="70" height="40" rx="6" fill="#ecf1f8" />
       <path d="M84 160v18m46-18v18m46-18v18m46-18v18m46-18v18" stroke="#d9ad62" strokeWidth="7" strokeLinecap="round" />
     </svg>;
   }
   if (productType === "MOTHERBOARD" || productType === "MAINBOARD") {
     return <svg viewBox="0 0 360 220" aria-hidden="true" focusable="false">
-      <rect x="73" y="24" width="214" height="172" rx="14" fill="#302542" />
-      <rect x="89" y="40" width="106" height="84" rx="8" fill="#493b62" />
+      <rect x="73" y="24" width="214" height="172" rx="14" fill="#162c4c" />
+      <rect x="89" y="40" width="106" height="84" rx="8" fill="#224474" />
       <rect x="105" y="55" width="74" height="54" rx="5" fill="#d9ad62" />
-      <rect x="211" y="42" width="55" height="12" rx="4" fill="#8d65e8" />
-      <rect x="211" y="61" width="55" height="12" rx="4" fill="#8d65e8" />
-      <rect x="211" y="80" width="55" height="12" rx="4" fill="#8d65e8" />
+      <rect x="211" y="42" width="55" height="12" rx="4" fill="#1e65c9" />
+      <rect x="211" y="61" width="55" height="12" rx="4" fill="#1e65c9" />
+      <rect x="211" y="80" width="55" height="12" rx="4" fill="#1e65c9" />
       <rect x="96" y="141" width="164" height="12" rx="4" fill="#d9ad62" />
-      <path d="M125 124v17m50-17v17m51 24v17m-92-17v17" stroke="#c8b3ed" strokeWidth="5" />
+      <path d="M125 124v17m50-17v17m51 24v17m-92-17v17" stroke="#b3cbed" strokeWidth="5" />
     </svg>;
   }
   if (productType === "PSU") {
     return <svg viewBox="0 0 360 220" aria-hidden="true" focusable="false">
-      <rect x="67" y="48" width="226" height="126" rx="16" fill="#302542" />
-      <rect x="82" y="62" width="196" height="98" rx="10" fill="#493b62" />
-      <circle cx="158" cy="111" r="34" fill="#ded6eb" />
-      <circle cx="158" cy="111" r="9" fill="#8d65e8" />
-      <path d="M158 77v25m0 18v25m-34-34h25m18 0h25m-58-24 18 18m13 13 18 18m-49 0 18-18m13-13 18-18" stroke="#8d65e8" strokeWidth="5" />
+      <rect x="67" y="48" width="226" height="126" rx="16" fill="#162c4c" />
+      <rect x="82" y="62" width="196" height="98" rx="10" fill="#224474" />
+      <circle cx="158" cy="111" r="34" fill="#d6dfeb" />
+      <circle cx="158" cy="111" r="9" fill="#1e65c9" />
+      <path d="M158 77v25m0 18v25m-34-34h25m18 0h25m-58-24 18 18m13 13 18 18m-49 0 18-18m13-13 18-18" stroke="#1e65c9" strokeWidth="5" />
       <path d="M219 91h39m-39 16h39m-39 16h30" stroke="#d9ad62" strokeWidth="5" strokeLinecap="round" />
     </svg>;
   }
   if (productType === "CASE" || productType === "PC") {
     return <svg viewBox="0 0 360 220" aria-hidden="true" focusable="false">
-      <rect x="105" y="20" width="150" height="180" rx="15" fill="#302542" />
-      <rect x="119" y="36" width="122" height="145" rx="9" fill="#493b62" />
-      <rect x="132" y="49" width="76" height="118" rx="5" fill="#332947" />
-      <circle cx="221" cy="77" r="12" fill="#8d65e8" />
+      <rect x="105" y="20" width="150" height="180" rx="15" fill="#162c4c" />
+      <rect x="119" y="36" width="122" height="145" rx="9" fill="#224474" />
+      <rect x="132" y="49" width="76" height="118" rx="5" fill="#183052" />
+      <circle cx="221" cy="77" r="12" fill="#1e65c9" />
       <circle cx="221" cy="112" r="12" fill="#d9ad62" />
-      <circle cx="221" cy="147" r="12" fill="#8d65e8" />
-      <path d="M138 184h84" stroke="#c8b3ed" strokeWidth="5" strokeLinecap="round" />
+      <circle cx="221" cy="147" r="12" fill="#1e65c9" />
+      <path d="M138 184h84" stroke="#b3cbed" strokeWidth="5" strokeLinecap="round" />
     </svg>;
   }
   return <svg viewBox="0 0 360 220" aria-hidden="true" focusable="false">
-    <path d="M95 45h170l28 30v108H67V75z" fill="#302542" />
-    <path d="M108 60h142l26 24v82H84V84z" fill="#493b62" />
-    <circle cx="180" cy="120" r="43" fill="#f0ecf8" />
-    <circle cx="180" cy="120" r="14" fill="#8d65e8" />
+    <path d="M95 45h170l28 30v108H67V75z" fill="#162c4c" />
+    <path d="M108 60h142l26 24v82H84V84z" fill="#224474" />
+    <circle cx="180" cy="120" r="43" fill="#ecf1f8" />
+    <circle cx="180" cy="120" r="14" fill="#1e65c9" />
     <path d="M180 87v20m0 26v20m-33-33h20m26 0h20m-56-23 14 14m18 18 14 14m-46 0 14-14m18-18 14-14" stroke="#d9ad62" strokeWidth="7" strokeLinecap="round" />
     <path d="M100 178h160" stroke="#d9ad62" strokeWidth="8" strokeLinecap="round" />
   </svg>;
@@ -485,12 +487,45 @@ export function ProductImageGallery({ product }: { product: CatalogProduct }) {
   );
 }
 
+export type HeroTheme = "pc" | "gpu" | "cpu" | "gear";
+
 export interface HeroSlide {
+  key: string;
+  theme: HeroTheme;
   eyebrow: string;
   title: ReactNode;
   description: string;
-  category: string;
-  product?: CatalogProduct;
+  /** Short factual capability statements; never invented promotions. */
+  highlights: string[];
+  /** Server-provided figure (e.g. catalog count) shown as a stat badge. */
+  stat?: { value: string; label: string };
+  ctaLabel: string;
+  href: string;
+  /** Up to three products from the matching homepage section; the first is featured. */
+  products: CatalogProduct[];
+}
+
+const HERO_INTERVAL_MS = 6500;
+
+function heroProductImage(product: CatalogProduct) {
+  return preferredProductImage(
+    displayProductImages(product.images.filter((image) => image.mediaType !== "VIDEO"), product.productType),
+  );
+}
+
+function heroProductLink(product: CatalogProduct) {
+  return `/customer/product?modelCode=${encodeURIComponent(product.modelCode)}`;
+}
+
+function HeroPriceTag({ product }: { product: CatalogProduct }) {
+  const offer = customerVisibleOffers(product.offers)[0];
+  if (!offer) return null;
+  return (
+    <span className="v2-promo-hero-price">
+      <small>Giá bán</small>
+      <strong>{money(offer.price, offer.currency)}</strong>
+    </span>
+  );
 }
 
 export function HeroCarousel({
@@ -498,12 +533,33 @@ export function HeroCarousel({
   onNavigate,
 }: {
   slides: HeroSlide[];
-  onNavigate: (category: string) => void;
+  onNavigate: (href: string) => void;
 }) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
-  const slidesRef = useRef<HTMLDivElement>(null);
+  const swipeStart = useRef<number | null>(null);
+  const heroRef = useRef<HTMLElement>(null);
+  // Autoplay only while the banner is on screen and the tab is visible; rotating slides
+  // out of view would shift the content the visitor is reading.
+  const [inView, setInView] = useState(true);
+  const [pageVisible, setPageVisible] = useState(true);
+  const count = slides.length;
+
+  useEffect(() => {
+    const hero = heroRef.current;
+    if (!hero || typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver(([entry]) => setInView(entry.isIntersecting), { threshold: 0.35 });
+    observer.observe(hero);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const update = () => setPageVisible(document.visibilityState !== "hidden");
+    update();
+    document.addEventListener("visibilitychange", update);
+    return () => document.removeEventListener("visibilitychange", update);
+  }, []);
   const currentSlide = slides[selectedIndex];
 
   useEffect(() => {
@@ -515,63 +571,159 @@ export function HeroCarousel({
   }, []);
 
   useEffect(() => {
-    if (paused || reducedMotion || slides.length < 2) return;
-    const timer = window.setInterval(() => {
-      setSelectedIndex((index) => (index + 1) % slides.length);
-    }, 6500);
-    return () => window.clearInterval(timer);
-  }, [paused, reducedMotion, slides.length, selectedIndex]);
+    if (paused || reducedMotion || !inView || !pageVisible || count < 2) return;
+    const timer = window.setTimeout(() => setSelectedIndex((index) => (index + 1) % count), HERO_INTERVAL_MS);
+    return () => window.clearTimeout(timer);
+  }, [paused, reducedMotion, inView, pageVisible, count, selectedIndex]);
+
+  useEffect(() => {
+    if (selectedIndex >= count) setSelectedIndex(0);
+  }, [count, selectedIndex]);
 
   if (!currentSlide) return null;
+  const go = (step: number) => setSelectedIndex((index) => (index + step + count) % count);
+  const [featured, ...supporting] = currentSlide.products;
+  const autoplaying = !paused && !reducedMotion && inView && pageVisible && count > 1;
+
   return (
     <section
-      className="v2-hero-carousel"
+      ref={heroRef}
+      className={`v2-promo-hero is-${currentSlide.theme}`}
       aria-roledescription="băng chuyền"
-      aria-label="Khám phá linh kiện máy tính"
+      aria-label="Danh mục nổi bật"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       onFocusCapture={() => setPaused(true)}
       onBlurCapture={(event) => {
         if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setPaused(false);
       }}
+      onPointerDown={(event) => {
+        if (event.pointerType !== "mouse") swipeStart.current = event.clientX;
+      }}
+      onPointerUp={(event) => {
+        if (swipeStart.current === null) return;
+        const distance = event.clientX - swipeStart.current;
+        swipeStart.current = null;
+        if (Math.abs(distance) > 48) go(distance < 0 ? 1 : -1);
+      }}
+      onKeyDown={(event) => {
+        if (event.key === "ArrowLeft") go(-1);
+        if (event.key === "ArrowRight") go(1);
+      }}
     >
-      <div className="v2-hero-slide" ref={slidesRef}>
-        <div className="v2-hero-copy">
-          <span className="v2-hero-eyebrow">{currentSlide.eyebrow}</span>
+      <div className="v2-promo-hero-backdrop" aria-hidden="true">
+        <span className="v2-promo-hero-glow" />
+        <span className="v2-promo-hero-beams" />
+        <span className="v2-promo-hero-grid" />
+      </div>
+
+      <div
+        className="v2-promo-hero-slide"
+        key={currentSlide.key}
+        role="group"
+        aria-roledescription="trang chiếu"
+        aria-label={`${selectedIndex + 1} / ${count}: ${currentSlide.eyebrow}`}
+      >
+        <div className="v2-promo-hero-copy">
+          <span className="v2-promo-hero-eyebrow">{currentSlide.eyebrow}</span>
           <h1>{currentSlide.title}</h1>
           <p>{currentSlide.description}</p>
-          <button className="v2-button v2-button-primary" type="button" onClick={() => onNavigate(currentSlide.category)}>
-            Khám phá {productTypeLabel(currentSlide.category)} <span aria-hidden="true">→</span>
-          </button>
+          {currentSlide.highlights.length > 0 && (
+            <ul className="v2-promo-hero-highlights">
+              {currentSlide.highlights.map((highlight) => (
+                <li key={highlight}>
+                  <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 10.5 3.2 3L15 6.5" /></svg>
+                  {highlight}
+                </li>
+              ))}
+            </ul>
+          )}
+          <div className="v2-promo-hero-actions">
+            <button className="v2-promo-hero-cta" type="button" onClick={() => onNavigate(currentSlide.href)}>
+              {currentSlide.ctaLabel} <span aria-hidden="true">→</span>
+            </button>
+            {featured && (
+              <button className="v2-promo-hero-secondary" type="button" onClick={() => onNavigate(heroProductLink(featured))}>
+                Xem sản phẩm nổi bật
+              </button>
+            )}
+          </div>
         </div>
-        <div className="v2-hero-visual">
-          <ProductArtwork
-            image={currentSlide.product?.images.find((image) => image.isPrimary) ?? currentSlide.product?.images[0]}
-            productName={currentSlide.product?.productName ?? productTypeLabel(currentSlide.category)}
-            productType={currentSlide.category}
-          />
-          {currentSlide.product && <span className="v2-hero-product-caption">{currentSlide.product.productName}</span>}
-        </div>
-      </div>
-      <div className="v2-hero-controls">
-        <div className="v2-hero-arrows">
-          <IconButton label="Khuyến nghị trước" onClick={() => setSelectedIndex((index) => (index - 1 + slides.length) % slides.length)}><ChevronIcon direction="previous" /></IconButton>
-          <IconButton label="Khuyến nghị tiếp theo" onClick={() => setSelectedIndex((index) => (index + 1) % slides.length)}><ChevronIcon direction="next" /></IconButton>
-        </div>
-        <div className="v2-hero-dots" aria-label="Chọn khuyến nghị">
-          {slides.map((slide, index) => (
+
+        <div className="v2-promo-hero-visual">
+          {currentSlide.stat && (
+            <span className="v2-promo-hero-stat">
+              <strong>{currentSlide.stat.value}</strong>
+              <small>{currentSlide.stat.label}</small>
+            </span>
+          )}
+          {supporting.slice(0, 2).map((product, index) => (
             <button
               type="button"
-              key={`${slide.category}:${slide.eyebrow}`}
-              className={index === selectedIndex ? "is-selected" : ""}
-              aria-label={`Trang ${index + 1}: ${slide.eyebrow}`}
-              aria-current={index === selectedIndex ? "true" : undefined}
-              onClick={() => setSelectedIndex(index)}
-            />
+              key={product.modelCode}
+              className={`v2-promo-hero-mini is-${index === 0 ? "back" : "front"}`}
+              onClick={() => onNavigate(heroProductLink(product))}
+              aria-label={`Xem ${product.productName}`}
+            >
+              <ProductArtwork image={heroProductImage(product)} productName={product.productName} productType={product.productType} />
+              <span>{product.productName}</span>
+            </button>
           ))}
+          {featured ? (
+            <button
+              type="button"
+              className="v2-promo-hero-feature"
+              onClick={() => onNavigate(heroProductLink(featured))}
+              aria-label={`Xem ${featured.productName}`}
+            >
+              <span className="v2-promo-hero-feature-media">
+                <ProductArtwork image={heroProductImage(featured)} productName={featured.productName} productType={featured.productType} />
+              </span>
+              <span className="v2-promo-hero-feature-info">
+                <span className="v2-promo-hero-feature-name">{featured.productName}</span>
+                <HeroPriceTag product={featured} />
+              </span>
+            </button>
+          ) : (
+            <div className="v2-promo-hero-feature is-empty">
+              <span className="v2-promo-hero-feature-media">
+                <ProductArtwork productName={currentSlide.eyebrow} productType={currentSlide.theme === "gear" ? "ACCESSORY" : currentSlide.theme.toUpperCase()} />
+              </span>
+            </div>
+          )}
         </div>
-        <span className="v2-hero-counter">{String(selectedIndex + 1).padStart(2, "0")} / {String(slides.length).padStart(2, "0")}</span>
       </div>
+
+      {count > 1 && (
+        <>
+          <button className="v2-promo-hero-arrow is-previous" type="button" aria-label="Trang trước" onClick={() => go(-1)}>
+            <ChevronIcon direction="previous" />
+          </button>
+          <button className="v2-promo-hero-arrow is-next" type="button" aria-label="Trang tiếp theo" onClick={() => go(1)}>
+            <ChevronIcon direction="next" />
+          </button>
+          <div className="v2-promo-hero-nav">
+            {slides.map((slide, index) => (
+              <button
+                type="button"
+                key={slide.key}
+                className={`v2-promo-hero-tab${index === selectedIndex ? " is-selected" : ""}`}
+                aria-label={`Trang ${index + 1}: ${slide.eyebrow}`}
+                aria-current={index === selectedIndex ? "true" : undefined}
+                onClick={() => setSelectedIndex(index)}
+              >
+                <span className="v2-promo-hero-tab-label">{slide.eyebrow}</span>
+                <span className="v2-promo-hero-tab-track">
+                  <span
+                    className={`v2-promo-hero-tab-fill${index === selectedIndex && autoplaying ? " is-running" : ""}`}
+                    style={{ animationDuration: `${HERO_INTERVAL_MS}ms` }}
+                  />
+                </span>
+              </button>
+            ))}
+          </div>
+        </>
+      )}
     </section>
   );
 }

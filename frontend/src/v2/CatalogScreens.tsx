@@ -59,6 +59,7 @@ import { ProductCompareButton, useComparison } from "./comparison-store";
 import { displayProductImages, preferredProductImage } from "./product-images";
 import {
   HeroCarousel,
+  type HeroSlide,
   ProductArtwork,
   ProductCarousel,
   ProductImageGallery,
@@ -726,29 +727,71 @@ export function HomePage() {
     if (quickViewCloseTimer.current) window.clearTimeout(quickViewCloseTimer.current);
   };
 
-  const heroSlides = [
+  const sectionByKey = (key: string) => homepageSections.find((section) => section.key === key);
+  const gearSections = ["gear-monitor", "gear-keyboard", "gear-mouse", "gear-headset"]
+    .map(sectionByKey)
+    .filter((section): section is StorefrontHomepageSection => section !== undefined);
+  const gearCount = gearSections.reduce((total, section) => total + section.productCount, 0);
+  const componentStat = (key: string, label: string) => {
+    const section = sectionByKey(key);
+    return section && section.productCount > 0
+      ? { value: String(section.productCount), label }
+      : undefined;
+  };
+  const heroSlides: HeroSlide[] = [
     {
+      key: "pc",
+      theme: "pc",
       eyebrow: "Máy tính bộ",
-      title: <>Chọn PC theo<br /><span>nhu cầu của bạn</span></>,
-      description: "Khám phá các mẫu máy tính bộ phù hợp với nhu cầu của bạn.",
-      category: "PC",
+      title: <>PC lắp sẵn<br /><span>theo nhu cầu của bạn</span></>,
+      description: "Gaming, đồ họa, văn phòng hay AI — xem cấu hình từng linh kiện trước khi chọn mua.",
+      highlights: ["Bảng cấu hình linh kiện chi tiết", "Tùy chọn nâng cấp linh kiện", "So sánh tối đa 4 sản phẩm"],
+      stat: pcSections.length > 0 ? { value: String(pcSections.length), label: "dòng máy theo nhu cầu" } : undefined,
+      ctaLabel: "Khám phá máy tính bộ",
+      href: "/customer/parts?type=PC",
+      products: (pcSections[0]?.products ?? []).slice(0, 3),
     },
     {
-      eyebrow: "Nâng cấp linh kiện",
-      title: <>Tìm card đồ họa<br /><span>phù hợp hệ thống</span></>,
-      description: "Xem các sản phẩm và thông tin kỹ thuật hiện có trong danh mục.",
-      category: "GPU",
+      key: "gpu",
+      theme: "gpu",
+      eyebrow: "Card đồ họa",
+      title: <>Nâng cấp sức mạnh<br /><span>đồ họa cho dàn máy</span></>,
+      description: "Đối chiếu VRAM, công suất và kích thước để chọn card phù hợp với nguồn và vỏ case.",
+      highlights: ["Thông số kỹ thuật theo từng mẫu", "Lọc theo hãng và khoảng giá", "So sánh tối đa 4 sản phẩm"],
+      stat: componentStat("component-gpu", "mẫu card đồ họa"),
+      ctaLabel: "Xem card đồ họa",
+      href: "/customer/parts?type=GPU",
+      products: (sectionByKey("component-gpu")?.products ?? []).slice(0, 3),
     },
     {
-      eyebrow: "Nền tảng xử lý",
-      title: <>Khám phá các<br /><span>bộ vi xử lý</span></>,
-      description: "Tìm hiểu các bộ vi xử lý và thông số kỹ thuật.",
-      category: "CPU",
+      key: "cpu",
+      theme: "cpu",
+      eyebrow: "Bộ vi xử lý",
+      title: <>Trái tim của hệ thống<br /><span>Intel & AMD</span></>,
+      description: "Xem socket, số nhân, xung nhịp và chọn bo mạch chủ tương thích cho cấu hình của bạn.",
+      highlights: ["Thông số kỹ thuật theo từng mẫu", "Lọc theo hãng và khoảng giá", "Giá và tồn kho từ hệ thống"],
+      stat: componentStat("component-cpu", "bộ vi xử lý"),
+      ctaLabel: "Xem bộ vi xử lý",
+      href: "/customer/parts?type=CPU",
+      products: (sectionByKey("component-cpu")?.products ?? []).slice(0, 3),
     },
-  ] as const;
+    {
+      key: "gear",
+      theme: "gear",
+      eyebrow: "Gaming gear",
+      title: <>Hoàn thiện<br /><span>góc máy của bạn</span></>,
+      description: "Màn hình, bàn phím, chuột và tai nghe để đi cùng bộ PC mới.",
+      highlights: ["Màn hình · Bàn phím", "Chuột · Tai nghe", "Giá và tồn kho từ hệ thống"],
+      stat: gearCount > 0 ? { value: String(gearCount), label: "sản phẩm gaming gear" } : undefined,
+      ctaLabel: "Xem phụ kiện",
+      href: "/customer/parts?type=ACCESSORY",
+      products: gearSections.map((section) => section.products[0]).filter((product) => product !== undefined).slice(0, 3),
+    },
+  ];
 
   return (
     <div className="v2-page v2-home-page">
+      <HeroCarousel slides={heroSlides} onNavigate={(href) => navigate(href)} />
       <section className="v2-home-collection-intro">
         <div>
           <p className="v2-eyebrow">PC Builder Store · Danh mục phần cứng</p>
@@ -757,16 +800,6 @@ export function HomePage() {
         </div>
         <Link className="v2-button v2-button-secondary" to="/customer/parts">Xem tất cả sản phẩm <span aria-hidden="true">→</span></Link>
       </section>
-      <HeroCarousel
-        slides={heroSlides.map((slide) => ({
-          ...slide,
-          product: slide.category === "PC"
-            ? pcSections[0]?.products[0]
-            : homepageSections.find((section) => section.key === `component-${slide.category.toLowerCase()}`)
-              ?.products[0],
-        }))}
-        onNavigate={(type) => navigate(`/customer/parts?type=${encodeURIComponent(type)}`)}
-      />
       {homepageError && <ErrorState title="Không thể tải nội dung trang chủ" message={homepageError} />}
       {homepageLoading && <LoadingState message="Đang tải danh mục sản phẩm…" />}
       {hotSaleSection && <HomeProductSection

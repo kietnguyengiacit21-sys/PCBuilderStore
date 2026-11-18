@@ -302,7 +302,9 @@ public class CatalogService {
         Sort sort = switch (sortValue == null ? "name" : sortValue) {
             case "name" -> Sort.NAME;
             case "price" -> Sort.PRICE;
-            default -> throw invalid("Query parameter \"sort\" must be \"name\" or \"price\".");
+            case "relevance" -> Sort.RELEVANCE;
+            default -> throw invalid(
+                    "Query parameter \"sort\" must be \"name\", \"price\", or \"relevance\".");
         };
         String orderValue = singleValue(parameters, "order");
         Direction order = switch (orderValue == null ? "asc" : orderValue) {
