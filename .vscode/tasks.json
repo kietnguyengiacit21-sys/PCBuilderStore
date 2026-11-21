@@ -16,20 +16,6 @@
 			"problemMatcher": []
 		},
 		{
-			"label": "Import catalog v10",
-			"type": "shell",
-			"command": "powershell.exe",
-			"args": [
-				"-NoProfile",
-				"-ExecutionPolicy",
-				"Bypass",
-				"-File",
-				"scripts/import-catalog-v10.ps1"
-			],
-			"isBackground": true,
-			"problemMatcher": []
-		},
-		{
 			"label": "Read PC BOM from local PostgreSQL",
 			"type": "shell",
 			"command": "C:\\Program Files\\PostgreSQL\\18\\bin\\psql.exe",

@@ -28,10 +28,12 @@ database.
 
 The root `schema_35_tables.sql` is MySQL 8 DDL and must not be used to initialize
 the Java backend's PostgreSQL database. A PostgreSQL 35-table baseline artifact
-exists at `backend/prisma/migrations/20261102000000_initial/migration.sql`;
+exists at `scripts/migrations/20261102_initial_schema.sql`;
 it was ported from that MySQL schema, but has not been applied to or verified
 against a deployment PostgreSQL instance. The Spring Boot application uses
-`JdbcTemplate` and does not apply Prisma migrations at startup.
+`JdbcTemplate` and does not apply any migrations at startup. Unlike the
+additive scripts below, the baseline is not idempotent: run it only on an empty
+database.
 
 The Java backend also relies on additive PostgreSQL migrations under
 `scripts/migrations/`:

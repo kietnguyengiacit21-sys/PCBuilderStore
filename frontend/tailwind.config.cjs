@@ -13,11 +13,5 @@ vm.runInNewContext(themeConfig, themeContext, {
 
 module.exports = {
   ...themeContext.tailwind.config,
-  content: [
-    "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}",
-    "./C01-C17/**/*.html",
-    "./A01-A15/**/*.html",
-    "./B01-B08/**/*.html",
-  ],
+  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
 };

@@ -78,28 +78,6 @@ class CatalogCsvImporterTest {
     }
 
     @Test
-    void parsesAndValidatesTheRequestedFullDemoCatalog() throws IOException {
-        String catalogCsv = Files.readString(
-                Path.of("..", "catalog-import-full-demo-v2.csv").toAbsolutePath().normalize(),
-                StandardCharsets.UTF_8);
-        List<CatalogCsvRow> rows = CatalogCsvImporter.parseRecords(catalogCsv, objectMapper);
-
-        CatalogCsvImporter.validateDataset(rows);
-
-        assertEquals(200, rows.size());
-        assertEquals(14, rows.stream().filter(row -> "PC".equals(row.productTypeCode())).count());
-        assertEquals(111, rows.stream().mapToInt(row -> row.bomComponents().size()).sum());
-        assertEquals(83, rows.stream().mapToInt(row -> row.upgradeGroups().size()).sum());
-        assertEquals(431, rows.stream()
-                .flatMap(row -> row.upgradeGroups().stream())
-                .mapToInt(group -> group.options().size())
-                .sum());
-        assertTrue(rows.stream().allMatch(CatalogCsvRow::priceIsEstimate));
-        assertTrue(rows.stream().allMatch(row -> !row.images().isEmpty()));
-        assertTrue(rows.stream().allMatch(row -> row.merchandising().description() != null));
-    }
-
-    @Test
     void parsesAndValidatesTheV4FullMasterCatalogWithoutTruncatingUpgradeOptions() throws IOException {
         String catalogCsv = Files.readString(
                 Path.of("..", "catalog-import-full-demo-v4.csv").toAbsolutePath().normalize(),
@@ -121,12 +99,15 @@ class CatalogCsvImporterTest {
         assertTrue(pcs.stream().flatMap(row -> row.upgradeGroups().stream())
                 .allMatch(group -> group.options().size() >= 2));
         assertTrue(pcs.stream().allMatch(row -> !row.bomComponents().isEmpty()));
+        assertTrue(rows.stream().allMatch(CatalogCsvRow::priceIsEstimate));
+        assertTrue(rows.stream().allMatch(row -> !row.images().isEmpty()));
+        assertTrue(rows.stream().allMatch(row -> row.merchandising().description() != null));
     }
 
     @Test
-    void attachingEvidencePreservesAllV2CatalogFields() throws IOException {
+    void attachingEvidencePreservesAllMasterCatalogFields() throws IOException {
         String catalogCsv = Files.readString(
-                Path.of("..", "catalog-import-full-demo-v2.csv").toAbsolutePath().normalize(),
+                Path.of("..", "catalog-import-full-demo-v4.csv").toAbsolutePath().normalize(),
                 StandardCharsets.UTF_8);
         String evidenceCsv = String.join(",",
                 "model_code", "product_type", "attribute_code", "data_type", "unit",
