@@ -77,8 +77,9 @@ public class CatalogService {
 
     public List<PublicCatalogAttributeDefinition> getAttributeDefinitions() {
         return catalogRepository.getAttributeDefinitions().stream()
-                .filter(definition -> !internalLedger.publicModelCodes(
-                        definition.code(), definition.productType()).isEmpty())
+                .filter(definition -> !internalLedger.enforcesAllowlist()
+                        || !internalLedger.publicModelCodes(
+                                definition.code(), definition.productType()).isEmpty())
                 .map(definition -> new PublicCatalogAttributeDefinition(
                         definition.productType(),
                         definition.code(),

@@ -204,6 +204,23 @@ function HardwareIllustration({ productType, productName }: { productType: strin
   </svg>;
 }
 
+type ImageFit = "cover" | "contain";
+
+/**
+ * Whether a photo can fill its frame (object-fit: cover) without losing the product.
+ * Photos wider than the frame may lose up to about a quarter of their width, which is
+ * usually background; taller photos may only lose a little height, so tower cases and
+ * portrait or square product shots keep their full outline and are shown whole.
+ */
+function preferredImageFit(image: HTMLImageElement): ImageFit | undefined {
+  const frame = image.parentElement?.getBoundingClientRect();
+  if (!frame?.width || !frame.height || !image.naturalWidth || !image.naturalHeight) return undefined;
+  const imageRatio = image.naturalWidth / image.naturalHeight;
+  const frameRatio = frame.width / frame.height;
+  const croppedShare = 1 - Math.min(imageRatio / frameRatio, frameRatio / imageRatio);
+  return croppedShare <= (imageRatio >= frameRatio ? 0.26 : 0.12) ? "cover" : "contain";
+}
+
 export function ProductArtwork({
   image,
   productName,
@@ -218,16 +235,23 @@ export function ProductArtwork({
   onImageError?: (url: string) => void;
 }) {
   const [failedUrl, setFailedUrl] = useState("");
+  // Keyed by URL so a cached image that loads before effects run keeps its fit.
+  const [measuredFit, setMeasuredFit] = useState<{ url: string; fit: ImageFit }>();
   const imageUrl = image?.url ?? "";
   const isBroken = imageUrl !== "" && failedUrl === imageUrl;
+  const fit = measuredFit?.url === imageUrl ? measuredFit.fit : undefined;
   useEffect(() => setFailedUrl(""), [imageUrl]);
 
   return (
-    <div className={`v2-product-artwork ${className}`}>
+    <div className={`v2-product-artwork ${className}`} data-fit={fit}>
       {imageUrl && !isBroken ? (
         <img
           src={imageUrl}
           alt={image?.altText ?? productName}
+          onLoad={(event) => {
+            const nextFit = preferredImageFit(event.currentTarget);
+            if (nextFit) setMeasuredFit({ url: imageUrl, fit: nextFit });
+          }}
           onError={() => {
             setFailedUrl(imageUrl);
             onImageError?.(imageUrl);

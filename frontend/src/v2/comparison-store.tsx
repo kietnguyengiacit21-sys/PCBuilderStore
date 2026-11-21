@@ -254,7 +254,6 @@ export function ComparisonTray() {
                   </Link>
                   <div className="v2-comparison-selection-copy">
                     <Link to={`/customer/product?modelCode=${encodeURIComponent(item.modelCode)}`}>{item.productName}</Link>
-                    <span className="v2-mono">{item.modelCode}</span>
                   </div>
                   <button type="button" className="v2-comparison-remove" aria-label={`Bỏ ${item.productName} khỏi so sánh`} onClick={() => remove(item.modelCode)}>×</button>
                 </article>

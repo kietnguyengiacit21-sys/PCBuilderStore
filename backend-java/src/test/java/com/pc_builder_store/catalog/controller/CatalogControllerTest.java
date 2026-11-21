@@ -2,6 +2,7 @@ package com.pc_builder_store.catalog.controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -26,10 +27,13 @@ import com.pc_builder_store.catalog.dto.PcBuilderCompatibilityResponse;
 import com.pc_builder_store.catalog.dto.CatalogVerificationStatus;
 import com.pc_builder_store.catalog.repository.CatalogRepository;
 import com.pc_builder_store.catalog.service.PcBuilderCompatibilityService;
+import com.pc_builder_store.inventory.ComponentInventoryService;
+import com.pc_builder_store.promotions.PromotionPricingService;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -37,11 +41,14 @@ import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.transaction.PlatformTransactionManager;
 import tools.jackson.databind.json.JsonMapper;
 
 @SpringBootTest
 @AutoConfigureMockMvc
+// These tests cover the verified-only contract; the app default (ALL_STORED) is covered in CatalogInternalLedgerTest.
+@TestPropertySource(properties = "catalog.specifications.visibility=ALLOWLIST")
 class CatalogControllerTest {
 
     @Autowired
@@ -55,6 +62,20 @@ class CatalogControllerTest {
 
     @MockitoBean
     private PlatformTransactionManager transactionManager;
+
+    // Both query PostgreSQL directly; without them the product endpoints need a live database.
+    @MockitoBean
+    private PromotionPricingService promotionPricing;
+
+    @MockitoBean
+    private ComponentInventoryService componentInventory;
+
+    @BeforeEach
+    void pricesWithoutPromotions() {
+        when(promotionPricing.price(any(), any(), any(), any())).thenAnswer(invocation ->
+                PromotionPricingService.Pricing.fullPrice(invocation.getArgument(2), invocation.getArgument(3)));
+        when(componentInventory.sellableQuantity(any(BigDecimal.class))).thenReturn(5);
+    }
 
     @Test
     void returnsFacetResponseInFrontendShape() throws Exception {

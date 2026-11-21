@@ -26,6 +26,19 @@ class CatalogInternalLedgerTest {
     }
 
     @Test
+    void allStoredModeShowsEveryStoredValueWithoutNarrowingQueries() {
+        CatalogInternalLedger ledger = new CatalogInternalLedger(new ClassPathResource(
+                "catalog-internal/catalog-attribute-internal-ledger.csv"),
+                CatalogInternalLedger.VisibilityMode.ALL_STORED);
+
+        assertFalse(ledger.enforcesAllowlist());
+        assertTrue(ledger.isPubliclyVisible("GPU", "DUAL-RTX4060-O8G", "architecture"));
+        assertTrue(ledger.isPubliclyVisible("MOTHERBOARD", "ROG-MAXIMUS-Z790-HERO", "socket"));
+        assertTrue(new CatalogInternalLedger(new ClassPathResource(
+                "catalog-internal/catalog-attribute-internal-ledger.csv")).enforcesAllowlist());
+    }
+
+    @Test
     void publiclyAllowsConfiguredPcComponentListsWithoutAllowingInternalWorkflowFields() {
         CatalogInternalLedger ledger = new CatalogInternalLedger(new ClassPathResource(
                 "catalog-internal/catalog-attribute-internal-ledger.csv"));

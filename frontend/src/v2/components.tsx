@@ -10,7 +10,7 @@ import type { CatalogFacets } from "../catalog-api";
 import { useAuth } from "./auth";
 import { HeaderSearch } from "./HeaderSearch";
 import { MegaMenu } from "./MegaMenu";
-import { FloatingContact } from "./FloatingContact";
+import { CONTACT_LINKS, FloatingContact } from "./FloatingContact";
 import { ComparisonTray, useComparison } from "./comparison-store";
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement>;
@@ -435,6 +435,21 @@ export function ErrorState({ title = "Đã xảy ra lỗi", message }: { title?:
   );
 }
 
+function CartIcon() {
+  return <svg className="v2-header-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+    <path d="M3 4h2.2l2.3 10.3a1.6 1.6 0 0 0 1.6 1.2h8.3a1.6 1.6 0 0 0 1.5-1.2L20.8 8H6.1" />
+    <circle cx="9.6" cy="19.4" r="1.4" />
+    <circle cx="17.4" cy="19.4" r="1.4" />
+  </svg>;
+}
+
+function UserIcon() {
+  return <svg className="v2-header-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+    <circle cx="12" cy="8" r="4" />
+    <path d="M4.5 20.5a7.5 7.5 0 0 1 15 0" />
+  </svg>;
+}
+
 export function CustomerHeader() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
@@ -470,8 +485,12 @@ export function CustomerHeader() {
     <header ref={headerRef} className="v2-customer-header" data-shared-component="v2-customer-header">
       <div className="v2-customer-announcement">
         <div className="v2-customer-announcement-inner">
-          <span>Khám phá phần cứng PC và thông tin kỹ thuật chi tiết</span>
-          <Link to="/customer/parts">Khám phá danh mục <span aria-hidden="true">→</span></Link>
+          <span>PC lắp sẵn, linh kiện và gaming gear · Giá và tồn kho cập nhật từ hệ thống</span>
+          <nav className="v2-customer-announcement-links" aria-label="Lối tắt mua sắm">
+            <Link to="/customer/parts?sale=true"><span aria-hidden="true">🔥</span> Hàng đang giảm giá</Link>
+            <Link to="/customer/guest-order-lookup">Tra cứu đơn hàng</Link>
+            <Link to="/build-pc/start">Tự build PC <span aria-hidden="true">→</span></Link>
+          </nav>
         </div>
       </div>
       <div className="v2-customer-header-inner">
@@ -487,10 +506,10 @@ export function CustomerHeader() {
         </nav>
         <HeaderSearch facets={catalogFacets} />
         <div className="v2-header-actions">
-          <Link className="v2-header-link" to="/customer/cart">Giỏ hàng</Link>
+          <Link className="v2-header-link" to="/customer/cart"><CartIcon /><span className="v2-header-link-text">Giỏ hàng</span></Link>
           {user ? (
             <>
-              <Link className="v2-header-link" to={user.roleCode === "CUSTOMER" ? "/customer/account" : "/admin/dashboard"}>{user.fullName} · {user.roleCode}</Link>
+              <Link className="v2-header-link" to={user.roleCode === "CUSTOMER" ? "/customer/account" : "/admin/dashboard"}><UserIcon /><span className="v2-header-link-text">{user.fullName} · {user.roleCode}</span></Link>
               <button className="v2-header-link" type="button" onClick={() => {
                 setLogoutError("");
                 void logout().then(() => navigate("/login")).catch((reason: unknown) =>
@@ -498,7 +517,7 @@ export function CustomerHeader() {
                 );
               }}>Đăng xuất</button>
             </>
-          ) : <Link className="v2-header-link" to="/login">Đăng nhập</Link>}
+          ) : <Link className="v2-header-link" to="/login"><UserIcon /><span className="v2-header-link-text">Đăng nhập</span></Link>}
         </div>
       </div>
       {logoutError && <p className="v2-header-error" role="alert">{logoutError}</p>}
@@ -513,29 +532,56 @@ export function CustomerHeader() {
 }
 
 export function CustomerFooter() {
+  // Only channels the store has confirmed (non-empty href) are listed.
+  const socialLinks = CONTACT_LINKS.filter((link) => link.href.startsWith("http"));
   return (
     <footer className="v2-customer-footer" data-shared-component="v2-customer-footer">
       <div className="v2-footer-inner">
         <div className="v2-footer-brand">
           <h2>PC BUILDER STORE</h2>
-          <p>Khám phá linh kiện và thông tin sản phẩm.</p>
+          <p>PC lắp sẵn, linh kiện và gaming gear với cấu hình minh bạch đến từng linh kiện.</p>
+          {socialLinks.length > 0 && <div className="v2-footer-social">
+            {socialLinks.map((link) => <a key={link.key} href={link.href} target="_blank" rel="noopener noreferrer"
+              aria-label={`${link.label} (mở tab mới)`}>
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">{link.icon}</svg>
+            </a>)}
+          </div>}
         </div>
         <div>
-          <h2>Khám phá</h2>
-          <nav className="v2-footer-links" aria-label="Khám phá">
-            <Link to="/customer/parts">Linh kiện</Link>
+          <h2>Sản phẩm</h2>
+          <nav className="v2-footer-links" aria-label="Sản phẩm">
+            <Link to="/customer/parts?type=PC">PC lắp sẵn</Link>
+            <Link to="/customer/parts">Linh kiện máy tính</Link>
+            <Link to="/customer/parts?type=ACCESSORY">Gaming gear</Link>
+            <Link to="/customer/parts?sale=true">Hàng đang giảm giá</Link>
+          </nav>
+        </div>
+        <div>
+          <h2>Công cụ</h2>
+          <nav className="v2-footer-links" aria-label="Công cụ">
+            <Link to="/build-pc/start">Tự build PC</Link>
             <Link to="/customer/compare">So sánh sản phẩm</Link>
           </nav>
         </div>
         <div>
-          <h2>Tài khoản</h2>
-          <nav className="v2-footer-links" aria-label="Tài khoản">
+          <h2>Hỗ trợ khách hàng</h2>
+          <nav className="v2-footer-links" aria-label="Hỗ trợ khách hàng">
+            <Link to="/customer/guest-order-lookup">Tra cứu đơn hàng</Link>
+            <Link to="/customer/cart">Giỏ hàng</Link>
             <Link to="/customer/orders">Lịch sử đơn hàng</Link>
-            <Link to="/customer/account">Tổng quan tài khoản</Link>
+            <Link to="/customer/account">Tài khoản của tôi</Link>
           </nav>
         </div>
+        <div>
+          <h2>Mua hàng</h2>
+          <ul className="v2-footer-list">
+            <li>Thanh toán khi nhận hàng (COD)</li>
+            <li>Giao hàng tận nơi</li>
+            <li>Bảo hành theo từng sản phẩm</li>
+          </ul>
+        </div>
       </div>
-      <div className="v2-footer-bottom">PC Builder Store</div>
+      <div className="v2-footer-bottom">© {new Date().getFullYear()} PC Builder Store. Giá và tình trạng hàng được cập nhật từ hệ thống.</div>
     </footer>
   );
 }

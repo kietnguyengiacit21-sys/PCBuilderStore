@@ -12,6 +12,7 @@ import java.util.Set;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
@@ -23,16 +24,37 @@ public final class CatalogInternalLedger {
             "model_code", "product_type", "attribute_code", "public_visibility");
     private static final String PUBLIC_ALLOWLIST = "PUBLIC_ALLOWLIST";
 
-    private final Map<AttributeKey, String> visibilityByAttribute;
+    /**
+     * Which stored specification values customers (and the PC builder) may use.
+     * ALLOWLIST: only values the ledger marks PUBLIC_ALLOWLIST (verified against a source).
+     * ALL_STORED: every value stored in the catalog, verified or not.
+     */
+    public enum VisibilityMode { ALLOWLIST, ALL_STORED }
 
+    private final Map<AttributeKey, String> visibilityByAttribute;
+    private final VisibilityMode visibilityMode;
+
+    public CatalogInternalLedger(Resource ledgerResource) {
+        this(ledgerResource, VisibilityMode.ALLOWLIST);
+    }
+
+    @Autowired
     public CatalogInternalLedger(
             @Value("classpath:catalog-internal/catalog-attribute-internal-ledger.csv")
-            Resource ledgerResource) {
+            Resource ledgerResource,
+            @Value("${catalog.specifications.visibility:ALLOWLIST}")
+            VisibilityMode visibilityMode) {
         this.visibilityByAttribute = load(ledgerResource);
+        this.visibilityMode = visibilityMode;
+    }
+
+    /** False in ALL_STORED mode: callers must not narrow results to {@link #publicModelCodes}. */
+    public boolean enforcesAllowlist() {
+        return visibilityMode == VisibilityMode.ALLOWLIST;
     }
 
     public boolean isPubliclyVisible(String productType, String modelCode, String attributeCode) {
-        return PUBLIC_ALLOWLIST.equals(
+        return !enforcesAllowlist() || PUBLIC_ALLOWLIST.equals(
                 visibilityByAttribute.get(new AttributeKey(productType, modelCode, attributeCode)));
     }
 

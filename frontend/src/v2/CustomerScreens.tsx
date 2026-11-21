@@ -263,7 +263,6 @@ function CartLine({
   return <div className="v2-cart-item">
     <div>
       <Link to={`/customer/product?modelCode=${encodeURIComponent(item.modelCode)}`}>{item.productName}</Link>
-      <span className="v2-mono">{item.modelCode}</span>
       {item.unitPrice !== null && item.subtotal !== null && item.currency ? <span className="v2-table-subtext">
         Đơn giá: {formatCartMoney(item.unitPrice, item.currency)} · Tạm tính: {formatCartMoney(item.subtotal, item.currency)}
       </span> : <span className="v2-table-subtext">Giá bán chưa được xác minh.</span>}
@@ -277,7 +276,7 @@ function CartLine({
           const selection = item.configuration?.upgrades.find((choice) => choice.groupId === group.groupId);
           const option = group.options.find((choice) => choice.optionId === selection?.optionId);
           return option ? <span key={group.groupId}>
-            {group.displayName}: {option.displayName} · {option.modelCode} × {selection?.quantity}
+            {group.displayName}: {option.displayName} × {selection?.quantity}
           </span> : null;
         })}
         {item.configuration.bundles.map((selection) => {
@@ -303,7 +302,7 @@ function CartLine({
                 || !enoughStock && !isGiftSelected(gift)}
               onChange={(event) => changeGiftSelection(gift, event.target.checked)}
             />
-            <span>{gift.productName} ({gift.modelCode}) × {gift.quantity}
+            <span>{gift.productName} × {gift.quantity}
               {gift.selectionRequired ? " · Bắt buộc" : " · Tùy chọn"}
               {!enoughStock ? " · Tạm hết hàng" : ""}
             </span>

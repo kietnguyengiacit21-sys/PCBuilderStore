@@ -44,15 +44,6 @@ export function customerVisibleCopy(value: string | null | undefined): string | 
   return visibleCopy || null;
 }
 
-export function hasVerifiedPCConfiguration(
-  verificationMetadata?: Record<string, CatalogAttributeVerification>,
-): boolean {
-  return ["bom_status", "component_details", "configuration_summary"].every((code) => {
-    const status = verificationMetadata?.[code]?.verificationStatus;
-    return status === "VERIFIED_EXACT_MODEL" || status === "VERIFIED_EXACT_VARIANT";
-  });
-}
-
 export function WarrantyDisplay({
   months,
   showMissing = false,
@@ -617,7 +608,7 @@ export function SpecificationComparison({
         {visibleRows.length ? <div className="v2-table-wrap">
           <table className="v2-table v2-compare-spec-table">
             <thead><tr><th scope="col">Thông số</th>{products.map((product) => (
-              <th scope="col" key={product.modelCode}>{product.productName}<small className="v2-mono">{product.modelCode}</small></th>
+              <th scope="col" key={product.modelCode}>{product.productName}</th>
             ))}</tr></thead>
             <tbody>{visibleRows.map(({ code, definition }) => {
               const values = products.map((product) => comparisonKey(product, code, definition));
@@ -774,7 +765,6 @@ function structuredConfiguration(value: unknown): StructuredConfigurationCompone
 
 export function PCConfigurationComparison({ products }: { products: CatalogProduct[] }) {
   if (!products.length || products.some((product) => product.productType !== "PC")) return null;
-  if (products.some((product) => !hasVerifiedPCConfiguration(product.verificationMetadata))) return null;
   const configurations = products.map((product) =>
     structuredConfiguration(product.specifications.component_details)
       ?? structuredConfiguration(product.specifications.configuration_items));
@@ -792,18 +782,18 @@ export function PCConfigurationComparison({ products }: { products: CatalogProdu
     <div className="v2-table-wrap">
       <table className="v2-table v2-compare-spec-table">
         <thead><tr><th scope="col">Loại thành phần</th>{products.map((product) =>
-          <th scope="col" key={product.modelCode}>{product.productName}<small className="v2-mono">{product.modelCode}</small></th>)}</tr></thead>
+          <th scope="col" key={product.modelCode}>{product.productName}</th>)}</tr></thead>
         <tbody>{componentTypes.map((componentType) => {
           const values = configurations.map((configuration) => configuration
             ?.filter((component) => component.componentType === componentType)
-            .map((component) => `${component.modelCode}${component.productName ? ` — ${component.productName}` : ""}`)
+            .map((component) => component.productName ?? component.modelCode)
             .sort((left, right) => left.localeCompare(right)));
           const normalized = values.map((value) => value?.join("\n") ?? "Chưa có cấu hình thành phần có định danh");
           const differs = new Set(normalized).size > 1;
           return <tr className={differs ? "v2-diff-row" : ""} key={componentType}>
             <th scope="row">{pcComponentTypeLabel(componentType)}</th>
             {values.map((value, index) => <td key={products[index].modelCode}>
-              {value?.length ? <ul>{value.map((item) => <li className="v2-mono" key={item}>{item}</li>)}</ul> : "Chưa có cấu hình thành phần có định danh"}
+              {value?.length ? <ul>{value.map((item, itemIndex) => <li key={`${itemIndex}:${item}`}>{item}</li>)}</ul> : "Chưa có cấu hình thành phần có định danh"}
             </td>)}
           </tr>;
         })}</tbody>
@@ -814,14 +804,11 @@ export function PCConfigurationComparison({ products }: { products: CatalogProdu
 
 export function PCConfigurationSummary({
   specifications,
-  verificationMetadata,
   limit = 4,
 }: {
   specifications: Record<string, unknown>;
-  verificationMetadata?: Record<string, CatalogAttributeVerification>;
   limit?: number;
 }) {
-  if (!hasVerifiedPCConfiguration(verificationMetadata)) return null;
   const entries = pcConfigurationSummaryEntries(
     specifications.component_details ?? specifications.configuration_items,
     specifications.configuration_summary,
@@ -879,14 +866,13 @@ export function PCConfigurationDetails({
     </div>
     <div className="v2-table-wrap v2-pc-configuration-table-wrap">
       <table className={`v2-table v2-pc-configuration-table${hasWarranty ? " has-warranty" : ""}${hasSpecifications ? " has-specifications" : ""}`}>
-        <colgroup><col /><col /><col /><col />
+        <colgroup><col /><col /><col />
           {hasWarranty && <col />}
           {hasSpecifications && <col />}
         </colgroup>
         <thead><tr>
           <th scope="col">Loại linh kiện</th>
           <th scope="col">Linh kiện</th>
-          <th scope="col">Mã model</th>
           <th scope="col">Số lượng</th>
           {hasWarranty && <th scope="col">Bảo hành</th>}
           {hasSpecifications && <th scope="col">Thông số chính</th>}
@@ -907,7 +893,6 @@ export function PCConfigurationDetails({
               {component.productName ?? "Chưa có tên sản phẩm"}
             </Link>
           </div></td>
-          <td className="v2-mono v2-pc-bom-model">{component.modelCode}</td>
           <td>{component.quantity ?? "—"}</td>
           {hasWarranty && <td>{formatWarranty(component.componentWarrantyMonths)}</td>}
           {hasSpecifications && <td><div className="v2-pc-bom-specs">
@@ -940,7 +925,7 @@ export function PCComponentChecklist({ components }: { components: CatalogBomCom
         <span className="v2-pc-checklist-type">{pcComponentTypeLabel(component.productType || component.displayCategory)}</span>
         <span className="v2-pc-checklist-name">
           {component.productName}
-          <small>{component.modelCode}{component.quantity > 1 ? ` · ${component.quantity} cái` : ""}</small>
+          {component.quantity > 1 && <small>{component.quantity} cái</small>}
         </span>
         {specs.length > 0 && <span className="v2-pc-checklist-specs">{specs.join(" · ")}</span>}
       </li>;
@@ -1084,6 +1069,10 @@ export function ProductOfferPanel({
           {offerOriginalPrice(selectedOffer) > 0
             && <span className="v2-promotion-original-price">{money(offerOriginalPrice(selectedOffer), selectedOffer.currency)}</span>}
           <strong>{money(selectedOffer.price, selectedOffer.currency)}</strong>
+          {offerOriginalPrice(selectedOffer) > Number(selectedOffer.price) && <span className="v2-current-offer-saving">
+            Tiết kiệm {money(offerOriginalPrice(selectedOffer) - Number(selectedOffer.price), selectedOffer.currency)}
+            {" "}(-{Math.round((offerOriginalPrice(selectedOffer) - Number(selectedOffer.price)) / offerOriginalPrice(selectedOffer) * 100)}%)
+          </span>}
         </div>
         <div className="v2-current-offer-facts">
           <Badge tone="primary">{conditionDisplayName(selectedOffer)}</Badge>

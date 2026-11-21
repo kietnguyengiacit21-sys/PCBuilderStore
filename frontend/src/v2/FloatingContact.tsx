@@ -7,7 +7,7 @@ import type { ReactNode } from "react";
  * at a placeholder. For the phone, use "tel:+84xxxxxxxxx"; for Zalo, "https://zalo.me/<id>";
  * for Messenger, "https://m.me/<page>".
  */
-const CONTACT_LINKS: { key: string; label: string; href: string; icon: ReactNode }[] = [
+export const CONTACT_LINKS: { key: string; label: string; href: string; icon: ReactNode }[] = [
   {
     key: "facebook",
     label: "Facebook",

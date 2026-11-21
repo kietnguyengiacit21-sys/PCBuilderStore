@@ -565,6 +565,10 @@ public class CatalogRepository {
             String codeParameter = "attributeCode" + index;
             String valueParameter = "attributeValue" + index;
             String modelCodesParameter = "publicModelCodes" + index;
+            boolean restrictToAllowlist = internalLedger.enforcesAllowlist();
+            String allowlistCondition = restrictToAllowlist
+                    ? "AND p.\"model_code\" IN (:" + modelCodesParameter + ")"
+                    : "";
             conditions.add("""
                     EXISTS (
                       SELECT 1
@@ -575,7 +579,7 @@ public class CatalogRepository {
                       WHERE ad."product_type_id" = p."product_type_id"
                         AND ad."attribute_code" = :%s
                         AND ad."is_filterable" = TRUE
-                        AND p."model_code" IN (:%s)
+                        %s
                         AND COALESCE(
                           to_jsonb(av."value_text"),
                           to_jsonb(av."value_decimal"),
@@ -584,11 +588,13 @@ public class CatalogRepository {
                           av."value_json"
                         ) = CAST(:%s AS jsonb)
                     )
-                    """.formatted(codeParameter, modelCodesParameter, valueParameter));
+                    """.formatted(codeParameter, allowlistCondition, valueParameter));
             parameters.addValue(codeParameter, attribute.code());
-            parameters.addValue(
-                    modelCodesParameter,
-                    internalLedger.publicModelCodes(attribute.code(), query.type()));
+            if (restrictToAllowlist) {
+                parameters.addValue(
+                        modelCodesParameter,
+                        internalLedger.publicModelCodes(attribute.code(), query.type()));
+            }
             parameters.addValue(valueParameter, jsonFilterValue(attribute.value()));
         }
         return new SqlQuery(" WHERE " + String.join(" AND ", conditions), parameters);
@@ -845,7 +851,8 @@ public class CatalogRepository {
         Set<String> supportedCodes = Set.copyOf(supported);
         for (String code : codes) {
             if (!supportedCodes.contains(code)
-                    || internalLedger.publicModelCodes(code, productType).isEmpty()) {
+                    || internalLedger.enforcesAllowlist()
+                            && internalLedger.publicModelCodes(code, productType).isEmpty()) {
                 throw new InvalidCatalogQueryException(
                         "Attribute \"" + code + "\" is not a supported filter.");
             }

@@ -57,6 +57,7 @@ import {
 } from "./components";
 import { ProductCompareButton, useComparison } from "./comparison-store";
 import { displayProductImages, preferredProductImage } from "./product-images";
+import { readRecentlyViewed, recordRecentlyViewed } from "./recently-viewed";
 import {
   HeroCarousel,
   type HeroSlide,
@@ -182,6 +183,14 @@ function useProducts(filters: CatalogProductFilters) {
   return { result, error, loading };
 }
 
+/** Whole-percent discount from the compare-at price; 0 when the offer is not reduced. */
+function offerDiscountPercent(offer: CatalogProduct["offers"][number] | undefined): number {
+  if (!offer) return 0;
+  const original = offerOriginalPrice(offer);
+  const price = Number(offer.price);
+  return original > price ? Math.round((original - price) / original * 100) : 0;
+}
+
 function productCoverImage(product: CatalogProduct) {
   return preferredProductImage(
     displayProductImages(
@@ -209,6 +218,7 @@ function ProductTile({
   const [cartMessage, setCartMessage] = useState("");
   const [cartError, setCartError] = useState("");
   const purchaseAvailable = canPurchaseOffer(offer, 1);
+  const discount = offerDiscountPercent(offer);
   const addToCart = async () => {
     if (!offer || !purchaseAvailable) return;
     setCartBusy(true);
@@ -233,6 +243,7 @@ function ProductTile({
         >
           <ProductArtwork image={image} productName={product.productName} productType={product.productType} />
         </Link>
+        {discount > 0 && <span className="v2-card-discount">-{discount}%</span>}
         <ProductCompareButton product={product} selected={compared} />
         <button className="v2-card-quick-view" type="button" onClick={(event) => {
           const touch = window.matchMedia("(max-width: 720px), (hover: none)").matches;
@@ -245,15 +256,14 @@ function ProductTile({
         <Link className="v2-product-name" to={`/customer/product?modelCode=${encodeURIComponent(product.modelCode)}`}>
           {product.productName}
         </Link>
-        <p className="v2-mono">{product.modelCode}</p>
         {product.productType === "PC"
-          ? <PCConfigurationSummary specifications={product.specifications} verificationMetadata={product.verificationMetadata} />
+          ? <PCConfigurationSummary specifications={product.specifications} />
           : <SpecificationHighlights productType={product.productType} specifications={product.specifications} definitions={definitions} />}
         {offer ? (
           <div className="v2-product-offer">
             {offer.saleBadge && <Badge tone="success">{offer.saleBadge}</Badge>}
             <strong>{money(offer.price, offer.currency)}</strong>
-            {offerOriginalPrice(offer) > 0
+            {discount > 0
               && <span className="v2-promotion-original-price">{money(offerOriginalPrice(offer), offer.currency)}</span>}
             {offer.promotionDisplayCopy && <span>{offer.promotionDisplayCopy}</span>}
             <span>Tình trạng: {conditionLabel(offer.condition)}</span>
@@ -284,12 +294,9 @@ function ProductGrid({
   onQuickView: (product: CatalogProduct, anchor: HTMLElement, touch: boolean) => void;
 }) {
   if (!products.length) return <EmptyState title="Chưa có sản phẩm phù hợp" message="Thử thay đổi từ khóa hoặc bộ lọc." />;
-  return <>
-    <p className="v2-spec-dictionary-note">Mở chi tiết sản phẩm để xem đầy đủ thông số kỹ thuật.</p>
-    <div className="v2-product-grid">{products.map((product) => (
-      <ProductTile key={product.productId} product={product} definitions={definitions} onQuickView={onQuickView} />
-    ))}</div>
-  </>;
+  return <div className="v2-product-grid">{products.map((product) => (
+    <ProductTile key={product.productId} product={product} definitions={definitions} onQuickView={onQuickView} />
+  ))}</div>;
 }
 
 function RelatedProductsSection({
@@ -382,15 +389,13 @@ interface ActiveQuickView {
   touch: boolean;
 }
 
-function verifiedQuickViewSpecifications(
+/** Specification values the API returned for this product (the backend decides visibility). */
+function displayedSpecifications(
   product: CatalogProduct,
   definitions: ReturnType<typeof useCatalogAttributeDefinitions>["definitions"],
 ) {
   return definitions.flatMap((definition) => {
     if (definition.productType !== product.productType) return [];
-    const verification = product.verificationMetadata?.[definition.code];
-    if (verification?.verificationStatus !== "VERIFIED_EXACT_MODEL"
-        && verification?.verificationStatus !== "VERIFIED_EXACT_VARIANT") return [];
     const value = product.specifications[definition.code];
     if (value === null || value === undefined || value === "") return [];
     return [{
@@ -415,10 +420,10 @@ function cardSpecifications(
   product: CatalogProduct,
   definitions: ReturnType<typeof useCatalogAttributeDefinitions>["definitions"],
 ) {
-  const verified = verifiedQuickViewSpecifications(product, definitions);
+  const available = displayedSpecifications(product, definitions);
   const preferredCodes = cardSpecificationOrder[product.productType];
-  if (!preferredCodes) return verified.slice(0, 3);
-  return preferredCodes.flatMap((code) => verified.filter((item) => item.code === code)).slice(0, 3);
+  if (!preferredCodes) return available.slice(0, 3);
+  return preferredCodes.flatMap((code) => available.filter((item) => item.code === code)).slice(0, 3);
 }
 
 function pcCardSummary(product: CatalogProduct) {
@@ -462,9 +467,7 @@ function HomepageProductTile({
   const [addingToCart, setAddingToCart] = useState(false);
   const [cartStatus, setCartStatus] = useState("");
   const originalPrice = offer ? offerOriginalPrice(offer) : 0;
-  const discountPercent = offer && originalPrice > Number(offer.price)
-    ? Math.round((originalPrice - Number(offer.price)) / originalPrice * 100)
-    : 0;
+  const discountPercent = offerDiscountPercent(offer);
   const specs = product.productType === "PC" ? [] : cardSpecifications(product, definitions);
   const openPreview = (anchor: HTMLElement, touch = false) => {
     onQuickView(product, anchor, touch);
@@ -486,12 +489,12 @@ function HomepageProductTile({
           <Link className="v2-product-image" to={productLink} aria-label={`Xem ${product.productName}`}>
             <ProductArtwork image={image} productName={product.productName} productType={product.productType} />
           </Link>
+          {discountPercent > 0 && <span className="v2-card-discount">-{discountPercent}%</span>}
           <ProductCompareButton product={product} selected={compared} />
         </div>
         <div className="v2-product-info">
           <p className="v2-eyebrow">{product.brandName ?? "Chưa có thương hiệu"} · {productTypeLabel(product.productType)}</p>
           <Link className="v2-product-name" to={productLink}>{product.productName}</Link>
-          <p className="v2-mono">{product.modelCode}</p>
           {product.productType === "PC" ? (
             <ul className="v2-home-card-specs" aria-label="Tóm tắt cấu hình PC">
               {pcCardSummary(product).map(([label, value]) => <li key={label}><b>{label}</b><span>{String(value)}</span></li>)}
@@ -503,7 +506,6 @@ function HomepageProductTile({
           ) : null}
           {offer ? (
             <div className="v2-product-offer">
-              {discountPercent > 0 && <Badge tone="success">-{discountPercent}%</Badge>}
               <strong>{money(offer.price, offer.currency)}</strong>
               {originalPrice > Number(offer.price)
                 && <span className="v2-promotion-original-price">{money(originalPrice, offer.currency)}</span>}
@@ -562,7 +564,8 @@ function ProductQuickView({
   const [addingToCart, setAddingToCart] = useState(false);
   const offer = customerVisibleOffers(active.product.offers)[0];
   const summary = productSummary(active.product);
-  const verifiedSpecs = verifiedQuickViewSpecifications(active.product, definitions).slice(0, 5);
+  // PCs show their component summary below instead of raw configuration fields.
+  const verifiedSpecs = active.product.productType === "PC" ? [] : cardSpecifications(active.product, definitions);
   const productLink = `/customer/product?modelCode=${encodeURIComponent(active.product.modelCode)}`;
 
   useEffect(() => {
@@ -570,8 +573,8 @@ function ProductQuickView({
       if (active.touch) return;
       const bounds = active.anchor.getBoundingClientRect();
       const panelBounds = panelRef.current?.getBoundingClientRect();
-      const width = Math.min(300, window.innerWidth - 24);
-      const height = Math.min(panelBounds?.height ?? 360, window.innerHeight - 24);
+      const width = Math.min(360, window.innerWidth - 24);
+      const height = Math.min(panelBounds?.height ?? 420, window.innerHeight - 24);
       const gap = 12;
       const roomBelow = window.innerHeight - bounds.bottom - gap;
       const roomAbove = bounds.top - gap;
@@ -636,7 +639,7 @@ function ProductQuickView({
             if (active.touch) active.anchor.focus();
           }}>×</button>
         </div>
-        <p className="v2-home-quick-view-brand">{active.product.brandName ?? productTypeLabel(active.product.productType)} · {active.product.modelCode}</p>
+        <p className="v2-home-quick-view-brand">{active.product.brandName ?? "Chưa có thương hiệu"} · {productTypeLabel(active.product.productType)}</p>
         <h2>{active.product.productName}</h2>
         {offer ? (
           <div className="v2-home-quick-view-price">
@@ -655,7 +658,7 @@ function ProductQuickView({
           </dl>
         )}
         {active.product.productType === "PC"
-          ? <PCConfigurationSummary specifications={active.product.specifications} verificationMetadata={active.product.verificationMetadata} limit={3} />
+          ? <PCConfigurationSummary specifications={active.product.specifications} limit={3} />
           : null}
         {offer && <button className="v2-button v2-button-secondary v2-home-quick-view-cart"
           type="button" disabled={addingToCart || !canPurchaseOffer(offer, 1)}
@@ -792,14 +795,7 @@ export function HomePage() {
   return (
     <div className="v2-page v2-home-page">
       <HeroCarousel slides={heroSlides} onNavigate={(href) => navigate(href)} />
-      <section className="v2-home-collection-intro">
-        <div>
-          <p className="v2-eyebrow">PC Builder Store · Danh mục phần cứng</p>
-          <h2>Phần cứng phù hợp cho mọi cấu hình</h2>
-          <p>Khám phá máy tính bộ và linh kiện với thông tin sản phẩm, thông số kỹ thuật và tình trạng cung cấp.</p>
-        </div>
-        <Link className="v2-button v2-button-secondary" to="/customer/parts">Xem tất cả sản phẩm <span aria-hidden="true">→</span></Link>
-      </section>
+      <HomeServiceStrip />
       {homepageError && <ErrorState title="Không thể tải nội dung trang chủ" message={homepageError} />}
       {homepageLoading && <LoadingState message="Đang tải danh mục sản phẩm…" />}
       {hotSaleSection && <HomeProductSection
@@ -808,6 +804,7 @@ export function HomePage() {
         onQuickView={showQuickView}
         onQuickViewClose={scheduleQuickViewClose}
       />}
+      <HomePromoBanners />
       {pcSections.length > 0 && <section className="v2-section-block">
         <div className="v2-section-heading">
           <div><p className="v2-eyebrow">Khám phá theo nhu cầu</p><h2>Chọn dòng máy tính</h2></div>
@@ -862,6 +859,7 @@ export function HomePage() {
       />)}
       {definitionsError && <p className="v2-inline-error" role="alert">Không tải được định nghĩa thông số: {definitionsError}</p>}
       {quickView && <ProductQuickView active={quickView} definitions={definitions} onClose={() => setQuickView(undefined)} onPointerEnter={keepQuickViewOpen} onPointerLeave={scheduleQuickViewClose} />}
+      <RecentlyViewedSection />
       {facets?.brands.length ? <section className="v2-section-block v2-brand-section">
         <div className="v2-section-heading"><div><p className="v2-eyebrow">Thương hiệu phần cứng</p><h2>Khám phá thương hiệu</h2></div><Link to="/customer/parts">Xem toàn bộ thương hiệu →</Link></div>
         <div className="v2-brand-grid">
@@ -878,6 +876,158 @@ export function HomePage() {
   );
 }
 
+type ServiceIcon = "truck" | "shield" | "check" | "search";
+
+const SERVICE_ICON_PATHS: Record<ServiceIcon, string> = {
+  truck: "M3 6h11v9H3zM14 9h4l3 3v3h-7zM7.5 18.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM17.5 18.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z",
+  shield: "M12 3 5 6v5c0 4.4 3 8.4 7 9.5 4-1.1 7-5.1 7-9.5V6l-7-3zM9 12l2 2 4-4",
+  check: "M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 17l2 2 4-4",
+  search: "M10.5 17a6.5 6.5 0 1 0 0-13 6.5 6.5 0 0 0 0 13zM15.5 15.5 20 20",
+};
+
+/*
+ * Store commitments shown under the hero. Each line describes something the store
+ * actually does today (COD checkout, per-offer warranty, the PC builder's compatibility
+ * check, guest order lookup); add a policy here only once it exists in the system.
+ */
+const HOME_SERVICES: { icon: ServiceIcon; title: string; detail: string; to?: string }[] = [
+  { icon: "truck", title: "Giao hàng tận nơi", detail: "Thanh toán khi nhận hàng (COD)" },
+  { icon: "shield", title: "Bảo hành rõ ràng", detail: "Thời hạn ghi trên từng sản phẩm" },
+  { icon: "check", title: "Kiểm tra tương thích", detail: "Tự build PC, hệ thống kiểm tra linh kiện", to: "/build-pc/start" },
+  { icon: "search", title: "Tra cứu đơn hàng", detail: "Không cần đăng nhập tài khoản", to: "/customer/guest-order-lookup" },
+];
+
+function HomeServiceStrip() {
+  return <section className="v2-home-services" aria-label="Cam kết của cửa hàng">
+    {HOME_SERVICES.map((service) => {
+      const content = <>
+        <span className="v2-home-service-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d={SERVICE_ICON_PATHS[service.icon]} /></svg>
+        </span>
+        <span className="v2-home-service-copy">
+          <strong>{service.title}</strong>
+          <small>{service.detail}</small>
+        </span>
+      </>;
+      return service.to
+        ? <Link key={service.title} className="v2-home-service" to={service.to}>{content}</Link>
+        : <div key={service.title} className="v2-home-service">{content}</div>;
+    })}
+  </section>;
+}
+
+const HOME_PROMOS = [
+  {
+    key: "pc",
+    eyebrow: "Máy tính bộ",
+    title: "PC lắp sẵn theo nhu cầu",
+    detail: "Gaming, đồ họa, văn phòng, AI: xem cấu hình từng linh kiện trước khi mua.",
+    cta: "Chọn PC ngay",
+    to: "/customer/parts?type=PC",
+  },
+  {
+    key: "deal",
+    eyebrow: "Ưu đãi",
+    title: "Linh kiện đang giảm giá",
+    detail: "Giá gốc và giá bán hiện tại hiển thị rõ trên từng sản phẩm.",
+    cta: "Săn deal",
+    to: "/customer/parts?sale=true",
+  },
+  {
+    key: "compare",
+    eyebrow: "So sánh",
+    title: "Đặt sản phẩm cạnh nhau",
+    detail: "So sánh thông số tối đa 4 sản phẩm để chọn đúng món cần mua.",
+    cta: "So sánh ngay",
+    to: "/customer/compare",
+  },
+];
+
+function HomePromoBanners() {
+  return <section className="v2-home-promos" aria-label="Gợi ý mua sắm">
+    {HOME_PROMOS.map((promo) => <Link key={promo.key} className={`v2-home-promo is-${promo.key}`} to={promo.to}>
+      <span className="v2-home-promo-copy">
+        <small>{promo.eyebrow}</small>
+        <strong>{promo.title}</strong>
+        <span>{promo.detail}</span>
+      </span>
+      <span className="v2-home-promo-cta">{promo.cta} <span aria-hidden="true">→</span></span>
+    </Link>)}
+  </section>;
+}
+
+const MILLION = 1_000_000;
+const PC_PRICE_STEPS = [15, 20, 30, 50, 80];
+const PART_PRICE_STEPS = [1, 3, 5, 10, 20];
+
+function lowestVisiblePrice(product: CatalogProduct): number | undefined {
+  const prices = customerVisibleOffers(product.offers).map((offer) => Number(offer.price)).filter(Number.isFinite);
+  return prices.length ? Math.min(...prices) : undefined;
+}
+
+interface PriceBand {
+  label: string;
+  /** Inclusive bounds as catalog filter values; "" means unbounded. */
+  minPrice: string;
+  maxPrice: string;
+}
+
+/** Price ranges between consecutive steps (in millions of VND), same buckets as the mega menu. */
+function priceBands(steps: number[]): PriceBand[] {
+  const bounds = [0, ...steps.map((step) => step * MILLION), Number.POSITIVE_INFINITY];
+  return bounds.slice(0, -1).map((low, index) => {
+    const high = bounds[index + 1];
+    return {
+      label: low === 0
+        ? `Dưới ${high / MILLION} triệu`
+        : high === Number.POSITIVE_INFINITY
+          ? `Trên ${low / MILLION} triệu`
+          : `${low / MILLION} – ${high / MILLION} triệu`,
+      minPrice: low > 0 ? String(low) : "",
+      maxPrice: high === Number.POSITIVE_INFINITY ? "" : String(high - 1),
+    };
+  });
+}
+
+function priceInBand(price: number, band: PriceBand): boolean {
+  return price >= Number(band.minPrice || 0) && (band.maxPrice === "" || price <= Number(band.maxPrice));
+}
+
+/**
+ * Price-range shortcuts for a homepage section. Ranges come only from products the
+ * section shows, so every chip opens a non-empty list.
+ */
+function sectionPriceLinks(section: StorefrontHomepageSection): { label: string; href: string }[] {
+  if (section.variant === "hot-sale") return [];
+  const prices = section.products.map(lowestVisiblePrice).filter((price): price is number => price !== undefined);
+  const [path, query = ""] = section.href.split("?");
+  return priceBands(section.key.startsWith("pc-") ? PC_PRICE_STEPS : PART_PRICE_STEPS)
+    .filter((band) => prices.some((price) => priceInBand(price, band)))
+    .map((band) => {
+      const params = new URLSearchParams(query);
+      if (band.minPrice) params.set("minPrice", band.minPrice);
+      if (band.maxPrice) params.set("maxPrice", band.maxPrice);
+      params.set("sort", "price");
+      return { label: band.label, href: `${path}?${params.toString()}` };
+    });
+}
+
+/** Compact price for filter chips: "4,5 triệu" from 4 500 000, plain currency below a million. */
+function compactPrice(value: string): string {
+  const amount = Number(value);
+  return amount >= MILLION
+    ? `${(Math.round(amount / 100_000) / 10).toLocaleString("vi-VN")} triệu`
+    : money(amount, "VND");
+}
+
+const PC_COLLECTION_LABELS: Record<string, string> = {
+  gaming: "PC Gaming & Streaming",
+  "workstation-creator": "PC Workstation & Creator",
+  "amd-gaming": "PC AMD Gaming",
+  office: "PC Văn phòng & Học tập",
+  "ai-development": "PC AI & Development",
+};
+
 function HomeProductSection({
   section,
   definitions,
@@ -889,13 +1039,15 @@ function HomeProductSection({
   onQuickView: (product: CatalogProduct, anchor: HTMLElement, touch: boolean) => void;
   onQuickViewClose: () => void;
 }) {
+  const priceLinks = sectionPriceLinks(section);
   return <section className={`v2-section-block v2-home-collection v2-home-collection-${section.variant}`}>
     <div className="v2-section-heading">
       <div>
         <p className="v2-eyebrow">{section.eyebrow}</p>
         <h2>{section.variant === "hot-sale" && <span aria-hidden="true">🔥 </span>}{section.title}</h2>
-        {section.links.length > 0 && <nav className="v2-home-section-links" aria-label={`Danh mục ${section.title}`}>
+        {(section.links.length > 0 || priceLinks.length > 0) && <nav className="v2-home-section-links" aria-label={`Danh mục ${section.title}`}>
           {section.links.map((link) => <Link key={`${link.label}:${link.href}`} to={link.href}>{link.label}</Link>)}
+          {priceLinks.map((link) => <Link key={link.href} className="is-price" to={link.href}>{link.label}</Link>)}
         </nav>}
       </div>
       <Link to={section.href}>Xem tất cả →</Link>
@@ -995,15 +1147,64 @@ export function PartsPage() {
       return;
     }
     setFilterValidation("");
+    writeUrl(filters);
+    setFilterOpen(false);
+  };
+  // The URL drives the filter state (see the effect above), so every applied change is written there.
+  function writeUrl(next: typeof filters) {
     const params = new URLSearchParams();
-    Object.entries(filters).forEach(([key, value]) => {
+    Object.entries(next).forEach(([key, value]) => {
       if (key !== "attributes" && value !== "" && value !== 1 && value !== false) {
         params.set(key, String(value));
       }
     });
     setSearchParams(params);
-    setFilterOpen(false);
+  }
+  const applyNow = (changes: Partial<typeof filters>) => {
+    const next = { ...filters, ...changes, page: 1 };
+    setFilterValidation("");
+    setFilters(next);
+    writeUrl(next);
   };
+
+  const typeName = filters.type ? productTypeLabel(filters.type) : "";
+  const brandName = filters.brand
+    ? facets?.brands.find((brand) => brand.value === filters.brand)?.label ?? filters.brand
+    : "";
+  const collectionName = filters.pcCollection ? PC_COLLECTION_LABELS[filters.pcCollection] ?? "Máy tính bộ" : "";
+  const accessoryName = filters.accessoryType
+    ? (accessoryTypeLabels as Record<string, string>)[filters.accessoryType] ?? "Phụ kiện"
+    : "";
+  const keyword = filters.q.trim();
+  const listingTitle = keyword ? `Kết quả cho “${keyword}”`
+    : filters.sale ? "Sản phẩm đang giảm giá"
+      : collectionName || accessoryName || typeName || (brandName ? `Sản phẩm ${brandName}` : "Tất cả sản phẩm");
+  const bands = priceBands(filters.type === "PC" || filters.pcCollection ? PC_PRICE_STEPS : PART_PRICE_STEPS);
+  const activeChips: { key: string; label: string; clear: Partial<typeof filters> }[] = [];
+  if (keyword) activeChips.push({ key: "q", label: `Từ khóa: ${keyword}`, clear: { q: "" } });
+  if (filters.sale) activeChips.push({ key: "sale", label: "Đang giảm giá", clear: { sale: false } });
+  if (collectionName) activeChips.push({ key: "pcCollection", label: collectionName, clear: { pcCollection: "" } });
+  if (typeName) activeChips.push({ key: "type", label: `Loại: ${typeName}`, clear: { type: "", attributes: {} } });
+  if (filters.category) {
+    const option = facets?.categories.find((category) => category.value === filters.category);
+    activeChips.push({ key: "category", label: `Danh mục: ${categoryLabel(filters.category, option?.label ?? filters.category)}`, clear: { category: "" } });
+  }
+  if (accessoryName) activeChips.push({ key: "accessoryType", label: accessoryName, clear: { accessoryType: "" } });
+  if (brandName) activeChips.push({ key: "brand", label: `Thương hiệu: ${brandName}`, clear: { brand: "" } });
+  if (filters.minPrice || filters.maxPrice) {
+    const range = filters.minPrice && filters.maxPrice
+      ? `${compactPrice(filters.minPrice)} – ${compactPrice(filters.maxPrice)}`
+      : filters.minPrice ? `từ ${compactPrice(filters.minPrice)}` : `đến ${compactPrice(filters.maxPrice)}`;
+    activeChips.push({ key: "price", label: `Giá: ${range}`, clear: { minPrice: "", maxPrice: "" } });
+  }
+  selectedAttributes.forEach((attribute) => {
+    const value = filters.attributes[attribute.code];
+    if (!value) return;
+    const optionLabel = attribute.values.find((option) => option.value === value)?.label ?? value;
+    const remaining = { ...filters.attributes };
+    delete remaining[attribute.code];
+    activeChips.push({ key: `attr:${attribute.code}`, label: `${attribute.label}: ${optionLabel}`, clear: { attributes: remaining } });
+  });
   const filterControls = <>
     <h2>Bộ lọc</h2>
     <label className="v2-field">Từ khóa<input className="v2-form-input" value={filters.q} onChange={(event) => update("q", event.target.value)} /></label>
@@ -1018,6 +1219,15 @@ export function PartsPage() {
       <label className="v2-field">Giá từ (₫)<input className="v2-form-input" type="number" min="0" step="1000" value={filters.minPrice} onChange={(event) => update("minPrice", event.target.value)} /></label>
       <label className="v2-field">Đến (₫)<input className="v2-form-input" type="number" min="0" step="1000" value={filters.maxPrice} onChange={(event) => update("maxPrice", event.target.value)} /></label>
     </div>
+    <div className="v2-price-bands" role="group" aria-label="Chọn nhanh khoảng giá">
+      {bands.map((band) => {
+        const active = filters.minPrice === band.minPrice && filters.maxPrice === band.maxPrice;
+        return <button key={band.label} type="button" className={active ? "is-active" : undefined} aria-pressed={active}
+          onClick={() => applyNow(active ? { minPrice: "", maxPrice: "" } : { minPrice: band.minPrice, maxPrice: band.maxPrice })}>
+          {band.label}
+        </button>;
+      })}
+    </div>
     {filterValidation && <p className="v2-inline-error" role="alert">{filterValidation}</p>}
     {selectedAttributes.map((attribute) => (
       <label className="v2-field" key={attribute.code}>{attribute.label}<select className="v2-form-input" value={filters.attributes[attribute.code] ?? ""} onChange={(event) => setFilters((current) => ({ ...current, page: 1, attributes: { ...current.attributes, [attribute.code]: event.target.value } }))}><option value="">Tất cả</option>{attribute.values.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
@@ -1027,29 +1237,51 @@ export function PartsPage() {
   </>;
   return (
     <div className="v2-page">
-      <div className="v2-page-title"><div><p className="v2-eyebrow">Danh mục sản phẩm</p><h1>Tìm linh kiện</h1></div><Link to="/customer/compare">So sánh ({codes.length}/4)</Link></div>
+      <nav className="v2-breadcrumb" aria-label="Đường dẫn">
+        <Link to="/customer/home">Trang chủ</Link><span>/</span>
+        {listingTitle === "Tất cả sản phẩm" ? <span>Tất cả sản phẩm</span> : <>
+          <Link to="/customer/parts">Sản phẩm</Link><span>/</span>
+          {typeName && typeName !== listingTitle && <>
+            <Link to={`/customer/parts?type=${encodeURIComponent(filters.type)}`}>{typeName}</Link><span>/</span>
+          </>}
+          <span>{listingTitle}</span>
+        </>}
+      </nav>
+      <div className="v2-page-title"><div><p className="v2-eyebrow">Danh mục sản phẩm</p><h1>{listingTitle}</h1></div><Link to="/customer/compare">So sánh ({codes.length}/4)</Link></div>
       {definitionsError && <p className="v2-inline-error" role="alert">Không tải được định nghĩa thông số: {definitionsError}</p>}
+      {/* Toolbar sits above both columns so the filter panel and the first product row start level. */}
+      <div className="v2-results-toolbar">
+        <p>{result ? <><strong>{result.pagination.total}</strong> sản phẩm</> : "Đang tải kết quả"}</p>
+        <SecondaryButton className="v2-filter-mobile-trigger" type="button" onClick={() => setFilterOpen(true)}>Bộ lọc</SecondaryButton>
+        <label className="v2-inline-field">Sắp xếp<select className="v2-form-input" value={`${filters.sort}-${filters.order}`} onChange={(event) => {
+          const [sort, order] = event.target.value.split("-");
+          setFilters((current) => ({
+            ...current,
+            sort: sort as "name" | "price",
+            order: order as "asc" | "desc",
+            page: 1,
+          }));
+        }}>
+          <option value="name-asc">Tên A–Z</option>
+          <option value="name-desc">Tên Z–A</option>
+          <option value="price-asc">Giá thấp đến cao</option>
+          <option value="price-desc">Giá cao đến thấp</option>
+        </select></label>
+      </div>
+      {activeChips.length > 0 && <div className="v2-active-filters" aria-label="Bộ lọc đang áp dụng">
+        <span>Đang lọc:</span>
+        {activeChips.map((chip) => <button key={chip.key} type="button" onClick={() => applyNow(chip.clear)}
+          aria-label={`Bỏ lọc ${chip.label}`}>
+          {chip.label}<span aria-hidden="true"><svg viewBox="0 0 12 12"><path d="M3 3l6 6M9 3 3 9" /></svg></span>
+        </button>)}
+        <button type="button" className="v2-active-filters-clear" onClick={() => applyNow({
+          q: "", type: "", category: "", pcCollection: "", accessoryType: "", sale: false,
+          brand: "", minPrice: "", maxPrice: "", attributes: {},
+        })}>Xóa tất cả</button>
+      </div>}
       <div className="v2-catalog-layout">
         <aside className="v2-filter-panel v2-filter-desktop">{filterControls}</aside>
         <section>
-          <div className="v2-results-toolbar">
-            <p>{result ? `${result.pagination.total} sản phẩm` : "Đang tải kết quả"}</p>
-            <SecondaryButton className="v2-filter-mobile-trigger" type="button" onClick={() => setFilterOpen(true)}>Bộ lọc</SecondaryButton>
-            <label className="v2-inline-field">Sắp xếp<select className="v2-form-input" value={`${filters.sort}-${filters.order}`} onChange={(event) => {
-              const [sort, order] = event.target.value.split("-");
-              setFilters((current) => ({
-                ...current,
-                sort: sort as "name" | "price",
-                order: order as "asc" | "desc",
-                page: 1,
-              }));
-            }}>
-              <option value="name-asc">Tên A–Z</option>
-              <option value="name-desc">Tên Z–A</option>
-              <option value="price-asc">Giá thấp đến cao</option>
-              <option value="price-desc">Giá cao đến thấp</option>
-            </select></label>
-          </div>
           {loading && <LoadingState message="Đang tải sản phẩm…" />}
           {error && <ErrorState title="Không thể tải danh sách sản phẩm" message={error} />}
           {result && <ProductGrid
@@ -1446,6 +1678,22 @@ export function ProductPage() {
     });
     return () => controller.abort();
   }, [product]);
+  useEffect(() => {
+    if (!product) return;
+    const viewedOffer = customerVisibleOffers(product.offers)[0];
+    const cover = productCoverImage(product);
+    recordRecentlyViewed({
+      modelCode: product.modelCode,
+      productName: product.productName,
+      productType: product.productType,
+      imageUrl: cover?.url,
+      imageAlt: cover?.altText ?? undefined,
+      price: viewedOffer ? Number(viewedOffer.price) : undefined,
+      originalPrice: viewedOffer ? offerOriginalPrice(viewedOffer) : undefined,
+      currency: viewedOffer?.currency,
+      viewedAt: Date.now(),
+    });
+  }, [product]);
   if (!modelCode) return <div className="v2-page"><EmptyState title="Chưa chọn sản phẩm" message="Mở chi tiết từ danh mục sản phẩm." action={<Link to="/customer/parts">Tìm sản phẩm</Link>} /></div>;
   if (loading) return <div className="v2-page"><LoadingState message="Đang tải chi tiết sản phẩm…" /></div>;
   if (error) return <div className="v2-page"><ErrorState title="Không thể tải sản phẩm" message={error} /></div>;
@@ -1583,7 +1831,7 @@ export function ProductPage() {
   };
   return (
     <div className="v2-page">
-      <nav className="v2-breadcrumb"><Link to="/customer/home">Trang chủ</Link><span>/</span><Link to="/customer/parts">Linh kiện</Link><span>/</span><span>{product.productName}</span></nav>
+      <nav className="v2-breadcrumb" aria-label="Đường dẫn"><Link to="/customer/home">Trang chủ</Link><span>/</span><Link to={`/customer/parts?type=${encodeURIComponent(product.productType)}`}>{productTypeLabel(product.productType)}</Link><span>/</span><span>{product.productName}</span></nav>
       {definitionsError && <p className="v2-inline-error" role="alert">Không tải được định nghĩa thông số: {definitionsError}</p>}
       <div className="v2-product-detail">
         <div className="v2-product-media-column">
@@ -1592,8 +1840,8 @@ export function ProductPage() {
             aria-labelledby="pc-accessory-heading">
             <header>
               <div>
-                <p className="v2-eyebrow">Hoàn thiện góc máy</p>
-                <h2 id="pc-accessory-heading">HOÀN THIỆN GÓC MÁY</h2>
+                <p className="v2-eyebrow">Phụ kiện gợi ý</p>
+                <h2 id="pc-accessory-heading">Hoàn thiện góc máy</h2>
               </div>
               <span>{selectedAccessoryItems.length} đã chọn</span>
             </header>
@@ -1653,9 +1901,8 @@ export function ProductPage() {
         <section className="v2-detail-info">
           <p className="v2-eyebrow">{product.brandName ?? "Chưa có thương hiệu"} · {productTypeLabel(product.productType)}</p>
           <h1>{product.productName}</h1>
-          <p className="v2-mono">Mã model: {product.modelCode}</p>
           {displayedShortDescription && product.modelCode !== "PBC-PC-GAME-002" && <p>{displayedShortDescription}</p>}
-          {displayedDescription && <p>{displayedDescription}</p>}
+          {displayedDescription && <ExpandableText text={displayedDescription} />}
           {product.productType === "PC" && <PCComponentChecklist components={configuredBom} />}
           <ProductOfferPanel
             offers={offers}
@@ -1720,6 +1967,14 @@ export function ProductPage() {
             </SecondaryButton>
           </div>
           {actionMessage && <p className="v2-muted" role="status">{actionMessage}</p>}
+          <ul className="v2-product-assurances" aria-label="Cam kết khi mua hàng">
+            {HOME_SERVICES.map((service) => <li key={service.title}>
+              <span className="v2-home-service-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d={SERVICE_ICON_PATHS[service.icon]} /></svg>
+              </span>
+              <span><strong>{service.title}</strong><small>{service.detail}</small></span>
+            </li>)}
+          </ul>
         </section>
       </div>
       {product.productType === "PC" && offer?.condition === "NEW"
@@ -1777,8 +2032,7 @@ export function ProductPage() {
                       }}>
                       <span className="v2-pc-upgrade-option-check" aria-hidden="true">{selected ? "✓" : ""}</span>
                       <strong>{option.displayName}</strong>
-                      <span>{option.productName}</span>
-                      <small className="v2-mono">{option.modelCode}</small>
+                      {option.productName !== option.displayName && <span>{option.productName}</span>}
                       {option.description && <small>{option.description}</small>}
                       <b>{deltaText}</b>
                       {unavailable && <small>Không đủ hàng cho số lượng đã chọn</small>}
@@ -1895,6 +2149,8 @@ export function ProductPage() {
           if (product.productType === "PC"
               && ["Tổng quan cấu hình", "Thành phần bên trong", "Khả năng nâng cấp",
                 "Tóm tắt cấu hình tham khảo"].includes(title ?? "")) return null;
+          // Data-pipeline notes ("thông số được lấy từ catalog…"), not product content.
+          if (["Hiển thị thông số", "Thông tin kỹ thuật", "Thông số kỹ thuật"].includes(title ?? "")) return null;
           if (!title && !body) return null;
           return <Card key={`${title}-${index}`} title={title || "Thông tin sản phẩm"}>
             {body && <p>{body}</p>}
@@ -1927,8 +2183,62 @@ export function ProductPage() {
         </Card>
       )}
       <RelatedProductsSection product={product} definitions={definitions} />
+      <RecentlyViewedSection key={product.modelCode} excludeModelCode={product.modelCode} />
     </div>
   );
+}
+
+/** Long copy collapsed to a few lines with a "Xem thêm" toggle, shown only when it overflows. */
+function ExpandableText({ text }: { text: string }) {
+  const paragraphRef = useRef<HTMLParagraphElement>(null);
+  const [expanded, setExpanded] = useState(false);
+  const [overflowing, setOverflowing] = useState(false);
+  useEffect(() => {
+    const paragraph = paragraphRef.current;
+    if (!paragraph || expanded) return;
+    const measure = () => setOverflowing(paragraph.scrollHeight > paragraph.clientHeight + 1);
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [text, expanded]);
+  return <div className="v2-expandable-text">
+    <p ref={paragraphRef} className={expanded ? undefined : "is-clamped"}>{text}</p>
+    {(overflowing || expanded) && <button type="button" aria-expanded={expanded} onClick={() => setExpanded((value) => !value)}>
+      {expanded ? "Thu gọn" : "Xem thêm"} <span aria-hidden="true">{expanded ? "▴" : "▾"}</span>
+    </button>}
+  </div>;
+}
+
+function RecentlyViewedSection({ excludeModelCode }: { excludeModelCode?: string }) {
+  const [items] = useState(() => readRecentlyViewed()
+    .filter((item) => item.modelCode !== excludeModelCode)
+    .slice(0, 6));
+  if (items.length === 0) return null;
+  return <section className="v2-section-block v2-recently-viewed" aria-labelledby="recently-viewed-heading">
+    <div className="v2-section-heading">
+      <div><p className="v2-eyebrow">Lịch sử xem trên trình duyệt này</p><h2 id="recently-viewed-heading">Sản phẩm bạn đã xem</h2></div>
+    </div>
+    <div className="v2-recently-viewed-grid">
+      {items.map((item) => {
+        const link = `/customer/product?modelCode=${encodeURIComponent(item.modelCode)}`;
+        const reduced = item.price !== undefined && item.originalPrice !== undefined && item.originalPrice > item.price;
+        return <Link key={item.modelCode} className="v2-recently-viewed-card" to={link}>
+          <span className="v2-recently-viewed-image">
+            <ProductArtwork
+              image={item.imageUrl ? { url: item.imageUrl, altText: item.imageAlt ?? item.productName, isPrimary: true } : undefined}
+              productName={item.productName}
+              productType={item.productType}
+            />
+          </span>
+          <strong>{item.productName}</strong>
+          {item.price !== undefined && item.currency && <span className="v2-recently-viewed-price">
+            <b>{money(item.price, item.currency)}</b>
+            {reduced && <s>{money(item.originalPrice!, item.currency)}</s>}
+          </span>}
+        </Link>;
+      })}
+    </div>
+  </section>;
 }
 
 export function ComparePage() {
@@ -1980,7 +2290,6 @@ export function ComparePage() {
           <thead><tr><th scope="col">Thông tin</th>{products.map((product) => <th key={product.modelCode} scope="col">
             <div className="v2-compare-product-art"><ProductArtwork image={productCoverImage(product)} productName={product.productName} productType={product.productType} /></div>
             <Link to={`/customer/product?modelCode=${encodeURIComponent(product.modelCode)}`}>{product.productName}</Link>
-            <span className="v2-mono">{product.modelCode}</span>
             <SecondaryButton type="button" onClick={() => remove(product.modelCode)}>Bỏ sản phẩm</SecondaryButton>
           </th>)}</tr></thead>
           <tbody>

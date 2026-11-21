@@ -145,6 +145,29 @@ public class OrderManagementService {
                 """, (result, rowNumber) -> mapSummary(result, rowNumber), Long.parseLong(userId));
     }
 
+    /** Orders placed as a guest (no account) with this email, for the admin customer lookup. */
+    @Transactional(readOnly = true)
+    public List<OrderSummary> listGuestOrders(String email) {
+        return jdbc.query("""
+                SELECT "order_number", "customer_name", "customer_email", "customer_phone",
+                       "order_status", "payment_method", "payment_status", "shipment_status",
+                       "shipping_carrier", "tracking_number",
+                       (SELECT CASE WHEN COUNT(DISTINCT oi."currency_code") = 1
+                                    THEN MIN(oi."currency_code") END
+                        FROM "order_items" oi
+                        WHERE oi."order_id" = "orders"."order_id") AS "currency_code",
+                       (SELECT COUNT(*) > 0 AND COUNT(DISTINCT oi."currency_code") = 1
+                        FROM "order_items" oi
+                        WHERE oi."order_id" = "orders"."order_id") AS "show_financials",
+                       "total_amount",
+                       "placed_at"::text AS "placed_at_text", "updated_at"::text AS "updated_at_text"
+                FROM "orders"
+                WHERE "user_id" IS NULL AND LOWER("customer_email") = LOWER(?)
+                ORDER BY "placed_at" DESC, "order_id" DESC
+                LIMIT 200
+                """, (result, rowNumber) -> mapSummary(result, rowNumber), email);
+    }
+
     @Transactional(readOnly = true)
     public OrderDetail getCustomerOrder(String orderNumber, String userId) {
         return findDetail(orderNumber, Long.parseLong(userId));

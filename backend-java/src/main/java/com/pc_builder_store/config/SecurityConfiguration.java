@@ -120,6 +120,7 @@ public class SecurityConfiguration {
                                 "/api/health/**",
                                 "/api/auth/csrf",
                                 "/api/auth/login",
+                                "/api/auth/register",
                                 "/api/auth/me",
                                 "/api/cart",
                                 "/api/cart/**")
@@ -152,7 +153,7 @@ public class SecurityConfiguration {
                                                 request.getContextPath() + "/api/catalog/products/")
                                         && request.getRequestURI().endsWith("/gaming-performance"))
                         .permitAll()
-                        .requestMatchers("/api/auth/logout")
+                        .requestMatchers("/api/auth/logout", "/api/auth/profile", "/api/auth/password")
                         .authenticated()
                         .anyRequest()
                         .denyAll())

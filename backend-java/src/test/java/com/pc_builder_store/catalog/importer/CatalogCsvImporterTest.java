@@ -39,7 +39,8 @@ class CatalogCsvImporterTest {
         assertEquals(10, rows.stream().map(CatalogCsvRow::categoryCode).distinct().count());
         assertEquals(41, rows.stream().map(CatalogCsvRow::brandName).distinct().count());
         assertEquals(348, AttributeDefinitionRegistry.all().size());
-        assertEquals(2482, rows.stream().mapToInt(row -> row.specifications().size()).sum());
+        // 2482 + 4 GPU max_display_refresh_rate_hz values filled on 2026-11-21.
+        assertEquals(2486, rows.stream().mapToInt(row -> row.specifications().size()).sum());
         assertEquals(150, rows.stream().filter(CatalogCsvRow::priceIsEstimate).count());
         assertEquals(81, rows.stream()
                 .map(row -> row.specifications().get("configuration_items"))
