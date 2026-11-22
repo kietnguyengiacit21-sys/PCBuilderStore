@@ -217,6 +217,8 @@ try {
             $env:SPRING_DATASOURCE_USERNAME = 'postgres'
             $env:SPRING_DATASOURCE_PASSWORD = $plainPassword
             $env:SERVER_PORT = '8081'
+            # Local only: show the sign-up code on screen while no SMTP server is configured.
+            $env:AUTH_EXPOSE_DEVELOPMENT_CODE = 'true'
             $backendArguments = '-NoProfile -ExecutionPolicy Bypass -File "{0}" -BackendChild' -f $PSCommandPath
 
             Write-Host 'Launching Spring Boot in a separate PowerShell window on port 8081...'
@@ -231,6 +233,7 @@ try {
         Remove-Item Env:\SPRING_DATASOURCE_URL -ErrorAction SilentlyContinue
         Remove-Item Env:\SPRING_DATASOURCE_USERNAME -ErrorAction SilentlyContinue
         Remove-Item Env:\SERVER_PORT -ErrorAction SilentlyContinue
+        Remove-Item Env:\AUTH_EXPOSE_DEVELOPMENT_CODE -ErrorAction SilentlyContinue
         $plainPassword = $null
         if ($passwordPointer -ne [IntPtr]::Zero) {
             [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($passwordPointer)

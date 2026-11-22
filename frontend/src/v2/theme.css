@@ -13420,3 +13420,376 @@
     font-size: 26px;
   }
 }
+
+
+/* =========================================================================
+   Sign-up verification, quick PIN login and code inputs
+   ========================================================================= */
+.v2-theme .v2-auth-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  border-radius: 12px;
+  background: #eef3fa;
+  padding: 4px;
+}
+
+.v2-theme .v2-auth-tabs button {
+  min-height: 38px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--v2-muted);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.v2-theme .v2-auth-tabs button[aria-selected="true"] {
+  background: var(--v2-card);
+  box-shadow: 0 1px 3px rgb(11 37 80 / 12%);
+  color: var(--v2-primary);
+}
+
+.v2-theme .v2-auth-tabs button:focus-visible {
+  outline: 2px solid var(--v2-primary);
+  outline-offset: 1px;
+}
+
+.v2-theme .v2-text-button {
+  border: 0;
+  background: transparent;
+  padding: 2px 0;
+  color: var(--v2-primary);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.v2-theme .v2-text-button:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+.v2-theme .v2-text-button:disabled {
+  color: var(--v2-muted);
+  font-weight: 600;
+  cursor: default;
+}
+
+.v2-theme .v2-auth-hint {
+  margin: 0;
+  color: var(--v2-muted);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+.v2-theme .v2-check-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--v2-text);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.v2-theme .v2-check-row input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--v2-primary);
+}
+
+/* Username with a fixed "@" in front. */
+.v2-theme .v2-username-field {
+  position: relative;
+  display: block;
+}
+
+.v2-theme .v2-username-field > span {
+  position: absolute;
+  top: 50%;
+  left: 12px;
+  transform: translateY(-50%);
+  color: var(--v2-muted);
+  font-weight: 700;
+  pointer-events: none;
+}
+
+.v2-theme .v2-username-field .v2-form-input {
+  padding-left: 30px;
+}
+
+.v2-theme .v2-username-status {
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.v2-theme .v2-username-status.is-ok { color: var(--v2-success); }
+.v2-theme .v2-username-status.is-bad { color: var(--v2-error); }
+.v2-theme .v2-username-status.is-checking { color: var(--v2-muted); font-weight: 500; }
+
+/* Remembered account on the quick-login tab. */
+.v2-theme .v2-quick-login-user {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid var(--v2-border);
+  border-radius: 12px;
+  background: #f7f9fd;
+  padding: 10px 12px;
+}
+
+.v2-theme .v2-quick-login-avatar {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--v2-primary), var(--v2-secondary));
+  color: #fff;
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.v2-theme .v2-quick-login-user > span:nth-child(2) {
+  display: grid;
+  min-width: 0;
+}
+
+.v2-theme .v2-quick-login-user small {
+  color: var(--v2-muted);
+  font-size: 12px;
+}
+
+.v2-theme .v2-quick-login-user strong {
+  overflow: hidden;
+  font-size: 15px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.v2-theme .v2-quick-login-user .v2-text-button {
+  font-size: 13px;
+}
+
+/* Digit boxes drawn over one transparent input. */
+.v2-theme .v2-code-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.v2-theme .v2-code-input-box {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  max-width: calc(var(--v2-code-length) * 52px);
+}
+
+.v2-theme .v2-code-input-box input {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: transparent;
+  caret-color: transparent;
+  font-size: 16px; /* keeps iOS from zooming in */
+  letter-spacing: 0;
+  outline: none;
+  cursor: text;
+}
+
+.v2-theme .v2-code-input-box input::selection {
+  background: transparent;
+}
+
+.v2-theme .v2-code-input-cells {
+  display: grid;
+  grid-template-columns: repeat(var(--v2-code-length), minmax(0, 1fr));
+  gap: 6px;
+}
+
+/* PINs read as two groups of four: a narrow empty column sits between them. */
+.v2-theme .v2-code-input[data-length="8"] .v2-code-input-cells {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) 2px repeat(4, minmax(0, 1fr));
+}
+
+.v2-theme .v2-code-input[data-length="8"] .v2-code-input-cells span:nth-child(5) {
+  grid-column-start: 6;
+}
+
+.v2-theme .v2-code-input-cells span {
+  display: grid;
+  height: 50px;
+  place-items: center;
+  border: 1px solid var(--v2-border);
+  border-radius: 10px;
+  background: var(--v2-card);
+  color: var(--v2-text);
+  font-size: 22px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease, background-color 0.12s ease;
+}
+
+.v2-theme .v2-code-input-cells span.is-filled {
+  border-color: #b9c9e2;
+  background: #f7f9fd;
+}
+
+.v2-theme .v2-code-input-cells span.is-active {
+  border-color: var(--v2-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--v2-primary) 18%, transparent);
+}
+
+.v2-theme .v2-code-input-cells span.is-active:not(.is-filled)::after {
+  content: "";
+  width: 2px;
+  height: 22px;
+  background: var(--v2-primary);
+  animation: v2-code-caret 1s steps(1) infinite;
+}
+
+.v2-theme .v2-code-input.is-invalid .v2-code-input-cells span {
+  border-color: var(--v2-error);
+}
+
+.v2-theme .v2-code-input.is-disabled .v2-code-input-cells span {
+  opacity: 0.6;
+}
+
+.v2-theme .v2-code-input-toggle {
+  flex: none;
+  border: 0;
+  border-radius: 8px;
+  background: #eef3fa;
+  padding: 6px 10px;
+  color: var(--v2-primary);
+  font-size: 12.5px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+@keyframes v2-code-caret {
+  50% { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .v2-theme .v2-code-input-cells span.is-active:not(.is-filled)::after {
+    animation: none;
+  }
+}
+
+@media (max-width: 420px) {
+  .v2-theme .v2-code-input-cells { gap: 4px; }
+  .v2-theme .v2-code-input-cells span { height: 44px; font-size: 19px; border-radius: 8px; }
+}
+
+/* Two-step sign-up. */
+.v2-theme .v2-auth-steps {
+  display: flex;
+  gap: 18px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--v2-muted);
+  font-size: 13.5px;
+  font-weight: 700;
+}
+
+.v2-theme .v2-auth-steps li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.v2-theme .v2-auth-steps li span {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  border: 1px solid var(--v2-border);
+  border-radius: 50%;
+  background: var(--v2-card);
+  font-size: 12px;
+}
+
+.v2-theme .v2-auth-steps li.is-current {
+  color: var(--v2-primary);
+}
+
+.v2-theme .v2-auth-steps li.is-current span {
+  border-color: var(--v2-primary);
+  background: var(--v2-primary);
+  color: #fff;
+}
+
+.v2-theme .v2-auth-steps li.is-done {
+  color: var(--v2-success);
+}
+
+.v2-theme .v2-auth-steps li.is-done span {
+  border-color: var(--v2-success);
+  background: var(--v2-success);
+  color: transparent;
+  position: relative;
+}
+
+.v2-theme .v2-auth-steps li.is-done span::after {
+  content: "✓";
+  position: absolute;
+  color: #fff;
+}
+
+.v2-theme .v2-dev-code {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 12px;
+  border: 1px dashed var(--v2-gold);
+  border-radius: 10px;
+  background: var(--v2-gold-light);
+  padding: 10px 12px;
+  font-size: 13.5px;
+}
+
+.v2-theme .v2-dev-code strong {
+  font-size: 15px;
+  letter-spacing: 0.08em;
+}
+
+.v2-theme .v2-auth-code-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+/* Account page: quick login card. */
+.v2-theme .v2-quick-pin-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  margin-bottom: 14px;
+  color: var(--v2-muted);
+  font-size: 13px;
+}
+
+.v2-theme .v2-quick-pin-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.v2-theme .v2-quick-pin-card .v2-muted {
+  margin: 0;
+}

@@ -159,6 +159,7 @@ const ROLE_LABEL: Record<string, string> = { ADMIN: "Quản trị", SALES: "Nhâ
 const EVENT_LABEL: Record<AccountEvent["type"], string> = {
   ROLE_CHANGED: "Đổi vai trò", CREATED: "Tạo tài khoản", LOCKED: "Khóa tài khoản", UNLOCKED: "Mở khóa",
   PASSWORD_RESET_BY_ADMIN: "Admin cấp mật khẩu tạm", PASSWORD_RESET_BY_EMAIL: "Tự đặt lại qua email",
+  QUICK_PIN_SET: "Bật/đổi mã PIN đăng nhập nhanh", QUICK_PIN_REMOVED: "Tắt mã PIN đăng nhập nhanh",
 };
 const roleText = (code: string) => code.split(" -> ").map((part) => ROLE_LABEL[part] ?? part).join(" → ");
 

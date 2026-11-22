@@ -23,7 +23,6 @@ public class AuthUserRepository implements UserDetailsService {
               u."account_status" AS "accountStatus"
             FROM "users" u
             JOIN "roles" r ON r."role_id" = u."role_id"
-            WHERE u."email" = ?
             """;
 
     private final JdbcTemplate jdbcTemplate;
@@ -32,11 +31,14 @@ public class AuthUserRepository implements UserDetailsService {
         this.jdbcTemplate = jdbcTemplate;
     }
 
+    /** Accepts the account email or its username (with or without a leading "@"). */
     @Override
-    public AuthUserPrincipal loadUserByUsername(String email) {
-        String normalizedEmail = email.trim().toLowerCase(Locale.ROOT);
+    public AuthUserPrincipal loadUserByUsername(String identifier) {
+        String normalized = identifier == null ? "" : identifier.trim().toLowerCase(Locale.ROOT);
+        boolean email = normalized.contains("@") && !normalized.startsWith("@");
+        if (normalized.startsWith("@")) normalized = normalized.substring(1);
         List<AuthUserPrincipal> users = jdbcTemplate.query(
-                FIND_USER,
+                FIND_USER + (email ? " WHERE u.\"email\" = ?" : " WHERE u.\"username\" = ?"),
                 (result, rowNumber) -> new AuthUserPrincipal(
                         result.getString("userId"),
                         result.getString("fullName"),
@@ -45,7 +47,7 @@ public class AuthUserRepository implements UserDetailsService {
                         result.getString("roleCode"),
                         result.getString("customerSegment"),
                         result.getString("accountStatus")),
-                normalizedEmail);
+                normalized);
         if (users.isEmpty()) {
             throw new UsernameNotFoundException("Invalid email or password.");
         }

@@ -156,7 +156,8 @@ public class StaffAccountService {
         }
         String temporary = AccountService.temporaryPassword();
         jdbc.update("""
-                UPDATE "users" SET "password_hash" = ?, "must_change_password" = TRUE, "updated_at" = CURRENT_TIMESTAMP
+                UPDATE "users" SET "password_hash" = ?, "must_change_password" = TRUE,
+                       "quick_pin_hash" = NULL, "quick_pin_updated_at" = NULL, "updated_at" = CURRENT_TIMESTAMP
                 WHERE "user_id" = ?
                 """, passwordEncoder.encode(temporary), targetId);
         jdbc.update("UPDATE \"password_reset_tokens\" SET \"used_at\" = CURRENT_TIMESTAMP WHERE \"user_id\" = ? AND \"used_at\" IS NULL", targetId);
@@ -287,12 +288,17 @@ public class StaffAccountService {
 
         var updatedAt = jdbc.queryForObject("""
                 UPDATE "users"
-                SET "role_id" = ?, "updated_at" = CURRENT_TIMESTAMP
+                SET "role_id" = ?, "updated_at" = CURRENT_TIMESTAMP,
+                    -- Quick login is for customers only; staff always use their password.
+                    "quick_pin_hash" = CASE WHEN ? = 'CUSTOMER' THEN "quick_pin_hash" END,
+                    "quick_pin_updated_at" = CASE WHEN ? = 'CUSTOMER' THEN "quick_pin_updated_at" END
                 WHERE "user_id" = ?
                 RETURNING "updated_at"
                 """,
                 (result, rowNumber) -> result.getTimestamp("updated_at").toLocalDateTime(),
                 roleId,
+                requestedRole,
+                requestedRole,
                 targetId);
 
         states.evict(userId);

@@ -81,7 +81,8 @@ export interface AccountWithPassword {
 }
 
 export interface AccountEvent {
-  type: "ROLE_CHANGED" | "CREATED" | "LOCKED" | "UNLOCKED" | "PASSWORD_RESET_BY_ADMIN" | "PASSWORD_RESET_BY_EMAIL";
+  type: "ROLE_CHANGED" | "CREATED" | "LOCKED" | "UNLOCKED" | "PASSWORD_RESET_BY_ADMIN" | "PASSWORD_RESET_BY_EMAIL"
+    | "QUICK_PIN_SET" | "QUICK_PIN_REMOVED";
   description: string;
   actorEmail: string | null;
   createdAt: string;

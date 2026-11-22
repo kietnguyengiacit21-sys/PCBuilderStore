@@ -1,9 +1,31 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, Navigate, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import type { FormEvent, ReactNode } from "react";
 import { useAuth } from "./auth";
-import { changePassword, confirmPasswordReset, fetchProfile, registerAccount, requestPasswordReset, updateProfile } from "../account-api";
-import type { AccountProfile } from "../account-api";
+import {
+  changePassword,
+  checkUsername,
+  confirmPasswordReset,
+  fetchProfile,
+  registerAccount,
+  removeQuickPin,
+  requestPasswordReset,
+  sendRegistrationCode,
+  setQuickPin,
+  updateProfile,
+} from "../account-api";
+import type { AccountProfile, RegisterInput, VerificationSent } from "../account-api";
+import { CodeInput } from "./CodeInput";
+import {
+  PIN_LENGTH,
+  SIGNUP_CODE_LENGTH,
+  forgetUsername,
+  normalizeUsername,
+  pinProblem,
+  rememberUsername,
+  rememberedUsername,
+  usernameProblem,
+} from "./quick-login";
 import { fetchMyBuilds } from "../builds-api";
 import type { SavedBuildSummary } from "../builds-api";
 import { money } from "../money";
@@ -40,6 +62,7 @@ import type {
 import {
   Badge,
   Card,
+  ConfirmationModal,
   EmptyState,
   ErrorState,
   FormField,
@@ -111,111 +134,325 @@ function PasswordInput({ id, value, onChange, autoComplete, minLength }: {
   </span>;
 }
 
+type LoginMode = "password" | "pin";
+
 export function LoginPage() {
-  const { user, loading, login } = useAuth();
-  const navigate = useNavigate();
+  const { user, loading, login, loginWithPin } = useAuth();
   const [params] = useSearchParams();
-  const [email, setEmail] = useState("");
+  const [remembered, setRemembered] = useState(() => rememberedUsername());
+  const [mode, setMode] = useState<LoginMode>(() => (rememberedUsername() ? "pin" : "password"));
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
+  const [username, setUsername] = useState("");
+  const [pin, setPin] = useState("");
+  const [remember, setRemember] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const pinRef = useRef<HTMLInputElement>(null);
 
   if (loading) {
     return <div className="v2-theme v2-auth-page"><Card className="v2-auth-card"><LoadingState message="Đang tải…" /></Card></div>;
   }
-  if (user) return <Navigate to={safeRedirect(params.get("redirect"), user.roleCode) ?? redirectForRole(user.roleCode)} replace />;
+  // Signing in sets the user and this redirect takes over. Navigating from the submit handler as
+  // well would race it (router navigations run as transitions and lose to this render).
+  if (user) {
+    return <Navigate replace to={user.mustChangePassword
+      ? passwordChangePath(user.roleCode)
+      : safeRedirect(params.get("redirect"), user.roleCode) ?? redirectForRole(user.roleCode)} />;
+  }
+  const pinUsername = remembered || username;
+  const submitPassword = (event: FormEvent) => {
+    event.preventDefault();
+    setError("");
+    setSubmitting(true);
+    void login(identifier.trim(), password).catch((reason: unknown) => {
+      setError(reason instanceof Error ? reason.message : "Không thể đăng nhập.");
+    }).finally(() => setSubmitting(false));
+  };
+  const submitPin = (code = pin) => {
+    setError("");
+    if (!normalizeUsername(pinUsername)) {
+      setError("Vui lòng nhập tên đăng nhập.");
+      return;
+    }
+    if (code.length !== PIN_LENGTH) {
+      setError(`Vui lòng nhập đủ ${PIN_LENGTH} số của mã PIN.`);
+      return;
+    }
+    setSubmitting(true);
+    void loginWithPin(normalizeUsername(pinUsername), code).then(() => {
+      if (remember) rememberUsername(pinUsername);
+      else forgetUsername();
+    }).catch((reason: unknown) => {
+      setError(reason instanceof Error ? reason.message : "Không thể đăng nhập.");
+      setPin("");
+      window.setTimeout(() => pinRef.current?.focus(), 0);
+    }).finally(() => setSubmitting(false));
+  };
+  const switchMode = (next: LoginMode) => {
+    setMode(next);
+    setError("");
+  };
+
   return <div className="v2-theme v2-auth-page">
     <Card className="v2-auth-card">
       <p className="v2-eyebrow">PC Builder Store</p>
       <h1>Đăng nhập</h1>
-      <p>Đăng nhập vào tài khoản PC Builder Store của bạn.</p>
-      <form className="v2-form-stack" onSubmit={(event) => {
-        event.preventDefault();
-        setError("");
-        setSubmitting(true);
-        void login(email.trim(), password).then((authenticatedUser) => {
-          navigate(authenticatedUser.mustChangePassword
-            ? passwordChangePath(authenticatedUser.roleCode)
-            : safeRedirect(params.get("redirect"), authenticatedUser.roleCode) ?? redirectForRole(authenticatedUser.roleCode), { replace: true });
-        }).catch((reason: unknown) => {
-          setError(reason instanceof Error ? reason.message : "Không thể đăng nhập.");
-        }).finally(() => setSubmitting(false));
-      }}>
-        <FormField label="Email" htmlFor="login-email">
-          <input className="v2-form-input" id="login-email" type="email" autoComplete="username" required value={email} onChange={(event) => setEmail(event.target.value)} />
-        </FormField>
-        <FormField label="Mật khẩu" htmlFor="login-password">
-          <PasswordInput id="login-password" autoComplete="current-password" value={password} onChange={setPassword} />
-        </FormField>
-        <Link className="v2-auth-forgot" to="/customer/forgot-password">Quên mật khẩu?</Link>
-        {error && <p className="v2-inline-error" role="alert">{error}</p>}
-        <PrimaryButton type="submit" disabled={submitting}>{submitting ? "Đang đăng nhập…" : "Đăng nhập"}</PrimaryButton>
-      </form>
+      <div className="v2-auth-tabs" role="tablist" aria-label="Cách đăng nhập">
+        <button type="button" role="tab" id="login-tab-password" aria-controls="login-panel" aria-selected={mode === "password"}
+          onClick={() => switchMode("password")}>Mật khẩu</button>
+        <button type="button" role="tab" id="login-tab-pin" aria-controls="login-panel" aria-selected={mode === "pin"}
+          onClick={() => switchMode("pin")}>Mã PIN nhanh</button>
+      </div>
+      <div id="login-panel" role="tabpanel" aria-labelledby={mode === "pin" ? "login-tab-pin" : "login-tab-password"}>
+        {mode === "password" ? <form className="v2-form-stack" onSubmit={submitPassword}>
+          <FormField label="Email hoặc tên đăng nhập" htmlFor="login-identifier">
+            <input className="v2-form-input" id="login-identifier" autoComplete="username" autoCapitalize="none" spellCheck={false}
+              required maxLength={254} value={identifier} onChange={(event) => setIdentifier(event.target.value)} />
+          </FormField>
+          <FormField label="Mật khẩu" htmlFor="login-password">
+            <PasswordInput id="login-password" autoComplete="current-password" value={password} onChange={setPassword} />
+          </FormField>
+          <Link className="v2-auth-forgot" to="/customer/forgot-password">Quên mật khẩu?</Link>
+          {error && <p className="v2-inline-error" role="alert">{error}</p>}
+          <PrimaryButton type="submit" disabled={submitting}>{submitting ? "Đang đăng nhập…" : "Đăng nhập"}</PrimaryButton>
+        </form> : <form className="v2-form-stack" onSubmit={(event) => { event.preventDefault(); submitPin(); }}>
+          {remembered ? <div className="v2-quick-login-user">
+            <span className="v2-quick-login-avatar" aria-hidden="true">{remembered.charAt(0).toUpperCase()}</span>
+            <span><small>Chào mừng trở lại</small><strong>@{remembered}</strong></span>
+            <button type="button" className="v2-text-button" onClick={() => {
+              forgetUsername();
+              setRemembered("");
+              setPin("");
+              setError("");
+            }}>Không phải bạn?</button>
+          </div> : <FormField label="Tên đăng nhập" htmlFor="login-username">
+            <span className="v2-username-field">
+              <span aria-hidden="true">@</span>
+              <input className="v2-form-input" id="login-username" autoComplete="username" autoCapitalize="none" spellCheck={false}
+                maxLength={31} value={username} onChange={(event) => setUsername(event.target.value)} />
+            </span>
+          </FormField>}
+          <div className="v2-form-field">
+            <label htmlFor="login-pin">Mã PIN {PIN_LENGTH} số</label>
+            <CodeInput ref={pinRef} id="login-pin" label={`Mã PIN ${PIN_LENGTH} số`} length={PIN_LENGTH} masked value={pin}
+              autoFocus={Boolean(remembered)} invalid={Boolean(error)} disabled={submitting}
+              onChange={(value) => { setPin(value); if (error) setError(""); }}
+              onComplete={(value) => { if (normalizeUsername(pinUsername)) submitPin(value); }} />
+          </div>
+          {!remembered && <label className="v2-check-row">
+            <input type="checkbox" checked={remember} onChange={(event) => setRemember(event.target.checked)} />
+            <span>Ghi nhớ tên đăng nhập trên máy này</span>
+          </label>}
+          {error && <p className="v2-inline-error" role="alert">{error}</p>}
+          <PrimaryButton type="submit" disabled={submitting}>{submitting ? "Đang đăng nhập…" : "Đăng nhập"}</PrimaryButton>
+          <p className="v2-auth-hint">Chưa có mã PIN? Đăng nhập bằng mật khẩu, rồi bật <strong>Đăng nhập nhanh</strong> trong trang Tài khoản. Mã PIN chỉ dành cho tài khoản khách hàng.</p>
+        </form>}
+      </div>
       <p className="v2-auth-switch">Chưa có tài khoản? <Link to={`/customer/register${params.get("redirect") ? `?redirect=${encodeURIComponent(params.get("redirect")!)}` : ""}`}>Tạo tài khoản mới</Link></p>
       <p className="v2-auth-switch"><Link to="/customer/home">← Về trang chủ</Link></p>
     </Card>
   </div>;
 }
 
+type UsernameCheck = { state: "idle" | "checking" | "ok" | "bad"; message: string };
+
+/** Live "is this username free?" check, debounced; {@code current} is the signed-in user's own name. */
+function useUsernameCheck(value: string, current?: string | null): UsernameCheck {
+  const [check, setCheck] = useState<UsernameCheck>({ state: "idle", message: "" });
+  const normalized = normalizeUsername(value);
+  useEffect(() => {
+    if (!normalized || normalized === current) {
+      setCheck({ state: "idle", message: "" });
+      return;
+    }
+    const problem = usernameProblem(normalized);
+    if (problem) {
+      setCheck({ state: "bad", message: problem });
+      return;
+    }
+    const controller = new AbortController();
+    setCheck({ state: "checking", message: "Đang kiểm tra…" });
+    const timer = window.setTimeout(() => {
+      void checkUsername(normalized, controller.signal).then(
+        (result) => setCheck({ state: result.available ? "ok" : "bad", message: result.message }),
+        () => { if (!controller.signal.aborted) setCheck({ state: "idle", message: "" }); },
+      );
+    }, 400);
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, [normalized, current]);
+  return check;
+}
+
+function UsernameStatus({ check }: { check: UsernameCheck }) {
+  if (check.state === "idle") return null;
+  return <span className={`v2-username-status is-${check.state}`} role={check.state === "bad" ? "alert" : "status"}>
+    {check.state === "ok" ? "✓ " : ""}{check.message}
+  </span>;
+}
+
+function useCountdown(until: number): number {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (until <= Date.now()) return;
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, [until]);
+  return Math.max(0, Math.ceil((until - now) / 1000));
+}
+
 export function RegisterPage() {
   const { user, loading, refresh } = useAuth();
-  const navigate = useNavigate();
   const [params] = useSearchParams();
-  const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirm, setConfirm] = useState("");
+  const [form, setForm] = useState({ fullName: "", username: "", email: "", phone: "", password: "", confirm: "" });
+  const [sent, setSent] = useState<VerificationSent>();
+  const [registered, setRegistered] = useState(false);
+  const [code, setCode] = useState("");
+  const [resendAt, setResendAt] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+  const usernameCheck = useUsernameCheck(form.username);
+  const resendIn = useCountdown(resendAt);
 
   if (loading) return <div className="v2-auth-page"><Card className="v2-auth-card"><LoadingState message="Đang tải…" /></Card></div>;
-  if (user) return <Navigate to={redirectForRole(user.roleCode)} replace />;
-  const strength = passwordStrength(password);
-  const submit = (event: FormEvent) => {
+  // A new account lands where the customer came from (e.g. checkout) or on the welcome page.
+  if (user) {
+    return <Navigate replace to={registered
+      ? safeRedirect(params.get("redirect"), "CUSTOMER") ?? "/customer/account?welcome=1"
+      : redirectForRole(user.roleCode)} />;
+  }
+  const strength = passwordStrength(form.password);
+  const input: RegisterInput = {
+    fullName: form.fullName.trim(),
+    username: normalizeUsername(form.username),
+    email: form.email.trim(),
+    password: form.password,
+    phone: form.phone.trim() || undefined,
+  };
+  const field = (name: keyof typeof form) => (event: { target: { value: string } }) =>
+    setForm((current) => ({ ...current, [name]: event.target.value }));
+
+  const requestCode = (resend: boolean) => {
+    setError("");
+    setNotice("");
+    setSubmitting(true);
+    void sendRegistrationCode(input).then((result) => {
+      setSent(result);
+      setCode("");
+      setResendAt(Date.now() + result.resendAfterSeconds * 1000);
+      if (resend) setNotice("Đã gửi mã mới. Mã cũ không còn dùng được.");
+    }).catch((reason: unknown) => setError(reason instanceof Error ? reason.message : "Không thể gửi mã xác minh."))
+      .finally(() => setSubmitting(false));
+  };
+  const submitDetails = (event: FormEvent) => {
     event.preventDefault();
     setError("");
-    if (password !== confirm) {
+    const problem = usernameProblem(form.username);
+    if (problem) {
+      setError(problem);
+      return;
+    }
+    if (form.password !== form.confirm) {
       setError("Mật khẩu nhập lại chưa khớp.");
       return;
     }
+    requestCode(false);
+  };
+  const verify = (value = code) => {
+    setError("");
+    setNotice("");
+    if (value.length !== SIGNUP_CODE_LENGTH) {
+      setError(`Vui lòng nhập đủ ${SIGNUP_CODE_LENGTH} số trong email.`);
+      return;
+    }
     setSubmitting(true);
-    void registerAccount({ fullName: fullName.trim(), email: email.trim(), password, phone: phone.trim() || undefined })
-      .then(() => refresh())
-      .then(() => navigate(safeRedirect(params.get("redirect"), "CUSTOMER") ?? "/customer/account?welcome=1", { replace: true }))
-      .catch((reason: unknown) => setError(reason instanceof Error ? reason.message : "Không thể tạo tài khoản."))
+    void registerAccount({ ...input, verificationCode: value })
+      .then(() => {
+        setRegistered(true);
+        return refresh();
+      })
+      .catch((reason: unknown) => {
+        setError(reason instanceof Error ? reason.message : "Không thể tạo tài khoản.");
+        setCode("");
+      })
       .finally(() => setSubmitting(false));
   };
+
   return <div className="v2-auth-page"><Card className="v2-auth-card">
     <p className="v2-eyebrow">PC Builder Store</p>
-    <h1>Tạo tài khoản</h1>
-    <p>Theo dõi đơn hàng, lưu giỏ hàng trên mọi thiết bị và thanh toán nhanh hơn ở lần sau. Giỏ hàng hiện tại được giữ nguyên.</p>
-    <form className="v2-form-stack" onSubmit={submit}>
-      <FormField label="Họ và tên" htmlFor="register-name">
-        <input className="v2-form-input" id="register-name" autoComplete="name" required minLength={2} maxLength={160}
-          value={fullName} onChange={(event) => setFullName(event.target.value)} />
-      </FormField>
-      <FormField label="Email" htmlFor="register-email">
-        <input className="v2-form-input" id="register-email" type="email" autoComplete="email" required maxLength={254}
-          value={email} onChange={(event) => setEmail(event.target.value)} />
-      </FormField>
-      <FormField label="Số điện thoại (không bắt buộc)" htmlFor="register-phone" hint="Dùng để giao hàng và liên hệ khi cần.">
-        <input className="v2-form-input" id="register-phone" type="tel" autoComplete="tel" maxLength={20}
-          value={phone} onChange={(event) => setPhone(event.target.value)} />
-      </FormField>
-      <FormField label="Mật khẩu" htmlFor="register-password" hint="Ít nhất 8 ký tự, gồm cả chữ và số.">
-        <PasswordInput id="register-password" autoComplete="new-password" minLength={8} value={password} onChange={setPassword} />
-      </FormField>
-      {password && <div className={`v2-password-meter is-${strength.level}`} aria-live="polite">
-        <span><i style={{ width: `${strength.score * 25}%` }} /></span><small>Độ mạnh: {strength.label}</small>
+    <h1>{sent ? "Xác minh email" : "Tạo tài khoản"}</h1>
+    <ol className="v2-auth-steps" aria-label="Các bước tạo tài khoản">
+      <li className={sent ? "is-done" : "is-current"} aria-current={sent ? undefined : "step"}><span>1</span>Thông tin</li>
+      <li className={sent ? "is-current" : undefined} aria-current={sent ? "step" : undefined}><span>2</span>Xác minh email</li>
+    </ol>
+    {!sent ? <>
+      <p>Theo dõi đơn hàng, lưu giỏ hàng trên mọi thiết bị và thanh toán nhanh hơn ở lần sau. Giỏ hàng hiện tại được giữ nguyên.</p>
+      <form className="v2-form-stack" onSubmit={submitDetails}>
+        <FormField label="Họ và tên" htmlFor="register-name">
+          <input className="v2-form-input" id="register-name" autoComplete="name" required minLength={2} maxLength={160}
+            value={form.fullName} onChange={field("fullName")} />
+        </FormField>
+        <FormField label="Tên đăng nhập" htmlFor="register-username" hint="3–30 ký tự: chữ thường không dấu, số, dấu chấm hoặc gạch dưới. Dùng để đăng nhập nhanh.">
+          <span className="v2-username-field">
+            <span aria-hidden="true">@</span>
+            <input className="v2-form-input" id="register-username" autoComplete="username" autoCapitalize="none" spellCheck={false}
+              required maxLength={31} placeholder="vd: khoa.tran" value={form.username} onChange={field("username")} />
+          </span>
+          <UsernameStatus check={usernameCheck} />
+        </FormField>
+        <FormField label="Email" htmlFor="register-email" hint="Chúng tôi sẽ gửi mã xác minh 6 số đến email này.">
+          <input className="v2-form-input" id="register-email" type="email" autoComplete="email" required maxLength={254}
+            value={form.email} onChange={field("email")} />
+        </FormField>
+        <FormField label="Số điện thoại (không bắt buộc)" htmlFor="register-phone" hint="Dùng để giao hàng và liên hệ khi cần.">
+          <input className="v2-form-input" id="register-phone" type="tel" autoComplete="tel" maxLength={20}
+            value={form.phone} onChange={field("phone")} />
+        </FormField>
+        <FormField label="Mật khẩu" htmlFor="register-password" hint="Ít nhất 8 ký tự, gồm cả chữ và số.">
+          <PasswordInput id="register-password" autoComplete="new-password" minLength={8} value={form.password}
+            onChange={(value) => setForm((current) => ({ ...current, password: value }))} />
+        </FormField>
+        {form.password && <div className={`v2-password-meter is-${strength.level}`} aria-live="polite">
+          <span><i style={{ width: `${strength.score * 25}%` }} /></span><small>Độ mạnh: {strength.label}</small>
+        </div>}
+        <FormField label="Nhập lại mật khẩu" htmlFor="register-confirm">
+          <input className="v2-form-input" id="register-confirm" type="password" autoComplete="new-password" required
+            value={form.confirm} onChange={field("confirm")} />
+        </FormField>
+        {error && <p className="v2-inline-error" role="alert">{error}</p>}
+        <PrimaryButton type="submit" disabled={submitting || usernameCheck.state === "bad"}>
+          {submitting ? "Đang gửi mã…" : "Tiếp tục: gửi mã xác minh"}
+        </PrimaryButton>
+      </form>
+    </> : <form className="v2-form-stack" onSubmit={(event) => { event.preventDefault(); verify(); }}>
+      <p>Chúng tôi đã gửi mã {SIGNUP_CODE_LENGTH} số đến <strong>{sent.email}</strong>. Mã có hiệu lực {Math.round(sent.expiresInSeconds / 60)} phút.</p>
+      {sent.developmentCode && <div className="v2-dev-code" role="note">
+        <span>Bản chạy thử chưa cấu hình gửi email. Mã của bạn: <strong>{sent.developmentCode}</strong></span>
+        <button type="button" className="v2-text-button" onClick={() => { setCode(sent.developmentCode!); verify(sent.developmentCode); }}>Dùng mã này</button>
       </div>}
-      <FormField label="Nhập lại mật khẩu" htmlFor="register-confirm">
-        <input className="v2-form-input" id="register-confirm" type="password" autoComplete="new-password" required
-          value={confirm} onChange={(event) => setConfirm(event.target.value)} />
-      </FormField>
+      <div className="v2-form-field">
+        <label htmlFor="register-code">Mã xác minh</label>
+        <CodeInput id="register-code" label="Mã xác minh" length={SIGNUP_CODE_LENGTH} value={code} autoComplete="one-time-code"
+          autoFocus invalid={Boolean(error)} disabled={submitting}
+          onChange={(value) => { setCode(value); if (error) setError(""); }} onComplete={verify} />
+      </div>
+      {notice && <p className="v2-inline-success" role="status">{notice}</p>}
       {error && <p className="v2-inline-error" role="alert">{error}</p>}
-      <PrimaryButton type="submit" disabled={submitting}>{submitting ? "Đang tạo tài khoản…" : "Tạo tài khoản"}</PrimaryButton>
-    </form>
+      <PrimaryButton type="submit" disabled={submitting}>{submitting ? "Đang xác minh…" : "Xác minh và tạo tài khoản"}</PrimaryButton>
+      <div className="v2-auth-code-actions">
+        <button type="button" className="v2-text-button" disabled={submitting || resendIn > 0} onClick={() => requestCode(true)}>
+          {resendIn > 0 ? `Gửi lại mã sau ${resendIn} giây` : "Gửi lại mã"}
+        </button>
+        <button type="button" className="v2-text-button" disabled={submitting} onClick={() => { setSent(undefined); setError(""); setNotice(""); }}>
+          ← Sửa thông tin
+        </button>
+      </div>
+      <p className="v2-auth-hint">Không thấy email? Hãy kiểm tra thư mục Spam/Quảng cáo, hoặc bấm Gửi lại mã.</p>
+    </form>}
     <p className="v2-auth-switch">Đã có tài khoản? <Link to="/login">Đăng nhập</Link></p>
   </Card></div>;
 }
@@ -863,7 +1100,7 @@ export function AccountPage() {
         void logout().then(() => window.location.assign("/login")).catch((reason: unknown) => setError(reason instanceof Error ? reason.message : "Không thể đăng xuất.")).finally(() => setBusy(false));
       }}>{busy ? "Đang đăng xuất…" : "Đăng xuất"}</SecondaryButton>
     </div>
-    {params.get("welcome") && <p className="v2-inline-success" role="status">Tạo tài khoản thành công. Giỏ hàng của bạn đã được giữ nguyên.</p>}
+    {params.get("welcome") && <p className="v2-inline-success" role="status">Tạo tài khoản thành công, email đã được xác minh. Giỏ hàng của bạn được giữ nguyên. Mẹo: bật <strong>Đăng nhập nhanh bằng mã PIN</strong> bên dưới để lần sau vào chỉ với tên đăng nhập và 8 số.</p>}
     {error && <p className="v2-inline-error" role="alert">{error}</p>}
     <div className="v2-account-shortcuts">
       <Link to="/customer/orders"><span aria-hidden="true">📦</span><strong>Đơn hàng của tôi</strong><small>Theo dõi, thanh toán, yêu cầu hủy</small></Link>
@@ -884,24 +1121,26 @@ export function AdminProfilePage() {
   </div></RoleGate>;
 }
 
-/** Profile and password cards shared by customer and staff account pages. */
+/** Profile and password cards shared by customer and staff account pages (plus quick login for customers). */
 function AccountSettings() {
   const { user, refresh } = useAuth();
   const [profile, setProfile] = useState<AccountProfile>();
-  const [profileForm, setProfileForm] = useState({ fullName: "", phone: "" });
+  const [profileForm, setProfileForm] = useState({ fullName: "", phone: "", username: "" });
   const [profileBusy, setProfileBusy] = useState(false);
   const [profileMessage, setProfileMessage] = useState<{ ok: boolean; text: string }>();
   const [passwords, setPasswords] = useState({ current: "", next: "", confirm: "" });
   const [passwordBusy, setPasswordBusy] = useState(false);
   const [passwordMessage, setPasswordMessage] = useState<{ ok: boolean; text: string }>();
   const [error, setError] = useState("");
+  const usernameCheck = useUsernameCheck(profileForm.username, profile?.username);
 
+  const applyProfile = (loaded: AccountProfile) => {
+    setProfile(loaded);
+    setProfileForm({ fullName: loaded.fullName, phone: loaded.phone ?? "", username: loaded.username ?? "" });
+  };
   useEffect(() => {
     const controller = new AbortController();
-    void fetchProfile(controller.signal).then((loaded) => {
-      setProfile(loaded);
-      setProfileForm({ fullName: loaded.fullName, phone: loaded.phone ?? "" });
-    }, (reason: unknown) => {
+    void fetchProfile(controller.signal).then(applyProfile, (reason: unknown) => {
       if (!controller.signal.aborted) setError(reason instanceof Error ? reason.message : "Không thể tải hồ sơ.");
     });
     return () => controller.abort();
@@ -911,9 +1150,16 @@ function AccountSettings() {
     event.preventDefault();
     setProfileBusy(true);
     setProfileMessage(undefined);
-    void updateProfile({ ...profileForm, customerSegment: profile?.customerSegment ?? "UNSPECIFIED" })
+    const username = normalizeUsername(profileForm.username);
+    void updateProfile({
+      fullName: profileForm.fullName,
+      phone: profileForm.phone,
+      customerSegment: profile?.customerSegment ?? "UNSPECIFIED",
+      // Accounts without a username may leave it empty; once set it can be changed but not removed.
+      username: profile?.username || username ? username : undefined,
+    })
       .then((saved) => {
-        setProfile(saved);
+        applyProfile(saved);
         setProfileMessage({ ok: true, text: "Đã lưu thông tin." });
         return refresh();
       })
@@ -929,9 +1175,10 @@ function AccountSettings() {
     }
     setPasswordBusy(true);
     void changePassword(passwords.current, passwords.next)
-      .then(() => {
+      .then((result) => {
         setPasswords({ current: "", next: "", confirm: "" });
-        setPasswordMessage({ ok: true, text: "Đã đổi mật khẩu. Lần đăng nhập sau hãy dùng mật khẩu mới." });
+        setPasswordMessage({ ok: true, text: result.message });
+        void fetchProfile().then(applyProfile, () => undefined);
         return refresh();
       })
       .catch((reason: unknown) => setPasswordMessage({ ok: false, text: reason instanceof Error ? reason.message : "Không thể đổi mật khẩu." }))
@@ -948,6 +1195,16 @@ function AccountSettings() {
             <input className="v2-form-input" id="account-name" required minLength={2} maxLength={160} autoComplete="name"
               value={profileForm.fullName} onChange={(event) => setProfileForm((current) => ({ ...current, fullName: event.target.value }))} />
           </FormField>
+          <FormField label="Tên đăng nhập" htmlFor="account-username"
+            hint={profile && !profile.username ? "Đặt tên đăng nhập để đăng nhập bằng tên thay cho email và dùng mã PIN nhanh." : "Có thể dùng thay cho email khi đăng nhập."}>
+            <span className="v2-username-field">
+              <span aria-hidden="true">@</span>
+              <input className="v2-form-input" id="account-username" autoComplete="username" autoCapitalize="none" spellCheck={false}
+                maxLength={31} placeholder="vd: khoa.tran" value={profileForm.username}
+                onChange={(event) => setProfileForm((current) => ({ ...current, username: event.target.value }))} />
+            </span>
+            <UsernameStatus check={usernameCheck} />
+          </FormField>
           <FormField label="Email đăng nhập" htmlFor="account-email" hint="Email dùng để đăng nhập, không thay đổi được.">
             <input className="v2-form-input" id="account-email" value={profile?.email ?? user?.email ?? ""} readOnly />
           </FormField>
@@ -956,7 +1213,7 @@ function AccountSettings() {
               value={profileForm.phone} onChange={(event) => setProfileForm((current) => ({ ...current, phone: event.target.value }))} />
           </FormField>
           {profileMessage && <p className={profileMessage.ok ? "v2-inline-success" : "v2-inline-error"} role="status">{profileMessage.text}</p>}
-          <PrimaryButton type="submit" disabled={profileBusy || !profile}>{profileBusy ? "Đang lưu…" : "Lưu thông tin"}</PrimaryButton>
+          <PrimaryButton type="submit" disabled={profileBusy || !profile || usernameCheck.state === "bad"}>{profileBusy ? "Đang lưu…" : "Lưu thông tin"}</PrimaryButton>
         </form>
       </Card>
       <Card title="Đổi mật khẩu" description="Mật khẩu mới cần ít nhất 8 ký tự, gồm cả chữ và số.">
@@ -977,8 +1234,89 @@ function AccountSettings() {
           <PrimaryButton type="submit" disabled={passwordBusy}>{passwordBusy ? "Đang đổi…" : "Đổi mật khẩu"}</PrimaryButton>
         </form>
       </Card>
+      {user?.roleCode === "CUSTOMER" && profile && <QuickPinCard profile={profile} onChanged={applyProfile} />}
     </div>
   </>;
+}
+
+/** Customer quick login: username + an 8-digit PIN instead of the password. */
+function QuickPinCard({ profile, onChanged }: { profile: AccountProfile; onChanged: (profile: AccountProfile) => void }) {
+  const [pin, setPin] = useState("");
+  const [confirmPin, setConfirmPin] = useState("");
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [confirmOff, setConfirmOff] = useState(false);
+  const [message, setMessage] = useState<{ ok: boolean; text: string }>();
+  const enabled = profile.quickPinEnabled;
+  const reload = () => fetchProfile().then(onChanged, () => undefined);
+
+  const save = (event: FormEvent) => {
+    event.preventDefault();
+    setMessage(undefined);
+    const problem = pinProblem(pin);
+    if (problem) {
+      setMessage({ ok: false, text: problem });
+      return;
+    }
+    if (pin !== confirmPin) {
+      setMessage({ ok: false, text: "Hai lần nhập mã PIN chưa khớp." });
+      return;
+    }
+    setBusy(true);
+    void setQuickPin(password, pin).then((result) => {
+      setPin("");
+      setConfirmPin("");
+      setPassword("");
+      if (profile.username) rememberUsername(profile.username);
+      setMessage({ ok: true, text: result.message });
+      return reload();
+    }).catch((reason: unknown) => setMessage({ ok: false, text: reason instanceof Error ? reason.message : "Không thể lưu mã PIN." }))
+      .finally(() => setBusy(false));
+  };
+  const turnOff = () => {
+    setBusy(true);
+    setMessage(undefined);
+    void removeQuickPin().then((result) => {
+      setConfirmOff(false);
+      setMessage({ ok: true, text: result.message });
+      return reload();
+    }).catch((reason: unknown) => setMessage({ ok: false, text: reason instanceof Error ? reason.message : "Không thể tắt đăng nhập nhanh." }))
+      .finally(() => setBusy(false));
+  };
+
+  return <Card title="Đăng nhập nhanh bằng mã PIN" className="v2-quick-pin-card"
+    description={`Lần sau chỉ cần nhập tên đăng nhập và mã PIN ${PIN_LENGTH} số, không cần mật khẩu.`}>
+    <div className="v2-quick-pin-status">
+      <Badge tone={enabled ? "success" : "neutral"}>{enabled ? "Đang bật" : "Chưa bật"}</Badge>
+      {enabled && profile.quickPinUpdatedAt && <small>Đặt ngày {new Date(profile.quickPinUpdatedAt).toLocaleDateString("vi-VN")}</small>}
+      {profile.username && <small>Tên đăng nhập: <strong>@{profile.username}</strong></small>}
+    </div>
+    {!profile.username ? <p className="v2-muted">Hãy đặt <strong>Tên đăng nhập</strong> ở ô Thông tin cá nhân trước, vì đăng nhập nhanh dùng tên đăng nhập + mã PIN.</p>
+      : <form className="v2-form-stack" onSubmit={save}>
+        <div className="v2-form-field">
+          <label htmlFor="quick-pin">{enabled ? "Mã PIN mới" : "Chọn mã PIN"} ({PIN_LENGTH} số)</label>
+          <CodeInput id="quick-pin" label={`Mã PIN ${PIN_LENGTH} số`} length={PIN_LENGTH} masked value={pin} onChange={setPin} disabled={busy} />
+        </div>
+        <div className="v2-form-field">
+          <label htmlFor="quick-pin-confirm">Nhập lại mã PIN</label>
+          <CodeInput id="quick-pin-confirm" label="Nhập lại mã PIN" length={PIN_LENGTH} masked value={confirmPin} onChange={setConfirmPin}
+            disabled={busy} invalid={confirmPin.length === PIN_LENGTH && confirmPin !== pin} />
+        </div>
+        <FormField label="Mật khẩu hiện tại (để xác nhận)" htmlFor="quick-pin-password">
+          <PasswordInput id="quick-pin-password" autoComplete="current-password" value={password} onChange={setPassword} />
+        </FormField>
+        <p className="v2-auth-hint">Không dùng ngày sinh, số điện thoại hay dãy số dễ đoán. Nhập sai 5 lần, mã PIN bị tạm khóa 15 phút. Mã PIN tự tắt khi bạn đổi mật khẩu.</p>
+        {message && <p className={message.ok ? "v2-inline-success" : "v2-inline-error"} role="status">{message.text}</p>}
+        <div className="v2-quick-pin-actions">
+          <PrimaryButton type="submit" disabled={busy}>{busy ? "Đang lưu…" : enabled ? "Đổi mã PIN" : "Bật đăng nhập nhanh"}</PrimaryButton>
+          {enabled && <SecondaryButton type="button" disabled={busy} onClick={() => setConfirmOff(true)}>Tắt đăng nhập nhanh</SecondaryButton>}
+        </div>
+      </form>}
+    {!profile.username && message && <p className={message.ok ? "v2-inline-success" : "v2-inline-error"} role="status">{message.text}</p>}
+    <ConfirmationModal open={confirmOff} onClose={() => setConfirmOff(false)} onConfirm={turnOff} busy={busy}
+      title="Tắt đăng nhập nhanh?" confirmLabel="Tắt mã PIN"
+      message="Sau khi tắt, bạn cần dùng email hoặc tên đăng nhập kèm mật khẩu để đăng nhập. Bạn có thể bật lại bất cứ lúc nào." />
+  </Card>;
 }
 
 export function MySavedBuilds() {

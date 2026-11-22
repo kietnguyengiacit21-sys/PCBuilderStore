@@ -16,7 +16,10 @@ interface AuthContextValue {
   user: AuthUser | null;
   loading: boolean;
   error: string | null;
-  login: (email: string, password: string) => Promise<AuthUser>;
+  /** Password login with the account email or username. */
+  login: (identifier: string, password: string) => Promise<AuthUser>;
+  /** Customer quick login with the username and the 8-digit PIN set on the account page. */
+  loginWithPin: (username: string, pin: string) => Promise<AuthUser>;
   logout: () => Promise<void>;
   refresh: () => Promise<AuthUser | null>;
 }
@@ -104,6 +107,22 @@ async function currentUser(): Promise<AuthUser | null> {
   }
 }
 
+async function postLogin(path: string, body: Record<string, string>): Promise<AuthUser> {
+  const token = await csrfToken();
+  const response = await fetch(`${apiBaseUrl}${path}`, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      [csrfHeaderName]: token,
+    },
+    body: JSON.stringify(body),
+  });
+  if (!response.ok) throw await responseError(response);
+  return parseAuthUser(await response.json());
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
@@ -132,20 +151,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     loading,
     error,
     refresh,
-    async login(email, password) {
-      const token = await csrfToken();
-      const response = await fetch(`${apiBaseUrl}/auth/login`, {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-          [csrfHeaderName]: token,
-        },
-        body: JSON.stringify({ email, password }),
-      });
-      if (!response.ok) throw await responseError(response);
-      const authenticatedUser = parseAuthUser(await response.json());
+    async login(identifier, password) {
+      const authenticatedUser = await postLogin("/auth/login", { identifier, password });
+      setUser(authenticatedUser);
+      setError(null);
+      return authenticatedUser;
+    },
+    async loginWithPin(username, pin) {
+      const authenticatedUser = await postLogin("/auth/login/pin", { username, pin });
       setUser(authenticatedUser);
       setError(null);
       return authenticatedUser;

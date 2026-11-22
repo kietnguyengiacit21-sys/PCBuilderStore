@@ -10,15 +10,10 @@ import java.util.HexFormat;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.ObjectProvider;
+import com.pc_builder_store.common.MailDelivery;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.mail.MailException;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,30 +27,26 @@ import org.springframework.web.server.ResponseStatusException;
 @Service
 public class PasswordResetService {
 
-    private static final Logger logger = LoggerFactory.getLogger(PasswordResetService.class);
     private static final SecureRandom RANDOM = new SecureRandom();
     private static final int VALID_MINUTES = 30;
 
     private final JdbcTemplate jdbc;
     private final PasswordEncoder passwordEncoder;
-    private final ObjectProvider<JavaMailSender> mailSender;
+    private final MailDelivery mail;
     private final AccountStateCache states;
     private final String publicBaseUrl;
-    private final String mailFrom;
 
     public PasswordResetService(
             JdbcTemplate jdbc,
             PasswordEncoder passwordEncoder,
-            ObjectProvider<JavaMailSender> mailSender,
+            MailDelivery mail,
             AccountStateCache states,
-            @Value("${app.public-base-url:http://localhost:5173}") String publicBaseUrl,
-            @Value("${app.mail.from:no-reply@pcbuilderstore.local}") String mailFrom) {
+            @Value("${app.public-base-url:http://localhost:5173}") String publicBaseUrl) {
         this.jdbc = jdbc;
         this.passwordEncoder = passwordEncoder;
-        this.mailSender = mailSender;
+        this.mail = mail;
         this.states = states;
         this.publicBaseUrl = publicBaseUrl.replaceAll("/+$", "");
-        this.mailFrom = mailFrom;
     }
 
     /** Always succeeds from the caller's point of view so the endpoint cannot reveal which emails exist. */
@@ -94,8 +85,10 @@ public class PasswordResetService {
         if (rows.isEmpty() || !"ACTIVE".equals(rows.getFirst().get("account_status"))) throw invalidLink();
         String password = AccountService.newPassword(newPassword);
         BigDecimal userId = (BigDecimal) rows.getFirst().get("user_id");
+        // Whoever triggered the reset may not be the person who set the quick-login PIN.
         jdbc.update("""
-                UPDATE "users" SET "password_hash" = ?, "must_change_password" = FALSE, "updated_at" = CURRENT_TIMESTAMP
+                UPDATE "users" SET "password_hash" = ?, "must_change_password" = FALSE,
+                       "quick_pin_hash" = NULL, "quick_pin_updated_at" = NULL, "updated_at" = CURRENT_TIMESTAMP
                 WHERE "user_id" = ?
                 """, passwordEncoder.encode(password), userId);
         jdbc.update("UPDATE \"password_reset_tokens\" SET \"used_at\" = CURRENT_TIMESTAMP WHERE \"user_id\" = ? AND \"used_at\" IS NULL", userId);
@@ -106,25 +99,12 @@ public class PasswordResetService {
     }
 
     private void send(String email, String fullName, String link) {
-        JavaMailSender sender = mailSender.getIfAvailable();
-        if (sender == null) {
-            logger.warn("Mail is not configured (spring.mail.host); password reset link for {}: {}", email, link);
-            return;
-        }
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom(mailFrom);
-        message.setTo(email);
-        message.setSubject("Đặt lại mật khẩu PC Builder Store");
-        message.setText("Xin chào " + fullName + ",\n\n"
-                + "Bạn (hoặc ai đó) vừa yêu cầu đặt lại mật khẩu cho tài khoản PC Builder Store.\n"
-                + "Mở link sau trong " + VALID_MINUTES + " phút để đặt mật khẩu mới:\n\n" + link + "\n\n"
-                + "Nếu không phải bạn yêu cầu, hãy bỏ qua email này; mật khẩu hiện tại vẫn giữ nguyên.\n");
-        try {
-            sender.send(message);
-        } catch (MailException exception) {
-            // The caller still gets the generic answer; the failure is for operators to see.
-            logger.error("Could not send password reset email to {}", email, exception);
-        }
+        mail.send(email, "Đặt lại mật khẩu PC Builder Store",
+                "Xin chào " + fullName + ",\n\n"
+                        + "Bạn (hoặc ai đó) vừa yêu cầu đặt lại mật khẩu cho tài khoản PC Builder Store.\n"
+                        + "Mở link sau trong " + VALID_MINUTES + " phút để đặt mật khẩu mới:\n\n" + link + "\n\n"
+                        + "Nếu không phải bạn yêu cầu, hãy bỏ qua email này; mật khẩu hiện tại vẫn giữ nguyên.\n",
+                "Password reset link: " + link);
     }
 
     private static ResponseStatusException invalidLink() {

@@ -135,7 +135,10 @@ public class SecurityConfiguration {
                                 "/api/health/**",
                                 "/api/auth/csrf",
                                 "/api/auth/login",
+                                "/api/auth/login/pin",
                                 "/api/auth/register",
+                                "/api/auth/register/verification",
+                                "/api/auth/username-availability",
                                 "/api/auth/me",
                                 "/api/auth/password-reset/request",
                                 "/api/auth/password-reset/confirm",
@@ -188,6 +191,8 @@ public class SecurityConfiguration {
                                                 request.getContextPath() + "/api/catalog/products/")
                                         && request.getRequestURI().endsWith("/gaming-performance"))
                         .permitAll()
+                        .requestMatchers("/api/auth/quick-pin")
+                        .hasRole("CUSTOMER")
                         .requestMatchers("/api/auth/logout", "/api/auth/profile", "/api/auth/password")
                         .authenticated()
                         .anyRequest()
