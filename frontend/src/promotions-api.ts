@@ -92,7 +92,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   try {
     payload = await response.json();
   } catch {
-    throw new Error(`Promotion service returned an invalid response (HTTP ${response.status}).`);
+    throw new Error(`Máy chủ trả về dữ liệu không hợp lệ (HTTP ${response.status}). Vui lòng thử lại.`);
   }
   if (!response.ok) {
     const error = typeof payload === "object" && payload !== null && "error" in payload
@@ -101,7 +101,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
     const message = typeof error === "object" && error !== null && "message" in error
       && typeof error.message === "string"
       ? error.message
-      : `Promotion request failed (HTTP ${response.status}).`;
+      : `Không thể xử lý yêu cầu (HTTP ${response.status}). Vui lòng thử lại.`;
     throw new Error(message);
   }
   return payload as T;
@@ -112,11 +112,11 @@ async function csrfToken(): Promise<string> {
     credentials: "include",
     headers: { Accept: "application/json" },
   });
-  if (!response.ok) throw new Error(`Could not obtain a CSRF token (HTTP ${response.status}).`);
+  if (!response.ok) throw new Error(`Không lấy được mã xác thực yêu cầu (HTTP ${response.status}). Vui lòng tải lại trang.`);
   const payload: unknown = await response.json();
   if (typeof payload !== "object" || payload === null
       || !("token" in payload) || typeof payload.token !== "string") {
-    throw new Error("Authentication service returned an invalid CSRF token.");
+    throw new Error("Không nhận được mã xác thực yêu cầu. Vui lòng tải lại trang.");
   }
   return payload.token;
 }

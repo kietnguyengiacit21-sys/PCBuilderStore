@@ -183,7 +183,9 @@ public final class ProductUpgradeDtos {
             boolean defaultOption,
             int minimumQuantity,
             int maximumQuantity,
-            int displayOrder) {}
+            int displayOrder,
+            /** Primary photo of the option's product, so a swapped component keeps a real image. */
+            String imageUrl) {}
 
     public record PublicBundle(
             String bundleId,

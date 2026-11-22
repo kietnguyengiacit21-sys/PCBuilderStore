@@ -163,7 +163,8 @@ public class ProductUpgradeService {
                                                             BigDecimal.valueOf(defaultOption.minimumQuantity()))),
                                             option.displayName(), option.description(),
                                             option.defaultOption(), option.minimumQuantity(),
-                                            option.maximumQuantity(), option.displayOrder()))
+                                            option.maximumQuantity(), option.displayOrder(),
+                                            primaryImage(option.productId())))
                                     .toList());
                 })
                 .filter(group -> !group.options().isEmpty())
@@ -191,7 +192,9 @@ public class ProductUpgradeService {
                 publicGroups, publicBundles, relatedProducts(product.id()));
     }
 
-    @Transactional(readOnly = true)
+    // Validation failures are read-only rejections: they must not mark a caller's transaction rollback-only
+    // (the cart catches them per item to stay readable when an upgrade is retired).
+    @Transactional(readOnly = true, noRollbackFor = org.springframework.web.server.ResponseStatusException.class)
     public ResolvedConfiguration resolve(
             BigDecimal productId,
             String condition,
@@ -781,6 +784,15 @@ public class ProductUpgradeService {
 
     private static String blankToNull(String value) {
         return hasText(value) ? value.trim() : null;
+    }
+
+    private String primaryImage(String productId) {
+        List<String> urls = jdbc.queryForList("""
+                SELECT "image_url" FROM "product_images"
+                WHERE "product_id" = ? AND "media_type" = 'IMAGE'
+                ORDER BY "is_primary" DESC, "sort_order", "image_id" LIMIT 1
+                """, String.class, new BigDecimal(productId));
+        return urls.isEmpty() ? null : urls.getFirst();
     }
 
     private static ResponseStatusException badRequest(String message) {

@@ -47,7 +47,9 @@ public final class CartDtos {
             List<PromotionPricingService.AppliedPromotion> promotions,
             List<PromotionPricingService.GiftOffer> gifts,
             List<GiftSelection> selectedGifts,
-            CartConfiguration configuration) {}
+            CartConfiguration configuration,
+            String imageUrl,
+            String productType) {}
 
     public record CartResponse(List<CartItem> items, int itemCount) {}
 }

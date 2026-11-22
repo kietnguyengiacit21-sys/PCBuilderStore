@@ -58,11 +58,20 @@ public class PromotionManagementService {
         Timestamp starts = timestamp(request.startsAt());
         Timestamp ends = timestamp(request.endsAt());
         if (starts != null && ends != null && !starts.before(ends)) {
-            throw badRequest("Campaign start must be before its end.");
+            throw badRequest("Thời gian bắt đầu phải trước thời gian kết thúc.");
         }
         BigDecimal actorId = actorId(actor);
         long id;
         if (campaignId == null) {
+            Integer taken = jdbc.queryForObject("""
+                    SELECT COUNT(*) FROM "promotion_campaigns"
+                    WHERE UPPER("campaign_code") = UPPER(?)
+                    """, Integer.class, request.campaignCode().trim());
+            if (taken != null && taken > 0) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT,
+                        "Mã chương trình \"" + request.campaignCode().trim().toUpperCase()
+                                + "\" đã được dùng (kể cả chương trình đã lưu trữ). Hãy chọn mã khác.");
+            }
             id = jdbc.queryForObject("""
                     INSERT INTO "promotion_campaigns" (
                         "campaign_code", "campaign_name", "campaign_tag", "starts_at", "ends_at",
@@ -74,7 +83,7 @@ public class PromotionManagementService {
                     starts, ends, request.priority(), request.exclusive(), request.enabled(),
                     actorId, actorId);
         } else {
-            long existing = parseId(campaignId, "campaign");
+            long existing = parseId(campaignId, "chương trình");
             int changed = jdbc.update("""
                     UPDATE "promotion_campaigns"
                     SET "campaign_name" = ?, "campaign_tag" = ?, "starts_at" = ?, "ends_at" = ?,
@@ -84,7 +93,7 @@ public class PromotionManagementService {
                     """, request.campaignName().trim(), blankToNull(request.campaignTag()),
                     starts, ends, request.priority(), request.exclusive(), request.enabled(),
                     actorId, existing);
-            if (changed != 1) throw notFound("Campaign not found or archived.");
+            if (changed != 1) throw notFound("Không tìm thấy chương trình, hoặc chương trình đã được lưu trữ.");
             id = existing;
         }
         audit("PROMOTION_CAMPAIGN", id, campaignId == null ? "CREATED" : "UPDATED",
@@ -94,14 +103,14 @@ public class PromotionManagementService {
 
     @Transactional
     public Campaign archiveCampaign(String campaignId, AuthUserPrincipal actor) {
-        long id = parseId(campaignId, "campaign");
+        long id = parseId(campaignId, "chương trình");
         int changed = jdbc.update("""
                 UPDATE "promotion_campaigns"
                 SET "is_enabled" = FALSE, "archived_at" = CURRENT_TIMESTAMP,
                     "updated_by" = ?, "updated_at" = CURRENT_TIMESTAMP
                 WHERE "campaign_id" = ? AND "archived_at" IS NULL
                 """, actorId(actor), id);
-        if (changed != 1) throw notFound("Campaign not found or already archived.");
+        if (changed != 1) throw notFound("Không tìm thấy chương trình, hoặc chương trình đã được lưu trữ trước đó.");
         audit("PROMOTION_CAMPAIGN", id, "ARCHIVED", Map.of(), actorId(actor));
         return findCampaign(id);
     }
@@ -109,7 +118,7 @@ public class PromotionManagementService {
     @Transactional(readOnly = true)
     public List<Promotion> listPromotions(String campaignId) {
         if (!StringUtils.hasText(campaignId)) return List.of();
-        long id = parseId(campaignId, "campaign");
+        long id = parseId(campaignId, "chương trình");
         return jdbc.query("""
                 SELECT pp."promotion_id"::text, pc."campaign_id"::text, pc."campaign_name",
                        pp."product_id"::text, p."model_code", p."product_name",
@@ -134,15 +143,15 @@ public class PromotionManagementService {
     public Promotion savePromotion(
             String promotionId, PromotionRequest request, AuthUserPrincipal actor) {
         validatePromotion(request);
-        long campaignId = parseId(request.campaignId(), "campaign");
-        BigDecimal productId = parseDecimalId(request.productId(), "product");
+        long campaignId = parseId(request.campaignId(), "chương trình");
+        BigDecimal productId = parseDecimalId(request.productId(), "sản phẩm");
         requireCampaign(campaignId);
         requireActiveProduct(productId);
         validateGifts(request.gifts());
         Timestamp starts = timestamp(request.startsAt());
         Timestamp ends = timestamp(request.endsAt());
         if (starts != null && ends != null && !starts.before(ends)) {
-            throw badRequest("Promotion start must be before its end.");
+            throw badRequest("Thời gian bắt đầu phải trước thời gian kết thúc.");
         }
         String eligibility = serialize(Map.of("conditions", request.conditions() == null
                 ? List.of() : request.conditions()));
@@ -163,7 +172,7 @@ public class PromotionManagementService {
                     blankToNull(request.saleBadge()), eligibility, starts, ends,
                     request.priority(), request.exclusive(), request.enabled(), actorId, actorId);
         } else {
-            id = parseId(promotionId, "promotion");
+            id = parseId(promotionId, "ưu đãi");
             int changed = jdbc.update("""
                     UPDATE "product_promotions"
                     SET "campaign_id" = ?, "product_id" = ?, "discount_type" = ?,
@@ -178,7 +187,7 @@ public class PromotionManagementService {
                     blankToNull(request.saleBadge()), eligibility,
                     starts, ends, request.priority(), request.exclusive(), request.enabled(),
                     actorId, id);
-            if (changed != 1) throw notFound("Promotion not found.");
+            if (changed != 1) throw notFound("Không tìm thấy ưu đãi.");
             jdbc.update("DELETE FROM \"promotion_gifts\" WHERE \"promotion_id\" = ?", id);
         }
         saveGifts(id, request.gifts());
@@ -191,13 +200,13 @@ public class PromotionManagementService {
     @Transactional
     public Promotion setPromotionEnabled(
             String promotionId, boolean enabled, AuthUserPrincipal actor) {
-        long id = parseId(promotionId, "promotion");
+        long id = parseId(promotionId, "ưu đãi");
         int changed = jdbc.update("""
                 UPDATE "product_promotions"
                 SET "is_enabled" = ?, "updated_by" = ?, "updated_at" = CURRENT_TIMESTAMP
                 WHERE "promotion_id" = ?
                 """, enabled, actorId(actor), id);
-        if (changed != 1) throw notFound("Promotion not found.");
+        if (changed != 1) throw notFound("Không tìm thấy ưu đãi.");
         audit("PRODUCT_PROMOTION", id, enabled ? "ACTIVATED" : "DEACTIVATED",
                 Map.of("enabled", enabled), actorId(actor));
         return findPromotion(id);
@@ -257,20 +266,20 @@ public class PromotionManagementService {
                         "promotion_id", "gift_offer_id", "quantity",
                         "selection_required", "display_order"
                     ) VALUES (?, ?, ?, ?, ?)
-                    """, promotionId, parseDecimalId(gift.giftOfferId(), "gift offer"),
+                    """, promotionId, parseDecimalId(gift.giftOfferId(), "quà tặng"),
                     gift.quantity(), gift.selectionRequired(), gift.displayOrder());
         }
     }
 
     private void validateGifts(List<GiftRequest> gifts) {
         if (gifts == null) return;
-        if (gifts.size() > MAX_GIFTS) throw badRequest("Too many gifts in one promotion.");
+        if (gifts.size() > MAX_GIFTS) throw badRequest("Mỗi ưu đãi chỉ kèm tối đa " + MAX_GIFTS + " quà tặng.");
         Set<String> ids = new java.util.HashSet<>();
         for (GiftRequest gift : gifts) {
-            BigDecimal offerId = parseDecimalId(gift.giftOfferId(), "gift offer");
+            BigDecimal offerId = parseDecimalId(gift.giftOfferId(), "quà tặng");
             if (gift.quantity() < 1 || gift.quantity() > 100 || gift.displayOrder() < 0
                     || !ids.add(offerId.toPlainString())) {
-                throw badRequest("Gift offer, quantity, or order is invalid.");
+                throw badRequest("Quà tặng không hợp lệ: số lượng từ 1 đến 100 và không chọn trùng một mặt hàng.");
             }
             Integer valid = jdbc.queryForObject("""
                     SELECT COUNT(*) FROM "product_offers" po
@@ -279,7 +288,7 @@ public class PromotionManagementService {
                       AND po."offer_status" = 'ACTIVE' AND p."product_status" = 'ACTIVE'
                     """, Integer.class, offerId);
             if (valid == null || valid != 1) {
-                throw badRequest("Gift must reference an active NEW offer.");
+                throw badRequest("Quà tặng phải là hàng mới đang được bán.");
             }
         }
     }
@@ -304,42 +313,64 @@ public class PromotionManagementService {
                 SELECT COUNT(*) FROM "promotion_campaigns"
                 WHERE "campaign_id" = ? AND "archived_at" IS NULL
                 """, Integer.class, id);
-        if (valid == null || valid != 1) throw notFound("Campaign not found or archived.");
+        if (valid == null || valid != 1) throw notFound("Không tìm thấy chương trình, hoặc chương trình đã được lưu trữ.");
     }
 
     private void requireActiveProduct(BigDecimal id) {
         Integer valid = jdbc.queryForObject("""
                 SELECT COUNT(*) FROM "products" WHERE "product_id" = ? AND "product_status" = 'ACTIVE'
                 """, Integer.class, id);
-        if (valid == null || valid != 1) throw badRequest("Promotion product must be active.");
+        if (valid == null || valid != 1) throw badRequest("Sản phẩm được chọn hiện không còn bán, không thể tạo ưu đãi.");
     }
 
     private void validateCampaign(CampaignRequest request) {
-        if (request == null || request.campaignCode() == null
-                || !request.campaignCode().trim().matches("[A-Za-z0-9][A-Za-z0-9_-]{0,99}")
-                || request.campaignName() == null || request.campaignName().isBlank()
-                || request.campaignName().length() > 180 || request.priority() < 0
-                || request.campaignTag() != null && request.campaignTag().length() > 80) {
-            throw badRequest("Campaign information is invalid.");
+        if (request == null) throw badRequest("Thiếu thông tin chương trình.");
+        if (request.campaignCode() == null
+                || !request.campaignCode().trim().matches("[A-Za-z0-9][A-Za-z0-9_-]{0,99}")) {
+            throw badRequest("Mã chương trình chỉ gồm chữ không dấu, số, dấu gạch ngang hoặc gạch dưới"
+                    + " (ví dụ: BLACK-FRIDAY-2026).");
+        }
+        if (request.campaignName() == null || request.campaignName().isBlank()) {
+            throw badRequest("Hãy nhập tên chương trình.");
+        }
+        if (request.campaignName().length() > 180) throw badRequest("Tên chương trình tối đa 180 ký tự.");
+        if (request.priority() < 0) throw badRequest("Độ ưu tiên phải từ 0 trở lên.");
+        if (request.campaignTag() != null && request.campaignTag().length() > 80) {
+            throw badRequest("Nhãn chương trình tối đa 80 ký tự.");
         }
     }
 
     private void validatePromotion(PromotionRequest request) {
-        if (request == null || !DISCOUNT_TYPES.contains(request.discountType())
-                || request.discountValue() == null || request.discountValue().signum() < 0
-                || "PERCENTAGE".equals(request.discountType())
-                        && request.discountCurrencyCode() != null
-                || !"PERCENTAGE".equals(request.discountType())
-                        && (request.discountCurrencyCode() == null
-                                || !request.discountCurrencyCode().matches("[A-Z]{3}"))
-                || "PERCENTAGE".equals(request.discountType())
-                        && request.discountValue().compareTo(new BigDecimal("100")) > 0
-                || request.priority() < 0
-                || request.displayCopy() != null && request.displayCopy().length() > 300
-                || request.saleBadge() != null && request.saleBadge().length() > 80
-                || request.conditions() != null && request.conditions().stream()
-                        .anyMatch(value -> !Set.of("NEW", "LIKE_NEW", "USED").contains(value))) {
-            throw badRequest("Promotion information is invalid.");
+        if (request == null) throw badRequest("Thiếu thông tin ưu đãi.");
+        if (!DISCOUNT_TYPES.contains(request.discountType())) throw badRequest("Loại ưu đãi không hợp lệ.");
+        boolean percentage = "PERCENTAGE".equals(request.discountType());
+        if (request.discountValue() == null || request.discountValue().signum() < 0) {
+            throw badRequest("Giá trị ưu đãi không được âm.");
+        }
+        if (percentage && request.discountValue().compareTo(new BigDecimal("100")) > 0) {
+            throw badRequest("Mức giảm theo phần trăm phải từ 0 đến 100.");
+        }
+        if (percentage && request.discountCurrencyCode() != null) {
+            throw badRequest("Ưu đãi theo phần trăm không dùng đơn vị tiền tệ.");
+        }
+        if (!percentage && (request.discountCurrencyCode() == null
+                || !request.discountCurrencyCode().matches("[A-Z]{3}"))) {
+            throw badRequest("Hãy chọn đơn vị tiền tệ cho ưu đãi giảm tiền hoặc giá chiến dịch.");
+        }
+        if (request.priority() < 0) throw badRequest("Độ ưu tiên phải từ 0 trở lên.");
+        if (request.displayCopy() != null && request.displayCopy().length() > 300) {
+            throw badRequest("Nội dung hiển thị tối đa 300 ký tự.");
+        }
+        if (request.saleBadge() != null && request.saleBadge().length() > 80) {
+            throw badRequest("Nhãn ưu đãi tối đa 80 ký tự.");
+        }
+        // An empty list would make the promotion match no offer at all.
+        if (request.conditions() == null || request.conditions().isEmpty()) {
+            throw badRequest("Chọn ít nhất một tình trạng hàng được áp dụng (mới, như mới, đã qua sử dụng).");
+        }
+        if (request.conditions().stream()
+                .anyMatch(value -> !Set.of("NEW", "LIKE_NEW", "USED").contains(value))) {
+            throw badRequest("Tình trạng hàng áp dụng không hợp lệ.");
         }
     }
 
@@ -367,16 +398,17 @@ public class PromotionManagementService {
     private static Timestamp timestamp(String value) {
         if (!StringUtils.hasText(value)) return null;
         try {
-            return Timestamp.valueOf(LocalDateTime.parse(value));
+            // Accept both the form value (2026-11-22T08:00) and the stored text (2026-11-22 08:00:00).
+            return Timestamp.valueOf(LocalDateTime.parse(value.trim().replace(' ', 'T')));
         } catch (DateTimeParseException exception) {
-            throw badRequest("Campaign and promotion dates must use ISO local date-time format.");
+            throw badRequest("Ngày giờ bắt đầu/kết thúc không hợp lệ.");
         }
     }
 
     private static BigDecimal actorId(AuthUserPrincipal actor) {
         if (actor == null || !"ADMIN".equals(actor.roleCode())
                 || actor.userId() == null || !actor.userId().matches("[0-9]{1,20}")) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Admin access is required.");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Chỉ quản trị viên được thay đổi khuyến mãi.");
         }
         return new BigDecimal(actor.userId());
     }
@@ -387,12 +419,12 @@ public class PromotionManagementService {
 
     private static long parseId(String value, String label) {
         if (value == null || !value.matches("[0-9]{1,18}")) {
-            throw badRequest("Invalid " + label + " ID.");
+            throw badRequest("Chưa chọn " + label + ", hoặc " + label + " không hợp lệ.");
         }
         try {
             return Long.parseLong(value);
         } catch (NumberFormatException exception) {
-            throw badRequest("Invalid " + label + " ID.");
+            throw badRequest("Chưa chọn " + label + ", hoặc " + label + " không hợp lệ.");
         }
     }
 

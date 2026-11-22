@@ -493,7 +493,7 @@ class CatalogControllerTest {
         mockMvc.perform(get("/api/catalog/products"))
                 .andExpect(status().isServiceUnavailable())
                 .andExpect(jsonPath("$.error.code").value("DATABASE_UNAVAILABLE"))
-                .andExpect(jsonPath("$.error.message").value("Database is unavailable."))
+                .andExpect(jsonPath("$.error.message").value("Hệ thống đang tạm gián đoạn kết nối dữ liệu, vui lòng thử lại sau ít phút."))
                 .andExpect(result -> org.junit.jupiter.api.Assertions.assertFalse(
                         result.getResponse().getContentAsString()
                                 .contains("internal connection details")));

@@ -6,15 +6,22 @@ public record AuthUserResponse(
         String email,
         String roleCode,
         String customerSegment,
-        String accountStatus) {
+        String accountStatus,
+        /** Set after an admin issued a temporary password; the UI asks the user to choose a new one. */
+        boolean mustChangePassword) {
 
     public static AuthUserResponse from(AuthUserPrincipal user) {
+        return from(user, false);
+    }
+
+    public static AuthUserResponse from(AuthUserPrincipal user, boolean mustChangePassword) {
         return new AuthUserResponse(
                 user.userId(),
                 user.fullName(),
                 user.email(),
                 user.roleCode(),
                 user.customerSegment(),
-                user.accountStatus());
+                user.accountStatus(),
+                mustChangePassword);
     }
 }

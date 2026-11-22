@@ -285,6 +285,8 @@ export interface UpgradeChoice {
   minimumQuantity: number;
   maximumQuantity: number;
   displayOrder: number;
+  /** Primary photo of the option's product (public configuration only). */
+  imageUrl?: string | null;
 }
 
 export interface UpgradeGroup {
@@ -425,10 +427,10 @@ async function fetchPayloadAt<T>(
   try {
     payload = await response.json();
   } catch {
-    throw new Error(`Catalog API returned an invalid response (HTTP ${response.status}).`);
+    throw new Error(`Không tải được dữ liệu sản phẩm (HTTP ${response.status}). Vui lòng thử lại.`);
   }
   if (typeof payload !== "object" || payload === null) {
-    throw new Error("Catalog API returned an invalid response.");
+    throw new Error("Dữ liệu sản phẩm nhận được không hợp lệ. Vui lòng thử lại.");
   }
   const record = payload as Record<string, unknown>;
   if (!response.ok) {
@@ -443,7 +445,7 @@ async function fetchPayloadAt<T>(
     throw new Error(message);
   }
   if (requireDataEnvelope && !("data" in record)) {
-    throw new Error("Catalog API returned an invalid response.");
+    throw new Error("Dữ liệu sản phẩm nhận được không hợp lệ. Vui lòng thử lại.");
   }
   return payload as T;
 }
@@ -487,7 +489,7 @@ export async function fetchCatalogProduct(
     signal,
   );
   if (typeof response.data !== "object" || response.data === null) {
-    throw new Error("Catalog API returned an invalid product.");
+    throw new Error("Dữ liệu sản phẩm nhận được không hợp lệ. Vui lòng thử lại.");
   }
   return response;
 }
@@ -539,7 +541,7 @@ export async function estimateGamingPerformance(
   try {
     payload = await response.json();
   } catch {
-    throw new Error(`Catalog API returned an invalid response (HTTP ${response.status}).`);
+    throw new Error(`Không tải được dữ liệu sản phẩm (HTTP ${response.status}). Vui lòng thử lại.`);
   }
   if (!response.ok) {
     const body = payload as { message?: unknown; detail?: unknown; error?: { message?: unknown } };
@@ -561,7 +563,7 @@ export async function fetchAdminCatalogProduct(
     "include",
   );
   if (typeof response.data !== "object" || response.data === null) {
-    throw new Error("Catalog API returned an invalid product.");
+    throw new Error("Dữ liệu sản phẩm nhận được không hợp lệ. Vui lòng thử lại.");
   }
   return response;
 }
@@ -641,13 +643,13 @@ export async function updateGpuCatalogSpecifications(
     headers: { Accept: "application/json" },
   });
   if (!csrfResponse.ok) {
-    throw new Error(`Could not obtain a CSRF token (HTTP ${csrfResponse.status}).`);
+    throw new Error(`Không lấy được mã xác thực yêu cầu (HTTP ${csrfResponse.status}). Vui lòng tải lại trang.`);
   }
 
   const csrfPayload: unknown = await csrfResponse.json();
   if (typeof csrfPayload !== "object" || csrfPayload === null
       || !("token" in csrfPayload) || typeof csrfPayload.token !== "string") {
-    throw new Error("Authentication service returned an invalid CSRF token.");
+    throw new Error("Không nhận được mã xác thực yêu cầu. Vui lòng tải lại trang.");
   }
 
   const response = await fetch(
@@ -676,7 +678,7 @@ export async function updateGpuCatalogSpecifications(
       }
 
     } catch {
-      throw new Error(`Catalog API returned an invalid error response (HTTP ${response.status}).`);
+      throw new Error(`Không tải được dữ liệu sản phẩm (HTTP ${response.status}). Vui lòng thử lại.`);
     }
     throw new Error(message);
   }
@@ -692,11 +694,11 @@ async function adminWrite<T>(
     credentials: "include",
     headers: { Accept: "application/json" },
   });
-  if (!csrfResponse.ok) throw new Error(`Could not obtain a CSRF token (HTTP ${csrfResponse.status}).`);
+  if (!csrfResponse.ok) throw new Error(`Không lấy được mã xác thực yêu cầu (HTTP ${csrfResponse.status}). Vui lòng tải lại trang.`);
   const csrfPayload: unknown = await csrfResponse.json();
   if (typeof csrfPayload !== "object" || csrfPayload === null
       || !("token" in csrfPayload) || typeof csrfPayload.token !== "string") {
-    throw new Error("Authentication service returned an invalid CSRF token.");
+    throw new Error("Không nhận được mã xác thực yêu cầu. Vui lòng tải lại trang.");
   }
   const headers: Record<string, string> = {
     Accept: "application/json",
@@ -718,7 +720,7 @@ async function adminWrite<T>(
     const error = record.error;
     throw new Error(typeof error === "object" && error !== null
         && "message" in error && typeof error.message === "string"
-      ? error.message : `Catalog request failed (HTTP ${response.status}).`);
+      ? error.message : `Không thể xử lý yêu cầu (HTTP ${response.status}). Vui lòng thử lại.`);
   }
   return payload as T;
 }
@@ -736,7 +738,7 @@ async function adminRead<T>(url: string, signal?: AbortSignal): Promise<T> {
     const error = record.error;
     throw new Error(typeof error === "object" && error !== null
         && "message" in error && typeof error.message === "string"
-      ? error.message : `Catalog request failed (HTTP ${response.status}).`);
+      ? error.message : `Không thể xử lý yêu cầu (HTTP ${response.status}). Vui lòng thử lại.`);
   }
   return payload as T;
 }

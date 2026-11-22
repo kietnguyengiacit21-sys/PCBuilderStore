@@ -500,7 +500,34 @@ public class CartService {
         }
     }
 
+    /**
+     * Drops upgrade choices whose option or group was disabled after the item was added, so the PC
+     * falls back to its standard part instead of blocking checkout. Returns the retired option names
+     * per cart item so the cart can tell the customer once.
+     */
+    private Map<BigDecimal, List<String>> pruneRetiredUpgrades(BigDecimal cartId) {
+        Map<BigDecimal, List<String>> retired = new java.util.HashMap<>();
+        jdbc.query("""
+                DELETE FROM "cart_item_upgrade_selections" s
+                USING "cart_items" ci
+                WHERE ci."cart_item_id" = s."cart_item_id" AND ci."cart_id" = ?
+                  AND NOT EXISTS (
+                      SELECT 1 FROM "product_upgrade_options" o
+                      JOIN "product_upgrade_groups" g ON g."upgrade_group_id" = o."upgrade_group_id"
+                      WHERE o."upgrade_option_id" = s."upgrade_option_id"
+                        AND o."upgrade_group_id" = s."upgrade_group_id"
+                        AND o."is_enabled" AND g."is_enabled")
+                RETURNING s."cart_item_id",
+                          (SELECT o."display_name" FROM "product_upgrade_options" o
+                           WHERE o."upgrade_option_id" = s."upgrade_option_id") AS "optionName"
+                """, (org.springframework.jdbc.core.RowCallbackHandler) rs -> retired
+                        .computeIfAbsent(rs.getBigDecimal(1), ignored -> new java.util.ArrayList<>())
+                        .add(rs.getString(2) == null ? "đã chọn" : rs.getString(2)), cartId);
+        return retired;
+    }
+
     private CartResponse readCart(BigDecimal cartId) {
+        Map<BigDecimal, List<String>> retired = pruneRetiredUpgrades(cartId);
         List<CartItem> items = jdbc.query("""
                 SELECT po."offer_id"::text AS "offerId",
                        ci."cart_item_id" AS "cartItemId",
@@ -517,19 +544,22 @@ public class CartService {
                        p."product_status" AS "productStatus",
                        p."product_id" AS "productId",
                        pt."type_code" AS "productType",
-                       po."condition_code" AS "conditionCode"
+                       po."condition_code" AS "conditionCode",
+                       (SELECT im."image_url" FROM "product_images" im
+                        WHERE im."product_id" = p."product_id"
+                        ORDER BY im."is_primary" DESC, im."sort_order", im."image_id" LIMIT 1) AS "imageUrl"
                 FROM "cart_items" ci
                 JOIN "product_offers" po ON po."offer_id" = ci."offer_id"
                 JOIN "products" p ON p."product_id" = po."product_id"
                 JOIN "product_types" pt ON pt."product_type_id" = p."product_type_id"
                 WHERE ci."cart_id" = ?
                 ORDER BY ci."added_at", ci."cart_item_id"
-                """, this::mapCartItem, cartId);
+                """, (rs, row) -> mapCartItem(rs, retired.get(rs.getBigDecimal("cartItemId"))), cartId);
         int itemCount = items.stream().mapToInt(CartItem::quantity).sum();
         return new CartResponse(List.copyOf(items), itemCount);
     }
 
-    private CartItem mapCartItem(ResultSet rs, int row) throws SQLException {
+    private CartItem mapCartItem(ResultSet rs, List<String> retiredUpgrades) throws SQLException {
         int available = rs.getInt("availableQuantity");
         int quantity = rs.getInt("quantity");
         boolean active = "ACTIVE".equals(rs.getString("offerStatus"))
@@ -554,20 +584,29 @@ public class CartService {
                     List.of(),
                     List.of(),
                     List.of(),
-                    null);
+                    null,
+                    rs.getString("imageUrl"),
+                    rs.getString("productType"));
         }
         ProductUpgradeService.ResolvedConfiguration resolved = null;
+        String configurationProblem = null;
         if (active && "PC".equals(rs.getString("productType"))
                 && "NEW".equals(rs.getString("conditionCode"))) {
-            resolved = upgrades.resolve(
-                    rs.getBigDecimal("productId"), rs.getString("conditionCode"), rs.getString("currency"),
-                    quantity, selectedUpgrades(rs.getBigDecimal("cartItemId")),
-                    selectedBundles(rs.getBigDecimal("cartItemId")));
-            available = componentInventory.sellableQuantity(
-                    rs.getBigDecimal("productId"), resolved.substitutions());
-            for (ProductUpgradeService.BundleOffer item : resolved.bundleOffers()) {
-                available = Math.min(available, itemAvailable(item.offerId())
-                        / item.quantityPerPc());
+            try {
+                resolved = upgrades.resolve(
+                        rs.getBigDecimal("productId"), rs.getString("conditionCode"), rs.getString("currency"),
+                        quantity, selectedUpgrades(rs.getBigDecimal("cartItemId")),
+                        selectedBundles(rs.getBigDecimal("cartItemId")));
+                available = componentInventory.sellableQuantity(
+                        rs.getBigDecimal("productId"), resolved.substitutions());
+                for (ProductUpgradeService.BundleOffer item : resolved.bundleOffers()) {
+                    available = Math.min(available, itemAvailable(item.offerId())
+                            / item.quantityPerPc());
+                }
+            } catch (org.springframework.web.server.ResponseStatusException exception) {
+                // A saved upgrade choice was retired after the item was added (group disabled, option
+                // removed). Flag this line instead of failing the whole cart.
+                configurationProblem = "Tùy chọn nâng cấp của PC này đã thay đổi. Hãy xóa sản phẩm và thêm lại với cấu hình mới.";
             }
         }
         BigDecimal unitPrice = rs.getBigDecimal("unitPrice");
@@ -577,18 +616,19 @@ public class CartService {
                 rs.getString("conditionCode"),
                 unitPrice,
                 currency);
-        String availability = !active ? "UNAVAILABLE"
+        String availability = !active || configurationProblem != null ? "UNAVAILABLE"
                 : unitPrice == null || unitPrice.signum() < 0
                         || currency == null || !currency.matches("[A-Z]{3}") ? "INVALID_PRICE"
                 : resolved != null && !resolved.available() ? "INSUFFICIENT_STOCK"
                 : available <= 0 ? "OUT_OF_STOCK"
                 : available < quantity ? "INSUFFICIENT_STOCK" : "AVAILABLE";
-        String message = switch (availability) {
+        String message = configurationProblem != null ? configurationProblem : switch (availability) {
             case "UNAVAILABLE" -> "Sản phẩm hiện không thể mua.";
             case "INVALID_PRICE" -> "Thông tin giá của sản phẩm chưa được xác minh.";
             case "OUT_OF_STOCK" -> "Sản phẩm hiện đã hết hàng.";
             case "INSUFFICIENT_STOCK" -> "Số lượng trong giỏ vượt quá số lượng còn lại.";
-            default -> "";
+            default -> retiredUpgrades == null ? "" : "Tùy chọn nâng cấp \"" + String.join("\", \"", retiredUpgrades)
+                    + "\" đã ngừng áp dụng nên PC được đưa về cấu hình tiêu chuẩn. Giá đã được cập nhật lại.";
         };
         BigDecimal priceDifference = resolved == null
                 ? BigDecimal.ZERO : resolved.componentPriceDifference();
@@ -620,7 +660,9 @@ public class CartService {
                 pricing.appliedPromotions(),
                 pricing.availableGifts(),
                 selectedGifts(rs.getBigDecimal("cartItemId")),
-                resolved == null ? null : resolved.cartView());
+                resolved == null ? null : resolved.cartView(),
+                rs.getString("imageUrl"),
+                rs.getString("productType"));
     }
 
     private List<UpgradeSelection> selectedUpgrades(BigDecimal cartItemId) {

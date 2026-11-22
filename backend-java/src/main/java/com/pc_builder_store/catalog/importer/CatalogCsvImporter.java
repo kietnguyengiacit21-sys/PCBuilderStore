@@ -244,6 +244,13 @@ public final class CatalogCsvImporter {
         }
     }
 
+    /** Parses and validates CSV text uploaded from the admin screen (no evidence file). */
+    List<CatalogCsvRow> parseAndValidate(String csv) {
+        List<CatalogCsvRow> rows = parseRecords(csv, null, objectMapper);
+        validateDataset(rows);
+        return rows;
+    }
+
     public void validateExistingAttributeDefinitionTypes() {
         Map<AttributeKey, String> existingTypes = new HashMap<>();
         jdbcTemplate.queryForList("""

@@ -134,12 +134,12 @@ class GamingPerformanceServiceTest {
     private PublicUpgradeOption gpuOption(String id, String modelCode, String name) {
         return new PublicUpgradeOption(id, id, "1", modelCode, name, "GPU",
                 BigDecimal.ZERO, "VND", 10, BigDecimal.ZERO, name, null,
-                "gpu-default".equals(id), 1, 1, 0);
+                "gpu-default".equals(id), 1, 1, 0, null);
     }
 
     private PublicUpgradeOption componentOption(String id, String name, String type, int quantity) {
         return new PublicUpgradeOption(id, id, "1", name, name, type,
                 BigDecimal.ZERO, "VND", 10, BigDecimal.ZERO, name, null,
-                false, quantity, quantity, 0);
+                false, quantity, quantity, 0, null);
     }
 }

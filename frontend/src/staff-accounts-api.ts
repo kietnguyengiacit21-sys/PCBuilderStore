@@ -1,3 +1,5 @@
+import { apiGet, apiSend } from "./api-client";
+
 export interface StaffAccount {
   userId: string;
   fullName: string;
@@ -5,6 +7,10 @@ export interface StaffAccount {
   roleCode: "ADMIN" | "SALES" | "CUSTOMER";
   accountStatus: string;
   updatedAt: string | null;
+  phone?: string | null;
+  createdAt?: string | null;
+  lastLoginAt?: string | null;
+  mustChangePassword?: boolean;
 }
 
 const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "/api").replace(/\/$/, "");
@@ -39,20 +45,6 @@ async function csrfToken(): Promise<string> {
   return payload.token;
 }
 
-export async function fetchStaffAccounts(search: string): Promise<StaffAccount[]> {
-  const query = search.trim();
-  const params = new URLSearchParams();
-  if (query) params.set("q", query);
-  const response = await fetch(`${apiBaseUrl}/admin/accounts${params.size ? `?${params}` : ""}`, {
-    credentials: "include",
-    headers: { Accept: "application/json" },
-  });
-  if (!response.ok) throw await readError(response);
-  const payload: unknown = await response.json();
-  if (!Array.isArray(payload)) throw new Error("Danh sách tài khoản không hợp lệ.");
-  return payload as StaffAccount[];
-}
-
 export async function updateStaffAccountRole(
   userId: string,
   roleCode: "CUSTOMER" | "SALES",
@@ -81,3 +73,54 @@ export async function updateStaffAccountRole(
   }
   return payload as StaffAccount;
 }
+
+export interface AccountWithPassword {
+  account: StaffAccount;
+  /** Shown once; the person must change it after logging in. */
+  temporaryPassword: string;
+}
+
+export interface AccountEvent {
+  type: "ROLE_CHANGED" | "CREATED" | "LOCKED" | "UNLOCKED" | "PASSWORD_RESET_BY_ADMIN" | "PASSWORD_RESET_BY_EMAIL";
+  description: string;
+  actorEmail: string | null;
+  createdAt: string;
+}
+
+export const searchAccounts = (query: string, role: "" | "ADMIN" | "SALES" | "CUSTOMER") => {
+  const params = new URLSearchParams();
+  if (query.trim()) params.set("q", query.trim());
+  if (role) params.set("role", role);
+  return apiGet<StaffAccount[]>(`/admin/accounts${params.size ? `?${params}` : ""}`);
+};
+
+export const createStaffAccount = (input: { fullName: string; email: string; phone: string }) =>
+  apiSend<AccountWithPassword>("/admin/accounts", "POST", input);
+
+export const setAccountStatus = (userId: string, status: "ACTIVE" | "LOCKED", note: string) =>
+  apiSend<StaffAccount>(`/admin/accounts/${encodeURIComponent(userId)}/status`, "PATCH", { status, note });
+
+export const resetAccountPassword = (userId: string) =>
+  apiSend<AccountWithPassword>(`/admin/accounts/${encodeURIComponent(userId)}/password-reset`, "POST");
+
+export const fetchAccountHistory = (userId: string) =>
+  apiGet<AccountEvent[]>(`/admin/accounts/${encodeURIComponent(userId)}/history`);
+
+// --- Operations dashboard (admin + sales) ---------------------------------------
+
+export interface DashboardOverview {
+  ordersToday: number;
+  revenueToday: number;
+  revenue30Days: number;
+  orders30Days: number;
+  averageOrderValue30Days: number;
+  newCustomers30Days: number;
+  pendingReviews: number;
+  ordersByStatus: Record<string, number>;
+  revenueByDay: { day: string; revenue: number; orders: number }[];
+  topProducts: { productName: string; quantity: number; revenue: number }[];
+  lowStock: { modelCode: string; productName: string; productType: string; available: number; threshold: number }[];
+  recentOrders: { orderNumber: string; customerName: string; status: string; paymentStatus: string; total: number; placedAt: string }[];
+}
+
+export const fetchDashboard = (signal?: AbortSignal) => apiGet<DashboardOverview>("/admin/dashboard", signal);

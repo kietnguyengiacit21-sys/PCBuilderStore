@@ -123,7 +123,8 @@ public class AccountService {
             throw badRequest("Mật khẩu mới phải khác mật khẩu hiện tại.");
         }
         jdbc.update("""
-                UPDATE "users" SET "password_hash" = ?, "updated_at" = CURRENT_TIMESTAMP WHERE "user_id" = ?
+                UPDATE "users" SET "password_hash" = ?, "must_change_password" = FALSE, "updated_at" = CURRENT_TIMESTAMP
+                WHERE "user_id" = ?
                 """, passwordEncoder.encode(next), userId(user));
     }
 
@@ -177,6 +178,21 @@ public class AccountService {
             throw badRequest("Mật khẩu cần có cả chữ và số.");
         }
         return value;
+    }
+
+    private static final String TEMPORARY_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
+    private static final java.security.SecureRandom RANDOM = new java.security.SecureRandom();
+
+    /** 12-character temporary password (letters and digits, no look-alike characters). */
+    static String temporaryPassword() {
+        while (true) {
+            StringBuilder password = new StringBuilder();
+            for (int index = 0; index < 12; index++) {
+                password.append(TEMPORARY_ALPHABET.charAt(RANDOM.nextInt(TEMPORARY_ALPHABET.length())));
+            }
+            String value = password.toString();
+            if (value.matches(".*[A-Za-z].*") && value.matches(".*\\d.*")) return value;
+        }
     }
 
     private static ResponseStatusException badRequest(String message) {

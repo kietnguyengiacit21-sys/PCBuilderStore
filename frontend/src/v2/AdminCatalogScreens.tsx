@@ -26,7 +26,9 @@ import type {
   CatalogFacets,
   CatalogProduct,
 } from "../catalog-api";
-import { money } from "../demo/demo-store";
+import { money } from "../money";
+import { fetchAdminBrands, fetchAdminCategories } from "../admin-data-api";
+import type { AdminBrand, AdminCategory } from "../admin-data-api";
 import {
   Badge,
   Card,
@@ -264,6 +266,16 @@ export function AdminProductEditorPage() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [confirmStatus, setConfirmStatus] = useState<string>();
+  // Storefront facets only list categories/brands that already have active products, so a newly
+  // created brand would be unselectable; the admin lists include every active one.
+  const [taxonomy, setTaxonomy] = useState<{ categories: AdminCategory[]; brands: AdminBrand[] }>();
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void Promise.all([fetchAdminCategories(controller.signal), fetchAdminBrands(controller.signal)])
+      .then(([categories, brands]) => setTaxonomy({ categories, brands }), () => undefined);
+    return () => controller.abort();
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -519,8 +531,12 @@ export function AdminProductEditorPage() {
   if (loading) return <div className="v2-page"><LoadingState message="Đang tải trình quản lý sản phẩm…" /></div>;
   if (error && !facets) return <div className="v2-page"><ErrorState title="Không thể mở trình quản lý" message={error} /></div>;
   const typeOptions = facets?.productTypes ?? [];
-  const categoryOptions = facets?.categories ?? [];
-  const brandOptions = facets?.brands ?? [];
+  const categoryOptions = taxonomy
+    ? taxonomy.categories.filter((item) => item.active).map((item) => ({ value: item.categoryCode, label: item.categoryName }))
+    : facets?.categories ?? [];
+  const brandOptions = taxonomy
+    ? taxonomy.brands.filter((item) => item.active).map((item) => ({ value: item.brandName, label: item.brandName }))
+    : facets?.brands ?? [];
   const updateOffer = <K extends keyof OfferFields>(key: K, value: OfferFields[K]) =>
     setOffer((current) => ({ ...current, [key]: value }));
 

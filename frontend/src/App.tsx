@@ -1,4 +1,6 @@
-import { Navigate, Route, Routes } from "react-router-dom";
+import { useEffect } from "react";
+import { Link, Navigate, Route, Routes } from "react-router-dom";
+import { CustomerLayout } from "./v2/components";
 import HealthPage from "./HealthPage";
 import { screens } from "./pages";
 import V2FoundationPreview, { V2AdminShellPreview } from "./v2/V2FoundationPreview";
@@ -7,13 +9,19 @@ import { AuthProvider } from "./v2/auth";
 import { ComparisonProvider } from "./v2/comparison-store";
 
 function NotFound() {
+  useEffect(() => { document.title = "Không tìm thấy trang | PC Builder Store"; }, []);
   return (
-    <main className="v2-theme p-8 text-center">
-      <h1 className="mb-4 text-3xl font-bold" style={{ color: "var(--v2-plum)" }}>Không tìm thấy trang</h1>
-      <a className="underline" style={{ color: "var(--v2-primary)" }} href="/customer/home">
-        Quay lại trang chủ
-      </a>
-    </main>
+    <CustomerLayout>
+      <div className="v2-page v2-not-found">
+        <p className="v2-not-found-code" aria-hidden="true">404</p>
+        <h1>Không tìm thấy trang</h1>
+        <p>Trang bạn tìm có thể đã được đổi địa chỉ hoặc không còn tồn tại.</p>
+        <div className="v2-action-row">
+          <Link className="v2-button v2-button-primary" to="/customer/home">Về trang chủ</Link>
+          <Link className="v2-button v2-button-secondary" to="/customer/parts">Xem sản phẩm</Link>
+        </div>
+      </div>
+    </CustomerLayout>
   );
 }
 

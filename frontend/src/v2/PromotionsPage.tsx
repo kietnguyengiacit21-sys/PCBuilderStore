@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { fetchCatalogProducts } from "../catalog-api";
 import type { CatalogProduct } from "../catalog-api";
+import { money } from "../money";
 import {
   archivePromotionCampaign,
   fetchProductPromotions,
@@ -41,7 +42,7 @@ const emptyCampaign = (): CampaignDraft => ({
   endsAt: "",
   priority: 100,
   exclusive: false,
-  enabled: false,
+  enabled: true,
 });
 
 const emptyPromotion = (campaignId: string): PromotionDraft => ({
@@ -58,11 +59,65 @@ const emptyPromotion = (campaignId: string): PromotionDraft => ({
   endsAt: "",
   priority: 100,
   exclusive: false,
-  enabled: false,
+  enabled: true,
   gifts: [],
 });
 
-const localInputDate = (value: string | null) => value ? value.slice(0, 16) : "";
+/** The API returns "2026-11-22 08:00:00"; datetime-local inputs need "2026-11-22T08:00". */
+const localInputDate = (value: string | null) => value ? value.replace(" ", "T").slice(0, 16) : "";
+
+const parseDate = (value: string | null) => value ? new Date(value.replace(" ", "T")) : null;
+
+function dateText(value: string | null) {
+  const date = parseDate(value);
+  if (!date || Number.isNaN(date.getTime())) return null;
+  const time = date.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+  return `${date.toLocaleDateString("vi-VN")} ${time}`;
+}
+
+function scheduleText(startsAt: string | null, endsAt: string | null) {
+  if (!startsAt && !endsAt) return "Không giới hạn thời gian";
+  return `${dateText(startsAt) ?? "Ngay khi bật"} → ${dateText(endsAt) ?? "không giới hạn"}`;
+}
+
+function scheduleStatus(item: { enabled: boolean; startsAt: string | null; endsAt: string | null }) {
+  if (!item.enabled) return { label: "Đang tắt", tone: "neutral" as const };
+  const now = Date.now();
+  const starts = parseDate(item.startsAt);
+  const ends = parseDate(item.endsAt);
+  if (starts && starts.getTime() > now) return { label: "Chưa bắt đầu", tone: "gold" as const };
+  if (ends && ends.getTime() <= now) return { label: "Đã kết thúc", tone: "warning" as const };
+  return { label: "Đang chạy", tone: "success" as const };
+}
+
+const discountValueLabel: Record<ProductPromotion["discountType"], string> = {
+  PERCENTAGE: "Phần trăm giảm (%)",
+  FIXED_AMOUNT: "Số tiền giảm",
+  FIXED_PRICE: "Giá bán trong chương trình",
+};
+
+function describeDiscount(item: Pick<ProductPromotion, "discountType" | "discountValue" | "discountCurrencyCode">) {
+  const currency = item.discountCurrencyCode ?? "VND";
+  if (item.discountType === "PERCENTAGE") return `Giảm ${Number(item.discountValue)}%`;
+  if (item.discountType === "FIXED_AMOUNT") return `Giảm ${money(item.discountValue, currency)}`;
+  return `Giá còn ${money(item.discountValue, currency)}`;
+}
+
+const conditionLabels: Record<string, string> = { NEW: "Hàng mới", LIKE_NEW: "Như mới", USED: "Đã qua sử dụng" };
+
+/** Price of the product's offer before any promotion, used for the live preview. */
+function previewPrice(product: CatalogProduct | undefined, draft: PromotionDraft) {
+  const offer = product?.offers.find((item) => item.status === "ACTIVE" && draft.conditions.includes(item.condition))
+    ?? product?.offers.find((item) => item.status === "ACTIVE");
+  if (!offer) return null;
+  const base = Number(offer.basePrice ?? offer.price);
+  if (!Number.isFinite(base)) return null;
+  const value = Number(draft.discountValue) || 0;
+  const after = draft.discountType === "PERCENTAGE" ? base * (1 - Math.min(value, 100) / 100)
+    : draft.discountType === "FIXED_AMOUNT" ? base - value
+      : value;
+  return { base, after: Math.max(0, Math.min(base, after)), currency: offer.currency, condition: offer.condition };
+}
 
 async function fetchAllProducts(): Promise<CatalogProduct[]> {
   const firstPage = await fetchCatalogProducts({ page: 1, limit: 100 });
@@ -84,6 +139,9 @@ export function PromotionsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [campaignError, setCampaignError] = useState("");
+  const [promotionError, setPromotionError] = useState("");
+  const [productQuery, setProductQuery] = useState("");
   const [notice, setNotice] = useState("");
   const [archiveTarget, setArchiveTarget] = useState<PromotionCampaign | null>(null);
 
@@ -100,6 +158,14 @@ export function PromotionsPage() {
         offerId: offer.offerId,
         label: `${product.productName} · ${product.modelCode}`,
       }))), [products]);
+  const productOptions = useMemo(() => {
+    const terms = productQuery.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    if (!terms.length) return products;
+    return products.filter((product) => product.productId === promotionDraft.productId || terms.every((term) =>
+      `${product.productName} ${product.modelCode} ${product.brandName ?? ""} ${product.categoryName ?? ""}`
+        .toLowerCase().includes(term)));
+  }, [products, productQuery, promotionDraft.productId]);
+  const preview = previewPrice(promotionProduct, promotionDraft);
 
   const loadCampaigns = async (keepSelected = true) => {
     const items = await fetchPromotionCampaigns();
@@ -157,11 +223,16 @@ export function PromotionsPage() {
   const saveCampaign = async (event: FormEvent) => {
     event.preventDefault();
     setSaving(true);
-    setError("");
+    setCampaignError("");
     setNotice("");
     try {
       const { campaignId, ...payload } = campaignDraft;
-      const saved = await savePromotionCampaign(payload, campaignId || undefined);
+      const saved = await savePromotionCampaign({
+        ...payload,
+        campaignCode: payload.campaignCode.trim().toUpperCase(),
+        startsAt: payload.startsAt || null,
+        endsAt: payload.endsAt || null,
+      }, campaignId || undefined);
       await loadCampaigns(false);
       setSelectedCampaignId(saved.campaignId);
       setCampaignDraft({
@@ -171,9 +242,9 @@ export function PromotionsPage() {
         endsAt: localInputDate(saved.endsAt),
       });
       setPromotionDraft(emptyPromotion(saved.campaignId));
-      setNotice("Đã lưu chương trình khuyến mãi.");
+      setNotice(campaignId ? "Đã cập nhật chương trình." : "Đã tạo chương trình. Giờ hãy thêm sản phẩm được ưu đãi ở bên dưới.");
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Không thể lưu chương trình.");
+      setCampaignError(reason instanceof Error ? reason.message : "Không thể lưu chương trình.");
     } finally {
       setSaving(false);
     }
@@ -181,35 +252,44 @@ export function PromotionsPage() {
 
   const savePromotion = async (event: FormEvent) => {
     event.preventDefault();
+    setPromotionError("");
     if (!selectedCampaignId) {
-      setError("Hãy tạo hoặc chọn chương trình trước.");
+      setPromotionError("Hãy tạo hoặc chọn chương trình trước.");
+      return;
+    }
+    if (!promotionDraft.conditions.length) {
+      setPromotionError("Chọn ít nhất một tình trạng hàng được áp dụng.");
       return;
     }
     setSaving(true);
-    setError("");
     setNotice("");
     try {
       const { promotionId, ...payload } = promotionDraft;
-      await saveProductPromotion(payload, promotionId || undefined);
+      await saveProductPromotion({
+        ...payload,
+        startsAt: payload.startsAt || null,
+        endsAt: payload.endsAt || null,
+      }, promotionId || undefined);
       await loadPromotions(selectedCampaignId);
       setPromotionDraft(emptyPromotion(selectedCampaignId));
-      setNotice("Đã lưu ưu đãi sản phẩm.");
+      setProductQuery("");
+      setNotice(promotionId ? "Đã cập nhật ưu đãi." : "Đã thêm ưu đãi sản phẩm.");
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Không thể lưu ưu đãi.");
+      setPromotionError(reason instanceof Error ? reason.message : "Không thể lưu ưu đãi.");
     } finally {
       setSaving(false);
     }
   };
 
   const togglePromotion = async (promotion: ProductPromotion) => {
-    setError("");
+    setPromotionError("");
     setNotice("");
     try {
       await setProductPromotionEnabled(promotion.promotionId, !promotion.enabled);
       await loadPromotions(selectedCampaignId);
-      setNotice(promotion.enabled ? "Đã tắt ưu đãi." : "Đã kích hoạt ưu đãi.");
+      setNotice(promotion.enabled ? "Đã tắt ưu đãi." : "Đã bật ưu đãi.");
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Không thể cập nhật ưu đãi.");
+      setPromotionError(reason instanceof Error ? reason.message : "Không thể cập nhật ưu đãi.");
     }
   };
 
@@ -309,8 +389,10 @@ export function PromotionsPage() {
                 }}
               >
                 <strong>{campaign.campaignName}</strong>
-                <span>{campaign.enabled ? "Đang bật" : "Đang tắt"} · Ưu tiên {campaign.priority}</span>
+                <span>{campaign.campaignCode}{campaign.campaignTag ? ` · ${campaign.campaignTag}` : ""} · Ưu tiên {campaign.priority}</span>
+                <span>{scheduleText(campaign.startsAt, campaign.endsAt)}</span>
               </button>
+              <Badge tone={scheduleStatus(campaign).tone}>{scheduleStatus(campaign).label}</Badge>
               <SecondaryButton type="button" onClick={() => editCampaign(campaign)}>Sửa</SecondaryButton>
               <SecondaryButton type="button" onClick={() => setArchiveTarget(campaign)}>Lưu trữ</SecondaryButton>
             </div>)}
@@ -318,24 +400,29 @@ export function PromotionsPage() {
             <EmptyState title="Chưa có chương trình" message="Tạo chương trình đầu tiên để bắt đầu." />}
           <SecondaryButton type="button" onClick={() => {
             setCampaignDraft(emptyCampaign());
+            setCampaignError("");
             setSelectedCampaignId("");
+            document.getElementById("promo-campaign-code")?.focus();
           }}>Tạo chương trình mới</SecondaryButton>
         </div>
       </Card>
       <Card title={campaignDraft.campaignId ? "Chỉnh sửa chương trình" : "Tạo chương trình"}>
         <form className="v2-form-stack" onSubmit={saveCampaign}>
-          <div className="v2-form-grid">
-            <FormField label="Mã chương trình" htmlFor="promo-campaign-code">
+          <div className="v2-form-grid v2-promotion-campaign-grid">
+            <FormField label="Mã chương trình" htmlFor="promo-campaign-code"
+              hint={campaignDraft.campaignId ? "Mã không đổi được sau khi tạo." : "Chữ không dấu, số, - hoặc _. Ví dụ: BLACK-FRIDAY-2026"}>
               <input id="promo-campaign-code" className="v2-form-input" required maxLength={60}
+                pattern="[A-Za-z0-9][A-Za-z0-9_\-]*" title="Chỉ dùng chữ không dấu, số, dấu gạch ngang hoặc gạch dưới."
+                placeholder="BLACK-FRIDAY-2026"
                 disabled={Boolean(campaignDraft.campaignId)} value={campaignDraft.campaignCode}
-                onChange={(event) => setCampaign("campaignCode", event.target.value)} />
+                onChange={(event) => setCampaign("campaignCode", event.target.value.toUpperCase())} />
             </FormField>
             <FormField label="Tên chương trình" htmlFor="promo-campaign-name">
               <input id="promo-campaign-name" className="v2-form-input" required maxLength={200}
                 value={campaignDraft.campaignName} onChange={(event) => setCampaign("campaignName", event.target.value)} />
             </FormField>
-            <FormField label="Nhãn" htmlFor="promo-campaign-tag">
-              <input id="promo-campaign-tag" className="v2-form-input" maxLength={100}
+            <FormField label="Nhãn (không bắt buộc)" htmlFor="promo-campaign-tag">
+              <input id="promo-campaign-tag" className="v2-form-input" maxLength={80} placeholder="Ví dụ: Sale cuối năm"
                 value={campaignDraft.campaignTag} onChange={(event) => setCampaign("campaignTag", event.target.value)} />
             </FormField>
             <FormField label="Ưu tiên (số nhỏ hơn được áp dụng trước)" htmlFor="promo-campaign-priority">
@@ -355,7 +442,10 @@ export function PromotionsPage() {
             onChange={(event) => setCampaign("exclusive", event.target.checked)} /> Chương trình độc quyền</label>
           <label className="v2-checkbox-row"><input type="checkbox" checked={campaignDraft.enabled}
             onChange={(event) => setCampaign("enabled", event.target.checked)} /> Kích hoạt chương trình</label>
-          <PrimaryButton type="submit" disabled={saving}>{saving ? "Đang lưu…" : "Lưu chương trình"}</PrimaryButton>
+          <p className="v2-promotion-hint">Để trống ngày bắt đầu/kết thúc nếu chương trình chạy ngay và không giới hạn thời gian.
+            Ưu đãi chỉ hiện trên cửa hàng khi cả chương trình và ưu đãi đều đang bật.</p>
+          {campaignError && <p className="v2-inline-error" role="alert">{campaignError}</p>}
+          <PrimaryButton type="submit" disabled={saving}>{saving ? "Đang lưu…" : campaignDraft.campaignId ? "Lưu thay đổi" : "Tạo chương trình"}</PrimaryButton>
         </form>
       </Card>
     </div>
@@ -364,11 +454,19 @@ export function PromotionsPage() {
       {!selectedCampaignId
         ? <EmptyState title="Chưa chọn chương trình" message="Tạo hoặc chọn chương trình để quản lý ưu đãi." />
         : <div className="v2-form-stack">
+          {!promotions.length && <p className="v2-promotion-hint">Chương trình này chưa có sản phẩm nào. Thêm ưu đãi đầu tiên bằng biểu mẫu bên dưới.</p>}
           {promotions.map((promotion) => <div className="v2-promotion-row" key={promotion.promotionId}>
-            <div><strong>{promotion.productName}</strong><span>{promotion.discountType} · {promotion.discountValue}{promotion.discountCurrencyCode ? ` ${promotion.discountCurrencyCode}` : ""} · Ưu tiên {promotion.priority}</span>
-              <span>{promotion.gifts.length ? `${promotion.gifts.length} quà tặng` : "Không kèm quà"}</span></div>
-            <Badge tone={promotion.enabled ? "success" : "neutral"}>{promotion.enabled ? "Đang bật" : "Đang tắt"}</Badge>
-            <SecondaryButton type="button" onClick={() => editPromotion(promotion)}>Sửa</SecondaryButton>
+            <div><strong>{promotion.productName}</strong>
+              <span>{promotion.modelCode} · {describeDiscount(promotion)}{promotion.saleBadge ? ` · nhãn "${promotion.saleBadge}"` : ""}</span>
+              <span>{promotion.conditions.map((condition) => conditionLabels[condition] ?? condition).join(", ")}
+                {" · "}{scheduleText(promotion.startsAt, promotion.endsAt)}
+                {" · "}{promotion.gifts.length ? `${promotion.gifts.length} quà tặng` : "Không kèm quà"}</span></div>
+            <Badge tone={scheduleStatus(promotion).tone}>{scheduleStatus(promotion).label}</Badge>
+            <SecondaryButton type="button" onClick={() => {
+              editPromotion(promotion);
+              setPromotionError("");
+              document.getElementById("promo-product")?.scrollIntoView({ behavior: "smooth", block: "center" });
+            }}>Sửa</SecondaryButton>
             <SecondaryButton type="button" onClick={() => void togglePromotion(promotion)}>
               {promotion.enabled ? "Tắt" : "Bật"}
             </SecondaryButton>
@@ -376,6 +474,10 @@ export function PromotionsPage() {
           <form className="v2-form-stack v2-promotion-form" onSubmit={savePromotion}>
             <h2>{promotionDraft.promotionId ? "Chỉnh sửa ưu đãi" : "Thêm ưu đãi sản phẩm"}</h2>
             <div className="v2-form-grid">
+              <FormField label="Tìm sản phẩm" htmlFor="promo-product-search" hint={`${productOptions.length} / ${products.length} sản phẩm`}>
+                <input id="promo-product-search" className="v2-form-input" type="search" placeholder="Tên, mã model, hãng…"
+                  value={productQuery} onChange={(event) => setProductQuery(event.target.value)} />
+              </FormField>
               <FormField label="Sản phẩm" htmlFor="promo-product">
                 <select id="promo-product" className="v2-form-input" required value={promotionDraft.productId}
                   onChange={(event) => {
@@ -389,7 +491,7 @@ export function PromotionsPage() {
                     }));
                   }}>
                   <option value="">Chọn sản phẩm</option>
-                  {products.map((product) => <option key={product.productId} value={product.productId}>
+                  {productOptions.map((product) => <option key={product.productId} value={product.productId}>
                     {product.productName} · {product.modelCode}
                   </option>)}
                 </select>
@@ -406,9 +508,9 @@ export function PromotionsPage() {
                         : promotionCurrencies[0] ?? null,
                     }));
                   }}>
-                  <option value="PERCENTAGE">Phần trăm</option>
-                  <option value="FIXED_AMOUNT">Giảm số tiền</option>
-                  <option value="FIXED_PRICE">Giá chiến dịch</option>
+                  <option value="PERCENTAGE">Giảm theo phần trăm</option>
+                  <option value="FIXED_AMOUNT">Giảm một số tiền</option>
+                  <option value="FIXED_PRICE">Đặt giá bán trong chương trình</option>
                 </select>
               </FormField>
               {promotionDraft.discountType !== "PERCENTAGE" && <FormField label="Đơn vị tiền tệ" htmlFor="promo-discount-currency"
@@ -420,8 +522,11 @@ export function PromotionsPage() {
                   {promotionCurrencies.map((currency) => <option key={currency} value={currency}>{currency}</option>)}
                 </select>
               </FormField>}
-              <FormField label="Giá trị" htmlFor="promo-discount-value">
-                <input id="promo-discount-value" className="v2-form-input" required type="number" min="0" step="any"
+              <FormField label={discountValueLabel[promotionDraft.discountType]} htmlFor="promo-discount-value"
+                hint={preview ? `Giá hiện tại ${money(preview.base, preview.currency)} → sau ưu đãi ${money(preview.after, preview.currency)}` : undefined}>
+                <input id="promo-discount-value" className="v2-form-input" required type="number" min="0"
+                  max={promotionDraft.discountType === "PERCENTAGE" ? 100 : undefined}
+                  step={promotionDraft.discountType === "PERCENTAGE" ? "any" : "1000"}
                   value={promotionDraft.discountValue}
                   onChange={(event) => setPromotion("discountValue", Number(event.target.value))} />
               </FormField>
@@ -490,10 +595,13 @@ export function PromotionsPage() {
                   giftOfferId: "", quantity: 1, selectionRequired: false, displayOrder: promotionDraft.gifts.length,
                 }])}>Thêm quà tặng</SecondaryButton>
             </div>
+            {promotionError && <p className="v2-inline-error" role="alert">{promotionError}</p>}
             <div className="v2-action-row">
-              <PrimaryButton type="submit" disabled={saving}>{saving ? "Đang lưu…" : "Lưu ưu đãi"}</PrimaryButton>
-              {promotionDraft.promotionId && <SecondaryButton type="button" onClick={() =>
-                setPromotionDraft(emptyPromotion(selectedCampaignId))}>Hủy chỉnh sửa</SecondaryButton>}
+              <PrimaryButton type="submit" disabled={saving}>{saving ? "Đang lưu…" : promotionDraft.promotionId ? "Lưu thay đổi" : "Thêm ưu đãi"}</PrimaryButton>
+              {promotionDraft.promotionId && <SecondaryButton type="button" onClick={() => {
+                setPromotionDraft(emptyPromotion(selectedCampaignId));
+                setPromotionError("");
+              }}>Hủy chỉnh sửa</SecondaryButton>}
             </div>
           </form>
         </div>}

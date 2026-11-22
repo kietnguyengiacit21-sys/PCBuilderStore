@@ -46,6 +46,10 @@ public class AuthController {
     private final CartService cartService;
     private final GuestCartTokenService guestCartTokens;
     private final AccountService accounts;
+    private final LoginAttemptLimiter limiter;
+    private final AccountStateCache states;
+    private final AuthUserRepository users;
+    private final PasswordResetService passwordResets;
 
     public AuthController(
             AuthenticationManager authenticationManager,
@@ -53,13 +57,21 @@ public class AuthController {
             SessionAuthenticationStrategy sessionAuthenticationStrategy,
             CartService cartService,
             GuestCartTokenService guestCartTokens,
-            AccountService accounts) {
+            AccountService accounts,
+            LoginAttemptLimiter limiter,
+            AccountStateCache states,
+            AuthUserRepository users,
+            PasswordResetService passwordResets) {
         this.authenticationManager = authenticationManager;
         this.securityContextRepository = securityContextRepository;
         this.sessionAuthenticationStrategy = sessionAuthenticationStrategy;
         this.cartService = cartService;
         this.guestCartTokens = guestCartTokens;
         this.accounts = accounts;
+        this.limiter = limiter;
+        this.states = states;
+        this.users = users;
+        this.passwordResets = passwordResets;
     }
 
     @GetMapping("/csrf")
@@ -72,15 +84,28 @@ public class AuthController {
             @Valid @RequestBody LoginRequest request,
             HttpServletRequest servletRequest,
             HttpServletResponse servletResponse) {
+        String clientIp = servletRequest.getRemoteAddr();
+        limiter.checkLogin(request.email(), clientIp);
         Authentication authentication;
         try {
             authentication = authenticationManager.authenticate(
                     UsernamePasswordAuthenticationToken.unauthenticated(request.email(), request.password()));
-        } catch (BadCredentialsException | DisabledException exception) {
+        } catch (DisabledException exception) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiErrorResponse.of("ACCOUNT_LOCKED",
+                    "Tài khoản đã bị khóa. Vui lòng liên hệ cửa hàng để được hỗ trợ."));
+        } catch (BadCredentialsException exception) {
+            limiter.recordFailure(request.email(), clientIp);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ApiErrorResponse.of("INVALID_CREDENTIALS", "Invalid email or password."));
+                    .body(ApiErrorResponse.of("INVALID_CREDENTIALS", "Email hoặc mật khẩu không đúng."));
         } catch (AuthenticationException exception) {
             throw exception;
+        }
+        limiter.recordSuccess(request.email());
+        AuthUserPrincipal user = (AuthUserPrincipal) authentication.getPrincipal();
+        try {
+            users.markLogin(user.userId());
+        } catch (org.springframework.dao.DataAccessException exception) {
+            // The login itself succeeded; the "last login" stamp is informational.
         }
         return startSession(authentication, HttpStatus.OK, servletRequest, servletResponse);
     }
@@ -91,6 +116,8 @@ public class AuthController {
             @RequestBody RegisterRequest request,
             HttpServletRequest servletRequest,
             HttpServletResponse servletResponse) {
+        limiter.checkAction("register:" + servletRequest.getRemoteAddr(), 10, java.time.Duration.ofHours(1),
+                "Bạn đã tạo quá nhiều tài khoản trong thời gian ngắn. Vui lòng thử lại sau.");
         AuthUserPrincipal user = accounts.register(request);
         Authentication authentication =
                 UsernamePasswordAuthenticationToken.authenticated(user, null, user.getAuthorities());
@@ -103,9 +130,33 @@ public class AuthController {
                 || authentication instanceof AnonymousAuthenticationToken) {
             return ResponseEntity.ok(new AuthSessionResponse(false, null));
         }
+        AuthUserPrincipal user = (AuthUserPrincipal) authentication.getPrincipal();
+        AuthUserRepository.AccountState state = states.get(user.userId());
         return ResponseEntity.ok(new AuthSessionResponse(
-                true,
-                AuthUserResponse.from((AuthUserPrincipal) authentication.getPrincipal())));
+                true, AuthUserResponse.from(user, state != null && state.mustChangePassword())));
+    }
+
+    public record PasswordResetRequest(String email) {}
+
+    public record PasswordResetConfirmation(String token, String newPassword) {}
+
+    /** Emails a reset link when the account exists; the answer is the same either way. */
+    @PostMapping("/password-reset/request")
+    public Map<String, String> requestPasswordReset(
+            @RequestBody PasswordResetRequest request, HttpServletRequest servletRequest) {
+        String email = request == null || request.email() == null ? "" : request.email().trim().toLowerCase(java.util.Locale.ROOT);
+        limiter.checkAction("reset-ip:" + servletRequest.getRemoteAddr(), 10, java.time.Duration.ofHours(1),
+                "Bạn đã yêu cầu quá nhiều lần. Vui lòng thử lại sau.");
+        limiter.checkAction("reset-email:" + email, 3, java.time.Duration.ofMinutes(15),
+                "Link đặt lại mật khẩu vừa được gửi. Vui lòng kiểm tra email hoặc thử lại sau 15 phút.");
+        passwordResets.request(email);
+        return Map.of("message", "Nếu email đã đăng ký, chúng tôi đã gửi link đặt lại mật khẩu. Link có hiệu lực trong 30 phút.");
+    }
+
+    @PostMapping("/password-reset/confirm")
+    public Map<String, String> confirmPasswordReset(@RequestBody PasswordResetConfirmation request) {
+        passwordResets.confirm(request == null ? null : request.token(), request == null ? null : request.newPassword());
+        return Map.of("message", "Đã đặt mật khẩu mới. Bạn có thể đăng nhập.");
     }
 
     @GetMapping("/profile")
@@ -131,6 +182,7 @@ public class AuthController {
             @AuthenticationPrincipal AuthUserPrincipal user,
             @RequestBody PasswordChangeRequest request) {
         accounts.changePassword(user, request);
+        states.evict(user.userId());
         return Map.of("message", "Đã đổi mật khẩu.");
     }
 

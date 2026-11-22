@@ -11,7 +11,7 @@ import { customerVisibleOffers, offerOriginalPrice } from "../catalog-api";
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { Badge, Card } from "./components";
-import { money } from "../demo/demo-store";
+import { money } from "../money";
 import {
   getSpecificationGroups,
   specificationDefinitionsFor,

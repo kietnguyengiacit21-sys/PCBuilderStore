@@ -35,7 +35,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class OrderController {
 
     private static final String GUEST_ORDER_RATE_LIMIT_MESSAGE =
-            "Too many guest order attempts. Please try again later.";
+            "Bạn thao tác quá nhiều lần. Vui lòng thử lại sau ít phút.";
 
     private final OrderManagementService service;
     private final GuestCartTokenService guestCartTokens;
@@ -63,7 +63,7 @@ public class OrderController {
         String guestToken = guestCartTokens.tokenFrom(servletRequest);
         if (!StringUtils.hasText(guestToken)) {
             throw new OrderManagementException(HttpStatus.BAD_REQUEST,
-                    "A valid guest cart token is required.");
+                    "Phiên giỏ hàng không hợp lệ. Vui lòng tải lại trang.");
         }
         return service.createGuestOrder(
                 request, idempotencyKey, guestCartTokens.hash(guestToken));
@@ -129,6 +129,22 @@ public class OrderController {
             @Valid @RequestBody CancellationDecisionRequest request,
             @AuthenticationPrincipal AuthUserPrincipal actor) {
         return service.decideCancellation(orderNumber, request, actor);
+    }
+
+    @PostMapping("/admin/{orderNumber}/payment-confirmation")
+    public OrderDetail confirmPayment(
+            @PathVariable String orderNumber,
+            @Valid @RequestBody(required = false) OrderDtos.ManualPaymentRequest request,
+            @AuthenticationPrincipal AuthUserPrincipal actor) {
+        return service.confirmPayment(orderNumber, request == null ? null : request.note(), actor);
+    }
+
+    @PostMapping("/admin/{orderNumber}/refund-confirmation")
+    public OrderDetail confirmManualRefund(
+            @PathVariable String orderNumber,
+            @Valid @RequestBody(required = false) OrderDtos.ManualPaymentRequest request,
+            @AuthenticationPrincipal AuthUserPrincipal actor) {
+        return service.confirmManualRefund(orderNumber, request == null ? null : request.note(), actor);
     }
 
     @PostMapping("/admin/{orderNumber}/refund-retries")

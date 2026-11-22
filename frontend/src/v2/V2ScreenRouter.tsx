@@ -1,29 +1,32 @@
-import { Component } from "react";
+import { Component, useEffect } from "react";
 import type { ErrorInfo, ReactNode } from "react";
 import type { ScreenRoute } from "../pages";
+import { OrdersManagementPage } from "./AdminScreens";
+import { DashboardPage, StaffRolesPage } from "./AdminOperationsScreens";
 import {
   BrandsAdminPage,
   CategoriesAdminPage,
   CsvImportPage,
   CustomerLookupPage,
-  DashboardPage,
-  OrdersManagementPage,
-  StaffRolesPage,
-} from "./AdminScreens";
+  ReviewsAdminPage,
+} from "./AdminDataScreens";
 import {
   AdminProductEditorPage,
   AdminProductManagementPage,
 } from "./AdminCatalogScreens";
 import {
   ComparePage,
-  FacetManagementPage,
   HomePage,
   PartsPage,
   ProductPage,
 } from "./CatalogScreens";
 import { PcBuilderPage } from "./PcBuilderPage";
+import { SavedBuildPage } from "./SavedBuildPage";
 import {
   AccountPage,
+  AdminProfilePage,
+  ForgotPasswordPage,
+  ResetPasswordPage,
   CartPage,
   CheckoutPage,
   LoginPage,
@@ -35,6 +38,7 @@ import {
   RoleGate,
 } from "./CustomerScreens";
 import { PromotionsPage } from "./PromotionsPage";
+import { infoPageContent } from "./InfoPages";
 import { AdminLayout, CustomerLayout, ErrorState } from "./components";
 
 class V2ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
@@ -87,25 +91,37 @@ function screenContent(path: string): ReactNode {
     case "/customer/guest-order-lookup": return <CustomerLayout><GuestOrderLookupPage /></CustomerLayout>;
     case "/customer/register": return <CustomerLayout><RegisterPage /></CustomerLayout>;
     case "/login": return <LoginPage />;
+    case "/customer/forgot-password": return <CustomerLayout><ForgotPasswordPage /></CustomerLayout>;
+    case "/customer/reset-password": return <CustomerLayout><ResetPasswordPage /></CustomerLayout>;
     case "/customer/account": return <CustomerLayout><RoleGate audience="customer"><AccountPage /></RoleGate></CustomerLayout>;
     case "/customer/orders": return <CustomerLayout><RoleGate audience="customer"><OrderHistoryPage /></RoleGate></CustomerLayout>;
     case "/customer/order-detail": return <CustomerLayout><RoleGate audience="customer"><OrderDetailPage /></RoleGate></CustomerLayout>;
     case "/customer/compare": return <CustomerLayout><ComparePage /></CustomerLayout>;
+    case "/build-pc/saved": return <CustomerLayout><SavedBuildPage /></CustomerLayout>;
     case "/admin/dashboard": return <AdminScreen title="Tổng quan điều hành" audience="staff"><DashboardPage /></AdminScreen>;
     case "/admin/products": return <AdminScreen title="Quản lý sản phẩm"><AdminProductManagementPage /></AdminScreen>;
     case "/admin/product-edit": return <AdminScreen title="Tạo / sửa sản phẩm"><AdminProductEditorPage /></AdminScreen>;
     case "/admin/csv-import": return <AdminScreen title="Nhập dữ liệu CSV"><CsvImportPage /></AdminScreen>;
     case "/admin/categories": return <AdminScreen title="Quản lý danh mục"><CategoriesAdminPage /></AdminScreen>;
     case "/admin/brands": return <AdminScreen title="Quản lý thương hiệu"><BrandsAdminPage /></AdminScreen>;
-    case "/admin/orders": return <AdminScreen title="Quản lý đơn hàng"><OrdersManagementPage /></AdminScreen>;
+    case "/admin/orders": return <AdminScreen title="Quản lý đơn hàng" audience="staff"><OrdersManagementPage /></AdminScreen>;
     case "/admin/promotions": return <AdminScreen title="Khuyến mãi và chiến dịch"><PromotionsPage /></AdminScreen>;
-    case "/admin/customers": return <AdminScreen title="Tra cứu khách hàng"><CustomerLookupPage /></AdminScreen>;
-    case "/admin/staff": return <AdminScreen title="Nhân viên và vai trò"><StaffRolesPage /></AdminScreen>;
-    default:
-      return path.startsWith("/build-pc/") ? <CustomerLayout><PcBuilderPage /></CustomerLayout> : <CustomerLayout><FacetManagementPage kind="categories" /></CustomerLayout>;
+    case "/admin/customers": return <AdminScreen title="Tra cứu khách hàng" audience="staff"><CustomerLookupPage /></AdminScreen>;
+    case "/admin/reviews": return <AdminScreen title="Đánh giá sản phẩm" audience="staff"><ReviewsAdminPage /></AdminScreen>;
+    case "/admin/profile": return <AdminScreen title="Tài khoản của tôi" audience="staff"><AdminProfilePage /></AdminScreen>;
+    case "/admin/staff": return <AdminScreen title="Nhân viên và tài khoản"><StaffRolesPage /></AdminScreen>;
+    default: {
+      const info = infoPageContent(path);
+      if (info) return <CustomerLayout>{info}</CustomerLayout>;
+      return path.startsWith("/build-pc/") ? <CustomerLayout><PcBuilderPage /></CustomerLayout> : <CustomerLayout><HomePage /></CustomerLayout>;
+    }
   }
 }
 
 export default function V2ScreenRouter({ screen }: { screen: ScreenRoute }) {
+  useEffect(() => {
+    document.title = screen.path === "/customer/home" ? "PC Builder Store – PC lắp sẵn, linh kiện và gaming gear"
+      : `${screen.title} | PC Builder Store`;
+  }, [screen.path, screen.title]);
   return <V2ErrorBoundary key={screen.path}>{screenContent(screen.path)}</V2ErrorBoundary>;
 }

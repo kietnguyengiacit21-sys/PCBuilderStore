@@ -1,12 +1,18 @@
 import { useEffect, useState } from "react";
-import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, Navigate, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import type { FormEvent, ReactNode } from "react";
 import { useAuth } from "./auth";
+import { changePassword, confirmPasswordReset, fetchProfile, registerAccount, requestPasswordReset, updateProfile } from "../account-api";
+import type { AccountProfile } from "../account-api";
+import { fetchMyBuilds } from "../builds-api";
+import type { SavedBuildSummary } from "../builds-api";
+import { money } from "../money";
 import {
   fetchProductUpgrades,
 } from "../catalog-api";
 import type { PublicUpgradeConfiguration } from "../catalog-api";
 import {
+  clearCart,
   fetchCart,
   removeCartItem,
   updateCartItem,
@@ -37,10 +43,24 @@ import {
   EmptyState,
   ErrorState,
   FormField,
+  IconButton,
   LoadingState,
+  MinusIcon,
+  PlusIcon,
   PrimaryButton,
   SecondaryButton,
 } from "./components";
+import { ProductArtwork } from "./storefront-components";
+import { OrderPaymentInstructions, usePaymentOptions } from "./PaymentComponents";
+import {
+  historyActionText,
+  label,
+  orderStatusText,
+  orderTone,
+  paymentMethodText,
+  paymentStatusText,
+  paymentTone,
+} from "../order-labels";
 
 function redirectForRole(role: string): string {
   if (role === "ADMIN" || role === "SALES") return "/admin/dashboard";
@@ -56,14 +76,45 @@ export function RoleGate({ audience, children }: { audience: "customer" | "staff
     ? user?.roleCode === "ADMIN" || user?.roleCode === "SALES"
     : audience === "admin" ? user?.roleCode === "ADMIN" : user?.roleCode === "CUSTOMER";
   if (!valid) {
-    return <Navigate to={user ? redirectForRole(user.roleCode) : "/login"} replace />;
+    const back = `${window.location.pathname}${window.location.search}`;
+    return <Navigate to={user ? redirectForRole(user.roleCode) : `/login?redirect=${encodeURIComponent(back)}`} replace />;
   }
   return <>{children}</>;
+}
+
+/** Only same-site paths, and only ones the role can open (customers never land on /admin). */
+function safeRedirect(value: string | null, role: string): string | undefined {
+  if (!value || !value.startsWith("/") || value.startsWith("//")) return undefined;
+  const staff = role === "ADMIN" || role === "SALES";
+  if (staff !== value.startsWith("/admin")) return undefined;
+  return value;
+}
+
+/** Where a user with an admin-issued temporary password goes to choose their own. */
+export function passwordChangePath(role: string): string {
+  return role === "CUSTOMER" ? "/customer/account?changePassword=1" : "/admin/profile?changePassword=1";
+}
+
+function PasswordInput({ id, value, onChange, autoComplete, minLength }: {
+  id: string;
+  value: string;
+  onChange: (value: string) => void;
+  autoComplete: string;
+  minLength?: number;
+}) {
+  const [visible, setVisible] = useState(false);
+  return <span className="v2-password-field">
+    <input className="v2-form-input" id={id} type={visible ? "text" : "password"} autoComplete={autoComplete} required
+      minLength={minLength} value={value} onChange={(event) => onChange(event.target.value)} />
+    <button type="button" onClick={() => setVisible((current) => !current)} aria-label={visible ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+      aria-pressed={visible}>{visible ? "Ẩn" : "Hiện"}</button>
+  </span>;
 }
 
 export function LoginPage() {
   const { user, loading, login } = useAuth();
   const navigate = useNavigate();
+  const [params] = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -72,7 +123,7 @@ export function LoginPage() {
   if (loading) {
     return <div className="v2-theme v2-auth-page"><Card className="v2-auth-card"><LoadingState message="Đang tải…" /></Card></div>;
   }
-  if (user) return <Navigate to={redirectForRole(user.roleCode)} replace />;
+  if (user) return <Navigate to={safeRedirect(params.get("redirect"), user.roleCode) ?? redirectForRole(user.roleCode)} replace />;
   return <div className="v2-theme v2-auth-page">
     <Card className="v2-auth-card">
       <p className="v2-eyebrow">PC Builder Store</p>
@@ -83,7 +134,9 @@ export function LoginPage() {
         setError("");
         setSubmitting(true);
         void login(email.trim(), password).then((authenticatedUser) => {
-          navigate(redirectForRole(authenticatedUser.roleCode), { replace: true });
+          navigate(authenticatedUser.mustChangePassword
+            ? passwordChangePath(authenticatedUser.roleCode)
+            : safeRedirect(params.get("redirect"), authenticatedUser.roleCode) ?? redirectForRole(authenticatedUser.roleCode), { replace: true });
         }).catch((reason: unknown) => {
           setError(reason instanceof Error ? reason.message : "Không thể đăng nhập.");
         }).finally(() => setSubmitting(false));
@@ -92,23 +145,162 @@ export function LoginPage() {
           <input className="v2-form-input" id="login-email" type="email" autoComplete="username" required value={email} onChange={(event) => setEmail(event.target.value)} />
         </FormField>
         <FormField label="Mật khẩu" htmlFor="login-password">
-          <input className="v2-form-input" id="login-password" type="password" autoComplete="current-password" required value={password} onChange={(event) => setPassword(event.target.value)} />
+          <PasswordInput id="login-password" autoComplete="current-password" value={password} onChange={setPassword} />
         </FormField>
+        <Link className="v2-auth-forgot" to="/customer/forgot-password">Quên mật khẩu?</Link>
         {error && <p className="v2-inline-error" role="alert">{error}</p>}
         <PrimaryButton type="submit" disabled={submitting}>{submitting ? "Đang đăng nhập…" : "Đăng nhập"}</PrimaryButton>
       </form>
+      <p className="v2-auth-switch">Chưa có tài khoản? <Link to={`/customer/register${params.get("redirect") ? `?redirect=${encodeURIComponent(params.get("redirect")!)}` : ""}`}>Tạo tài khoản mới</Link></p>
+      <p className="v2-auth-switch"><Link to="/customer/home">← Về trang chủ</Link></p>
     </Card>
   </div>;
 }
 
 export function RegisterPage() {
+  const { user, loading, refresh } = useAuth();
+  const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+
+  if (loading) return <div className="v2-auth-page"><Card className="v2-auth-card"><LoadingState message="Đang tải…" /></Card></div>;
+  if (user) return <Navigate to={redirectForRole(user.roleCode)} replace />;
+  const strength = passwordStrength(password);
+  const submit = (event: FormEvent) => {
+    event.preventDefault();
+    setError("");
+    if (password !== confirm) {
+      setError("Mật khẩu nhập lại chưa khớp.");
+      return;
+    }
+    setSubmitting(true);
+    void registerAccount({ fullName: fullName.trim(), email: email.trim(), password, phone: phone.trim() || undefined })
+      .then(() => refresh())
+      .then(() => navigate(safeRedirect(params.get("redirect"), "CUSTOMER") ?? "/customer/account?welcome=1", { replace: true }))
+      .catch((reason: unknown) => setError(reason instanceof Error ? reason.message : "Không thể tạo tài khoản."))
+      .finally(() => setSubmitting(false));
+  };
   return <div className="v2-auth-page"><Card className="v2-auth-card">
-    <Badge tone="gold">Đăng ký tài khoản chưa mở</Badge><p className="v2-eyebrow">Tài khoản khách hàng</p><h1>Mua sắm linh kiện</h1>
-    <p>Bạn vẫn có thể đặt hàng mà không cần đăng nhập. Đăng nhập nếu bạn đã có tài khoản.</p>
-    <div className="v2-action-row">
-      <Link className="v2-button v2-button-primary" to="/customer/parts">Tiếp tục mua sắm</Link>
-      <Link className="v2-button v2-button-secondary" to="/login">Đăng nhập</Link>
-    </div>
+    <p className="v2-eyebrow">PC Builder Store</p>
+    <h1>Tạo tài khoản</h1>
+    <p>Theo dõi đơn hàng, lưu giỏ hàng trên mọi thiết bị và thanh toán nhanh hơn ở lần sau. Giỏ hàng hiện tại được giữ nguyên.</p>
+    <form className="v2-form-stack" onSubmit={submit}>
+      <FormField label="Họ và tên" htmlFor="register-name">
+        <input className="v2-form-input" id="register-name" autoComplete="name" required minLength={2} maxLength={160}
+          value={fullName} onChange={(event) => setFullName(event.target.value)} />
+      </FormField>
+      <FormField label="Email" htmlFor="register-email">
+        <input className="v2-form-input" id="register-email" type="email" autoComplete="email" required maxLength={254}
+          value={email} onChange={(event) => setEmail(event.target.value)} />
+      </FormField>
+      <FormField label="Số điện thoại (không bắt buộc)" htmlFor="register-phone" hint="Dùng để giao hàng và liên hệ khi cần.">
+        <input className="v2-form-input" id="register-phone" type="tel" autoComplete="tel" maxLength={20}
+          value={phone} onChange={(event) => setPhone(event.target.value)} />
+      </FormField>
+      <FormField label="Mật khẩu" htmlFor="register-password" hint="Ít nhất 8 ký tự, gồm cả chữ và số.">
+        <PasswordInput id="register-password" autoComplete="new-password" minLength={8} value={password} onChange={setPassword} />
+      </FormField>
+      {password && <div className={`v2-password-meter is-${strength.level}`} aria-live="polite">
+        <span><i style={{ width: `${strength.score * 25}%` }} /></span><small>Độ mạnh: {strength.label}</small>
+      </div>}
+      <FormField label="Nhập lại mật khẩu" htmlFor="register-confirm">
+        <input className="v2-form-input" id="register-confirm" type="password" autoComplete="new-password" required
+          value={confirm} onChange={(event) => setConfirm(event.target.value)} />
+      </FormField>
+      {error && <p className="v2-inline-error" role="alert">{error}</p>}
+      <PrimaryButton type="submit" disabled={submitting}>{submitting ? "Đang tạo tài khoản…" : "Tạo tài khoản"}</PrimaryButton>
+    </form>
+    <p className="v2-auth-switch">Đã có tài khoản? <Link to="/login">Đăng nhập</Link></p>
+  </Card></div>;
+}
+
+function passwordStrength(value: string): { score: number; level: "weak" | "fair" | "good" | "strong"; label: string } {
+  let score = 0;
+  if (value.length >= 8) score++;
+  if (/\p{L}/u.test(value) && /\d/.test(value)) score++;
+  if (/[A-Z]/.test(value) && /[a-z]/.test(value)) score++;
+  if (value.length >= 12 || /[^\p{L}\d]/u.test(value)) score++;
+  const levels = [["weak", "yếu"], ["weak", "yếu"], ["fair", "trung bình"], ["good", "khá"], ["strong", "mạnh"]] as const;
+  return { score, level: levels[score][0], label: levels[score][1] };
+}
+
+export function ForgotPasswordPage() {
+  const [email, setEmail] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  return <div className="v2-auth-page"><Card className="v2-auth-card">
+    <p className="v2-eyebrow">PC Builder Store</p>
+    <h1>Quên mật khẩu</h1>
+    <p>Nhập email đã đăng ký. Chúng tôi sẽ gửi link để bạn đặt mật khẩu mới (hiệu lực 30 phút).</p>
+    {message ? <div className="v2-form-stack">
+      <p className="v2-inline-success" role="status">{message}</p>
+      <p className="v2-muted">Không thấy email? Hãy kiểm tra thư mục Spam/Quảng cáo, hoặc liên hệ cửa hàng để được cấp mật khẩu tạm.</p>
+    </div> : <form className="v2-form-stack" onSubmit={(event) => {
+      event.preventDefault();
+      setBusy(true);
+      setError("");
+      void requestPasswordReset(email.trim()).then((result) => setMessage(result.message),
+        (reason: unknown) => setError(reason instanceof Error ? reason.message : "Không thể gửi yêu cầu."))
+        .finally(() => setBusy(false));
+    }}>
+      <FormField label="Email" htmlFor="forgot-email">
+        <input className="v2-form-input" id="forgot-email" type="email" autoComplete="email" required value={email}
+          onChange={(event) => setEmail(event.target.value)} />
+      </FormField>
+      {error && <p className="v2-inline-error" role="alert">{error}</p>}
+      <PrimaryButton type="submit" disabled={busy}>{busy ? "Đang gửi…" : "Gửi link đặt lại mật khẩu"}</PrimaryButton>
+    </form>}
+    <p className="v2-auth-switch"><Link to="/login">← Quay lại đăng nhập</Link></p>
+  </Card></div>;
+}
+
+export function ResetPasswordPage() {
+  const [params] = useSearchParams();
+  const token = params.get("token") ?? "";
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState("");
+  const [error, setError] = useState("");
+  const strength = passwordStrength(password);
+  return <div className="v2-auth-page"><Card className="v2-auth-card">
+    <p className="v2-eyebrow">PC Builder Store</p>
+    <h1>Đặt mật khẩu mới</h1>
+    {!token ? <p className="v2-inline-error">Link không hợp lệ. Hãy mở đúng link trong email hoặc <Link to="/customer/forgot-password">yêu cầu link mới</Link>.</p>
+      : done ? <div className="v2-form-stack">
+        <p className="v2-inline-success" role="status">{done}</p>
+        <Link className="v2-button v2-button-primary" to="/login">Đăng nhập</Link>
+      </div> : <form className="v2-form-stack" onSubmit={(event) => {
+        event.preventDefault();
+        setError("");
+        if (password !== confirm) {
+          setError("Mật khẩu nhập lại chưa khớp.");
+          return;
+        }
+        setBusy(true);
+        void confirmPasswordReset(token, password).then((result) => setDone(result.message),
+          (reason: unknown) => setError(reason instanceof Error ? reason.message : "Không thể đặt lại mật khẩu."))
+          .finally(() => setBusy(false));
+      }}>
+        <FormField label="Mật khẩu mới" htmlFor="reset-password" hint="Ít nhất 8 ký tự, gồm cả chữ và số.">
+          <PasswordInput id="reset-password" autoComplete="new-password" minLength={8} value={password} onChange={setPassword} />
+        </FormField>
+        {password && <div className={`v2-password-meter is-${strength.level}`} aria-live="polite">
+          <span><i style={{ width: `${strength.score * 25}%` }} /></span><small>Độ mạnh: {strength.label}</small>
+        </div>}
+        <FormField label="Nhập lại mật khẩu mới" htmlFor="reset-confirm">
+          <PasswordInput id="reset-confirm" autoComplete="new-password" value={confirm} onChange={setConfirm} />
+        </FormField>
+        {error && <p className="v2-inline-error" role="alert">{error}</p>}
+        <PrimaryButton type="submit" disabled={busy}>{busy ? "Đang lưu…" : "Đặt mật khẩu mới"}</PrimaryButton>
+      </form>}
   </Card></div>;
 }
 
@@ -123,6 +315,7 @@ export function CartPage() {
 }
 
 function CartContents() {
+  const paymentOptions = usePaymentOptions();
   const [cart, setCart] = useState<CartResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -147,13 +340,13 @@ function CartContents() {
   const giftsComplete = items.every((item) => item.gifts.every((gift) =>
     !gift.selectionRequired || item.selectedGifts.some((selected) =>
       selected.promotionId === String(gift.promotionId) && selected.offerId === gift.offerId)));
-  const update = async (offerId: string, operation: () => Promise<CartResponse>) => {
+  const update = async (offerId: string, operation: () => Promise<CartResponse>, doneMessage = "") => {
     setBusyOfferId(offerId);
     setError("");
     setNotice("");
     try {
       setCart(await operation());
-      setNotice("Giỏ hàng đã được cập nhật.");
+      if (doneMessage) setNotice(doneMessage);
       setQuantityDrafts((drafts) => {
         const next = { ...drafts };
         delete next[offerId];
@@ -165,51 +358,72 @@ function CartContents() {
       setBusyOfferId("");
     }
   };
+  const setQuantity = (item: CartItem, quantity: number) => {
+    if (!Number.isSafeInteger(quantity) || quantity < 1 || quantity > 100) {
+      setError("Số lượng mỗi sản phẩm từ 1 đến 100.");
+      setQuantityDrafts((drafts) => ({ ...drafts, [item.offerId]: String(item.quantity) }));
+      return;
+    }
+    if (quantity === item.quantity) return;
+    void update(item.offerId, () => updateCartItem(item.offerId, quantity));
+  };
+  const blocked = items.filter((item) => item.availability !== "AVAILABLE");
+  const canCheckout = !blocked.length && oneCurrency && giftsComplete && !hasUnverifiedPrice;
+  const currency = verifiedSubtotal?.currency ?? items.find((item) => item.currency)?.currency ?? "VND";
+  const savings = items.reduce((sum, item) => sum + (Number(item.discountAmount) || 0) * item.quantity, 0);
+  const listTotal = verifiedSubtotal ? verifiedSubtotal.amount + savings : null;
   return <div className="v2-page">
-    <div className="v2-page-title"><div><p className="v2-eyebrow">Giỏ hàng</p><h1>Sản phẩm của bạn</h1></div></div>
+    <div className="v2-page-title"><div><p className="v2-eyebrow">Giỏ hàng</p>
+      <h1>Giỏ hàng của bạn{items.length ? ` (${cart?.itemCount ?? 0})` : ""}</h1></div></div>
     {loading && <LoadingState message="Đang tải giỏ hàng…" />}
-    {error && <ErrorState title="Không thể tải hoặc cập nhật giỏ hàng" message={error} />}
-    {notice && <p className="v2-muted" role="status">{notice}</p>}
-    {!loading && !error && !items.length && <EmptyState title="Giỏ hàng đang trống" message="Thêm sản phẩm từ danh mục để tiếp tục." action={<Link to="/customer/parts">Khám phá linh kiện</Link>} />}
-    {!loading && items.length > 0 && <div className="v2-commerce-layout">
-      <Card title={`${cart?.itemCount ?? 0} sản phẩm`}>
+    {error && <p className="v2-inline-error" role="alert">{error}</p>}
+    {notice && <p className="v2-inline-success" role="status">{notice}</p>}
+    {!loading && !items.length && !error && <EmptyState title="Giỏ hàng đang trống"
+      message="Hãy chọn sản phẩm bạn thích, hoặc để chúng tôi gợi ý một cấu hình PC theo nhu cầu."
+      action={<div className="v2-action-row">
+        <Link className="v2-button v2-button-primary" to="/customer/parts">Mua sắm ngay</Link>
+        <Link className="v2-button v2-button-secondary" to="/build-pc/start">Tự build PC</Link>
+      </div>} />}
+    {!loading && items.length > 0 && <div className="v2-commerce-layout v2-cart-layout">
+      <Card title="Sản phẩm" action={<button type="button" className="v2-cart-clear" disabled={Boolean(busyOfferId)} onClick={() => {
+        if (!window.confirm("Xóa toàn bộ sản phẩm trong giỏ hàng?")) return;
+        void update("*", () => clearCart(), "Đã xóa toàn bộ giỏ hàng.");
+      }}>Xóa tất cả</button>}>
         <div className="v2-cart-items">{items.map((item) => <CartLine
           key={item.offerId}
           item={item}
           quantityDraft={quantityDrafts[item.offerId] ?? String(item.quantity)}
-          busy={busyOfferId === item.offerId}
-          onQuantityChange={(value) => setQuantityDrafts((drafts) => ({ ...drafts, [item.offerId]: value }))}
-          onUpdate={() => {
-            const quantity = Number(quantityDrafts[item.offerId] ?? item.quantity);
-            if (!Number.isSafeInteger(quantity) || quantity < 1 || quantity > 100) {
-              setError("Số lượng phải từ 1 đến 100.");
-              return;
-            }
-            void update(item.offerId, () => updateCartItem(item.offerId, quantity));
-          }}
-          onRemove={() => void update(item.offerId, () => removeCartItem(item.offerId))}
-          onGiftsChange={(gifts) => void update(
-            item.offerId,
-            () => updateCartItemGifts(item.offerId, gifts),
-          )}
+          busy={busyOfferId === item.offerId || busyOfferId === "*"}
+          onQuantityDraft={(value) => setQuantityDrafts((drafts) => ({ ...drafts, [item.offerId]: value }))}
+          onSetQuantity={(quantity) => setQuantity(item, quantity)}
+          onRemove={() => void update(item.offerId, () => removeCartItem(item.offerId), `Đã xóa "${item.productName}" khỏi giỏ.`)}
+          onGiftsChange={(gifts) => void update(item.offerId, () => updateCartItemGifts(item.offerId, gifts))}
         />)}</div>
       </Card>
-      <Card title="Mua hàng">
-        <p>Đơn giá và tạm tính sử dụng giá hiện được lưu cho sản phẩm.</p>
-        {hasUnverifiedPrice
-          ? <strong>Tạm tính giỏ hàng: Chưa xác minh</strong>
-          : oneCurrency
-            ? <strong>Tạm tính giỏ hàng: {formatCartMoney(verifiedSubtotal.amount, verifiedSubtotal.currency)}</strong>
-            : <p className="v2-inline-error">Các sản phẩm có nhiều loại tiền tệ; vui lòng tách giao dịch.</p>}
-        <div className="v2-action-row">
-          <Link className="v2-button v2-button-secondary" to="/customer/parts">Tiếp tục mua sắm</Link>
-          {items.every((item) => item.availability === "AVAILABLE") && oneCurrency && giftsComplete
-            ? <Link className="v2-button v2-button-primary" to="/customer/checkout">Tiếp tục đặt hàng</Link>
-            : <span className="v2-muted">{giftsComplete
-              ? "Cập nhật hoặc xóa sản phẩm chưa đủ điều kiện trước khi đặt hàng."
-              : "Vui lòng chọn đầy đủ quà tặng bắt buộc trước khi đặt hàng."}</span>}
-        </div>
-      </Card>
+      <div className="v2-cart-summary-column">
+        <Card title="Tóm tắt đơn hàng">
+          <dl className="v2-cart-summary">
+            {listTotal !== null && savings > 0 && <div><dt>Giá niêm yết</dt><dd>{formatCartMoney(listTotal, currency)}</dd></div>}
+            {savings > 0 && <div className="is-saving"><dt>Tiết kiệm</dt><dd>−{formatCartMoney(savings, currency)}</dd></div>}
+            <div><dt>Phí vận chuyển</dt><dd>Miễn phí</dd></div>
+            <div className="is-total"><dt>Tổng cộng</dt><dd>{hasUnverifiedPrice ? "Chưa xác minh"
+              : oneCurrency ? formatCartMoney(verifiedSubtotal.amount, verifiedSubtotal.currency) : "—"}</dd></div>
+          </dl>
+          <p className="v2-cart-summary-note">Giá và tồn kho được kiểm tra lại một lần nữa khi bạn đặt hàng.</p>
+          {!oneCurrency && !hasUnverifiedPrice && <p className="v2-inline-error">Giỏ hàng có nhiều loại tiền tệ; vui lòng đặt riêng từng đơn.</p>}
+          {canCheckout
+            ? <Link className="v2-button v2-button-primary v2-cart-checkout" to="/customer/checkout">Tiến hành đặt hàng</Link>
+            : <p className="v2-inline-error" role="status">{!giftsComplete
+              ? "Vui lòng chọn đầy đủ quà tặng bắt buộc trước khi đặt hàng."
+              : `Có ${blocked.length || "một số"} sản phẩm chưa thể đặt. Hãy điều chỉnh số lượng hoặc xóa sản phẩm đó.`}</p>}
+          <Link className="v2-cart-continue" to="/customer/parts">← Tiếp tục mua sắm</Link>
+        </Card>
+        <ul className="v2-cart-assurances">
+          <li>🚚 Miễn phí giao hàng toàn quốc</li>
+          <li>🛡️ Bảo hành chính hãng theo từng sản phẩm</li>
+          <li>💵 {paymentOptions.bankTransfer ? "Thanh toán khi nhận hàng hoặc chuyển khoản" : "Thanh toán khi nhận hàng (COD)"}</li>
+        </ul>
+      </div>
     </div>}
   </div>;
 }
@@ -218,16 +432,16 @@ function CartLine({
   item,
   quantityDraft,
   busy,
-  onQuantityChange,
-  onUpdate,
+  onQuantityDraft,
+  onSetQuantity,
   onRemove,
   onGiftsChange,
 }: {
   item: CartItem;
   quantityDraft: string;
   busy: boolean;
-  onQuantityChange: (value: string) => void;
-  onUpdate: () => void;
+  onQuantityDraft: (value: string) => void;
+  onSetQuantity: (quantity: number) => void;
   onRemove: () => void;
   onGiftsChange: (gifts: GiftSelection[]) => void;
 }) {
@@ -246,7 +460,16 @@ function CartLine({
     );
     return () => controller.abort();
   }, [item.modelCode, item.offerId, item.configuration]);
-  const quantityChanged = quantityDraft !== String(item.quantity);
+  const productLink = `/customer/product?modelCode=${encodeURIComponent(item.modelCode)}`;
+  const maxQuantity = Math.max(1, Math.min(100, item.availableQuantity || 100));
+  const commitDraft = () => {
+    const value = Number(quantityDraft);
+    if (quantityDraft.trim() === "" || value === item.quantity) {
+      onQuantityDraft(String(item.quantity));
+      return;
+    }
+    onSetQuantity(value);
+  };
   const isGiftSelected = (gift: CartItem["gifts"][number]) =>
     item.selectedGifts.some((selected) =>
       selected.promotionId === String(gift.promotionId) && selected.offerId === gift.offerId);
@@ -260,16 +483,20 @@ function CartLine({
     });
     onGiftsChange(current);
   };
-  return <div className="v2-cart-item">
-    <div>
-      <Link to={`/customer/product?modelCode=${encodeURIComponent(item.modelCode)}`}>{item.productName}</Link>
-      {item.unitPrice !== null && item.subtotal !== null && item.currency ? <span className="v2-table-subtext">
-        Đơn giá: {formatCartMoney(item.unitPrice, item.currency)} · Tạm tính: {formatCartMoney(item.subtotal, item.currency)}
-      </span> : <span className="v2-table-subtext">Giá bán chưa được xác minh.</span>}
-      {item.baseUnitPrice !== null && item.unitPrice !== null && item.currency
-        && item.baseUnitPrice > item.unitPrice && <span className="v2-table-subtext">
-        Giá gốc {formatCartMoney(item.baseUnitPrice, item.currency)} · Tiết kiệm {formatCartMoney(item.discountAmount, item.currency)}
-      </span>}
+  const blocked = item.availability !== "AVAILABLE";
+  return <div className={`v2-cart-line${blocked ? " is-blocked" : ""}`}>
+    <Link className="v2-cart-thumb" to={productLink} tabIndex={-1} aria-hidden="true">
+      <ProductArtwork
+        image={item.imageUrl ? { url: item.imageUrl, altText: item.productName, isPrimary: true } : undefined}
+        productName={item.productName}
+        productType={item.productType ?? "ACCESSORY"}
+      />
+    </Link>
+    <div className="v2-cart-info">
+      <Link className="v2-cart-name" to={productLink}>{item.productName}</Link>
+      <span className="v2-cart-model">Mã: {item.modelCode}</span>
+      {item.saleBadge && <span className="v2-cart-badges"><Badge tone="error">{item.saleBadge}</Badge>
+        {item.promotionDisplayCopy && <Badge>{item.promotionDisplayCopy}</Badge>}</span>}
       {item.configuration && <div className="v2-cart-configuration">
         <strong>Lựa chọn cấu hình</strong>
         {upgradeDetails?.groups.map((group) => {
@@ -288,7 +515,7 @@ function CartLine({
         })}
         {!upgradeDetails && <span className="v2-muted">Chi tiết nâng cấp hiện không tải được.</span>}
       </div>}
-      {item.promotionDisplayCopy && <Badge>{item.promotionDisplayCopy}</Badge>}
+      {!item.saleBadge && item.promotionDisplayCopy && <Badge>{item.promotionDisplayCopy}</Badge>}
       {item.gifts.length > 0 && <fieldset className="v2-cart-gifts">
         <legend>Quà tặng khuyến mãi</legend>
         {item.gifts.map((gift) => {
@@ -309,26 +536,35 @@ function CartLine({
           </label>;
         })}
       </fieldset>}
-      {item.availability !== "UNAVAILABLE"
-        && <span className="v2-table-subtext">Còn {item.availableQuantity} sản phẩm</span>}
-      {item.availability !== "AVAILABLE" && <p className="v2-inline-error" role="status">{item.availabilityMessage}</p>}
+      {item.availability === "AVAILABLE" && item.availableQuantity > 0 && item.availableQuantity <= 5
+        && <span className="v2-cart-stock">Chỉ còn {item.availableQuantity} sản phẩm</span>}
+      {blocked && <p className="v2-inline-error" role="status">{item.availabilityMessage}</p>}
+      {!blocked && item.availabilityMessage && <p className="v2-cart-notice" role="status">{item.availabilityMessage}</p>}
     </div>
-    <label>Số lượng
-      <input
-        className="v2-form-input"
-        type="number"
-        min="1"
-        max="100"
-        value={quantityDraft}
-        disabled={busy}
-        onChange={(event) => onQuantityChange(event.target.value)}
-      />
-    </label>
-    <div className="v2-action-row">
-      <SecondaryButton type="button" disabled={busy || !quantityChanged} onClick={onUpdate}>
-        {busy ? "Đang lưu…" : "Cập nhật"}
-      </SecondaryButton>
-      <SecondaryButton type="button" disabled={busy} onClick={onRemove}>Xóa</SecondaryButton>
+    <div className="v2-cart-price">
+      {item.unitPrice !== null && item.currency
+        ? <><strong>{formatCartMoney(item.unitPrice, item.currency)}</strong>
+          {item.baseUnitPrice !== null && item.baseUnitPrice > item.unitPrice
+            && <s>{formatCartMoney(item.baseUnitPrice, item.currency)}</s>}</>
+        : <span className="v2-muted">Chưa có giá</span>}
+    </div>
+    <div className="v2-cart-qty">
+      <div className="v2-quantity-control v2-cart-stepper">
+        <IconButton className="v2-quantity-stepper-button" label="Giảm số lượng"
+          disabled={busy || item.quantity <= 1} onClick={() => onSetQuantity(item.quantity - 1)}><MinusIcon /></IconButton>
+        <input className="v2-form-input" type="number" min="1" max={maxQuantity} inputMode="numeric"
+          aria-label={`Số lượng ${item.productName}`} value={quantityDraft} disabled={busy}
+          onChange={(event) => onQuantityDraft(event.target.value)}
+          onBlur={commitDraft}
+          onKeyDown={(event) => { if (event.key === "Enter") event.currentTarget.blur(); }} />
+        <IconButton className="v2-quantity-stepper-button" label="Tăng số lượng"
+          disabled={busy || item.quantity >= maxQuantity} onClick={() => onSetQuantity(item.quantity + 1)}><PlusIcon /></IconButton>
+      </div>
+      <button type="button" className="v2-cart-remove" disabled={busy} onClick={onRemove}>Xóa</button>
+    </div>
+    <div className="v2-cart-line-total">
+      <span>Thành tiền</span>
+      <strong>{item.subtotal !== null && item.currency ? formatCartMoney(item.subtotal, item.currency) : "—"}</strong>
     </div>
   </div>;
 }
@@ -363,6 +599,7 @@ function CheckoutContents() {
   const [region, setRegion] = useState("");
   const [postalCode, setPostalCode] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<CheckoutRequest["paymentMethod"]>("COD");
+  const paymentOptions = usePaymentOptions();
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [idempotencyKey] = useState(() => crypto.randomUUID());
@@ -412,11 +649,10 @@ function CheckoutContents() {
       ? createOrder(checkout, idempotencyKey)
       : createGuestOrder({ ...checkout, customerEmail: email.trim() } satisfies GuestCheckoutRequest, idempotencyKey);
     void submission.then((detail) => {
-      if (isCustomer) {
-        navigate(`/customer/order-detail?orderNumber=${encodeURIComponent(detail.order.orderNumber)}`);
-      } else {
-        navigate(`/customer/order-result?guest=true&orderNumber=${encodeURIComponent(detail.order.orderNumber)}`);
-      }
+      // The confirmation page receives the created order in router state, so a guest sees the full
+      // summary (and transfer instructions) without having to look the order up again.
+      navigate(`/customer/order-result?${isCustomer ? "" : "guest=true&"}orderNumber=${encodeURIComponent(detail.order.orderNumber)}`,
+        { state: { order: detail } });
     }).catch((reason: unknown) => {
       setError(reason instanceof Error ? reason.message : "Không thể tạo đơn hàng.");
     }).finally(() => setBusy(false));
@@ -437,12 +673,22 @@ function CheckoutContents() {
           <FormField label="Tỉnh/thành" htmlFor="checkout-region"><input id="checkout-region" className="v2-form-input" maxLength={160} value={region} onChange={(event) => setRegion(event.target.value)} /></FormField>
           <FormField label="Mã bưu chính" htmlFor="checkout-postal"><input id="checkout-postal" className="v2-form-input" maxLength={30} value={postalCode} onChange={(event) => setPostalCode(event.target.value)} /></FormField>
         </div>
-        <FormField label="Thanh toán" htmlFor="checkout-payment"><select id="checkout-payment" className="v2-form-input" value={paymentMethod} onChange={(event) => setPaymentMethod(event.target.value as CheckoutRequest["paymentMethod"])}>
-          <option value="COD">Thanh toán khi nhận hàng</option>
-          <option value="SIMULATED_ONLINE">Thanh toán trực tuyến mô phỏng</option>
-        </select></FormField>
+        <fieldset className="v2-payment-methods">
+          <legend>Phương thức thanh toán</legend>
+          {paymentOptions.methods.map((method) => <label key={method} className={`v2-payment-method${paymentMethod === method ? " is-selected" : ""}`}>
+            <input type="radio" name="checkout-payment" value={method} checked={paymentMethod === method}
+              onChange={() => setPaymentMethod(method)} />
+            <span>
+              <strong>{paymentMethodText[method] ?? method}</strong>
+              <small>{method === "COD" ? "Trả tiền mặt cho nhân viên giao hàng khi nhận được hàng."
+                : method === "BANK_TRANSFER" ? `Quét mã VietQR hoặc chuyển khoản${paymentOptions.bankTransfer?.bankName ? ` qua ${paymentOptions.bankTransfer.bankName}` : ""}. Đơn được giao sau khi cửa hàng nhận tiền.`
+                  : "Chỉ dùng để thử nghiệm, không có khoản tiền thật nào được thu."}</small>
+            </span>
+          </label>)}
+        </fieldset>
         {error && <p className="v2-inline-error" role="alert">{error}</p>}
-        <PrimaryButton type="submit" disabled={busy || !cartPurchasable}>{busy ? "Đang kiểm tra và đặt hàng…" : "Tạo đơn hàng"}</PrimaryButton>
+        <PrimaryButton type="submit" disabled={busy || !cartPurchasable}>{busy ? "Đang kiểm tra và đặt hàng…" : "Đặt hàng"}</PrimaryButton>
+        <p className="v2-muted v2-checkout-terms">Bằng việc đặt hàng, bạn đồng ý với <Link to="/policies/terms">điều khoản mua hàng</Link> và <Link to="/policies/privacy">chính sách bảo mật</Link> của cửa hàng.</p>
       </form>
       </Card>
       <Card title="Tóm tắt đơn hàng">
@@ -453,14 +699,14 @@ function CheckoutContents() {
             <strong>{formatCartMoney(item.subtotal, item.currency)}</strong>
           </div>)}
         </div>
-        <p className="v2-checkout-subtotal">
-          <span>Tạm tính</span>
-          <strong>{verifiedSubtotal
+        <dl className="v2-cart-summary">
+          <div><dt>Phí vận chuyển</dt><dd>Miễn phí</dd></div>
+          <div className="is-total"><dt>Tổng thanh toán</dt><dd>{verifiedSubtotal
             ? formatCartMoney(verifiedSubtotal.amount, verifiedSubtotal.currency)
-            : "Chưa xác minh"}</strong>
-        </p>
-        <p className="v2-muted">Phí giao hàng và các điều chỉnh khuyến mãi sẽ do máy chủ xác nhận khi tạo đơn.</p>
-        <Link className="v2-button v2-button-secondary" to="/customer/cart">Chỉnh sửa giỏ hàng</Link>
+            : "Chưa xác minh"}</dd></div>
+        </dl>
+        <p className="v2-cart-summary-note">Giá và tồn kho được kiểm tra lại khi bạn bấm "Đặt hàng".</p>
+        <Link className="v2-cart-continue" to="/customer/cart">← Chỉnh sửa giỏ hàng</Link>
       </Card>
     </div>}
   </div>;
@@ -468,23 +714,65 @@ function CheckoutContents() {
 
 export function OrderResultPage() {
   const [params] = useSearchParams();
+  const location = useLocation();
+  const { user, loading: authLoading } = useAuth();
   const isGuestOrder = params.get("guest") === "true";
-  const orderNumber = params.get("orderNumber");
-  return <div className="v2-page">
-    <Card title="Đơn hàng">
-      {isGuestOrder ? <>
-        <p>Đặt hàng thành công. Mã đơn hàng của bạn là <strong>{orderNumber}</strong>.</p>
-        <p>Để kiểm tra đơn hàng, hãy chuẩn bị mã đơn và số điện thoại đã dùng khi đặt.</p>
-        <div className="v2-action-row">
-          <Link className="v2-button v2-button-primary" to="/customer/guest-order-lookup">Tra cứu đơn hàng</Link>
-          <Link className="v2-button v2-button-secondary" to="/customer/home">Tiếp tục mua sắm</Link>
-        </div>
-      </> : <>
-        <p>Đơn hàng được lưu trong tài khoản sau khi máy chủ xác nhận đặt hàng.</p>
-      <div className="v2-action-row"><Link className="v2-button v2-button-primary" to="/customer/orders">Xem lịch sử đơn hàng</Link>
-        <Link className="v2-button v2-button-secondary" to="/customer/home">Tiếp tục mua sắm</Link></div>
-      </>}
-    </Card>
+  const orderNumber = params.get("orderNumber") ?? "";
+  const passed = (location.state as { order?: OrderDetail } | null)?.order;
+  const [detail, setDetail] = useState<OrderDetail | undefined>(
+    passed?.order.orderNumber === orderNumber ? passed : undefined);
+
+  useEffect(() => {
+    // Reloading the page loses router state: signed-in customers can fetch their order again.
+    if (detail || isGuestOrder || !orderNumber || user?.roleCode !== "CUSTOMER") return;
+    let active = true;
+    void fetchCustomerOrder(orderNumber).then((loaded) => { if (active) setDetail(loaded); }, () => undefined);
+    return () => { active = false; };
+  }, [detail, isGuestOrder, orderNumber, user?.roleCode]);
+
+  if (!orderNumber) {
+    if (authLoading) return <div className="v2-page"><LoadingState message="Đang tải…" /></div>;
+    return <Navigate to={user?.roleCode === "CUSTOMER" ? "/customer/orders" : "/customer/guest-order-lookup"} replace />;
+  }
+  const order = detail?.order;
+  return <div className="v2-page v2-order-result">
+    <section className="v2-order-success">
+      <span className="v2-order-success-icon" aria-hidden="true">✓</span>
+      <div>
+        <p className="v2-eyebrow">Đặt hàng thành công</p>
+        <h1>Cảm ơn bạn đã mua hàng!</h1>
+        <p>Mã đơn hàng của bạn: <strong className="v2-order-code">{orderNumber}</strong></p>
+        <p className="v2-muted">{order?.paymentMethod === "BANK_TRANSFER"
+          ? "Đơn hàng sẽ được xác nhận ngay khi cửa hàng nhận được chuyển khoản."
+          : "Cửa hàng sẽ gọi điện xác nhận đơn trong giờ làm việc trước khi giao hàng."}
+          {isGuestOrder && " Hãy lưu lại mã đơn và số điện thoại để tra cứu đơn hàng."}</p>
+      </div>
+    </section>
+    {detail && <OrderPaymentInstructions detail={detail} />}
+    {detail && order && <div className="v2-account-grid">
+      <Card title="Thông tin đơn hàng">
+        <dl className="v2-cart-summary">
+          <div><dt>Ngày đặt</dt><dd>{formatOrderDate(order.placedAt)}</dd></div>
+          <div><dt>Thanh toán</dt><dd>{label(paymentMethodText, order.paymentMethod)}</dd></div>
+          <div><dt>Trạng thái</dt><dd>{label(paymentStatusText, order.paymentStatus)}</dd></div>
+          <div><dt>Người nhận</dt><dd>{order.customerName} · {order.customerPhone}</dd></div>
+          <div><dt>Giao đến</dt><dd>{[detail.shippingAddress, detail.shippingRegion].filter(Boolean).join(", ")}</dd></div>
+          <div className="is-total"><dt>Tổng thanh toán</dt><dd>{order.currencyCode ? formatCartMoney(order.total, order.currencyCode) : "—"}</dd></div>
+        </dl>
+      </Card>
+      <Card title={`Sản phẩm (${detail.items.reduce((sum, item) => sum + item.quantity, 0)})`}>
+        <ul className="v2-order-result-items">{detail.items.map((item, index) => <li key={`${item.productName}-${index}`}>
+          <span>{item.productName} <small>× {item.quantity}</small></span>
+          <strong>{formatCartMoney(item.lineTotal, item.currencyCode)}</strong>
+        </li>)}</ul>
+      </Card>
+    </div>}
+    <div className="v2-action-row">
+      {isGuestOrder
+        ? <Link className="v2-button v2-button-primary" to="/customer/guest-order-lookup">Tra cứu đơn hàng</Link>
+        : <Link className="v2-button v2-button-primary" to={`/customer/order-detail?orderNumber=${encodeURIComponent(orderNumber)}`}>Theo dõi đơn hàng</Link>}
+      <Link className="v2-button v2-button-secondary" to="/customer/home">Tiếp tục mua sắm</Link>
+    </div>
   </div>;
 }
 
@@ -522,9 +810,9 @@ export function GuestOrderLookupPage() {
       crypto.randomUUID(),
     ).then((updated) => {
       setDetail(updated);
-      setNotice(`Kết quả thanh toán mô phỏng: ${updated.order.paymentStatus}. Không có khoản tiền thật nào được thu.`);
+      setNotice(`Kết quả thanh toán: ${label(paymentStatusText, updated.order.paymentStatus)}.`);
     }).catch((reason: unknown) => setError(
-      reason instanceof Error ? reason.message : "Không thể xử lý thanh toán mô phỏng.",
+      reason instanceof Error ? reason.message : "Không thể xử lý thanh toán.",
     )).finally(() => setBusy(false));
   };
 
@@ -532,7 +820,7 @@ export function GuestOrderLookupPage() {
   return <div className="v2-page">
     <div className="v2-page-title"><div><p className="v2-eyebrow">Đơn hàng khách</p><h1>Tra cứu đơn hàng</h1></div></div>
     <Card title="Xác minh đơn hàng">
-      <p>Nhập mã đơn hàng và số điện thoại đã cung cấp khi đặt hàng. Thông tin này không được lưu vào URL hay trình duyệt.</p>
+      <p>Nhập mã đơn hàng (ví dụ PC261122-7KQ4M) và số điện thoại bạn đã dùng khi đặt hàng.</p>
       <form className="v2-form-stack" onSubmit={submitLookup}>
         <FormField label="Mã đơn hàng" htmlFor="guest-order-number">
           <input id="guest-order-number" className="v2-form-input" required maxLength={100}
@@ -546,71 +834,171 @@ export function GuestOrderLookupPage() {
         <PrimaryButton type="submit" disabled={loading}>{loading ? "Đang tra cứu…" : "Tra cứu đơn hàng"}</PrimaryButton>
       </form>
     </Card>
-    {notice && <p role="status" className="v2-muted">{notice}</p>}
-    {order && detail && <>
-      <Card title={`Đơn ${order.orderNumber}`}>
-        <dl className="v2-profile-grid">
-          <div><dt>Trạng thái đơn hàng</dt><dd>{orderStatusLabel[order.status]}</dd></div>
-          <div><dt>Trạng thái thanh toán</dt><dd>{order.paymentStatus}</dd></div>
-          <div><dt>Phương thức thanh toán</dt><dd>{order.paymentMethod}</dd></div>
-          <div><dt>Người nhận</dt><dd>{order.customerName}</dd></div>
-          <div><dt>Email</dt><dd>{order.customerEmail}</dd></div>
-          <div><dt>Số điện thoại</dt><dd>{order.customerPhone}</dd></div>
-          <div><dt>Địa chỉ giao hàng</dt><dd>{detail.shippingAddress}{detail.shippingRegion ? `, ${detail.shippingRegion}` : ""}{detail.shippingPostalCode ? ` ${detail.shippingPostalCode}` : ""}</dd></div>
-          {order.shippingCarrier && <div><dt>Đơn vị vận chuyển</dt><dd>{order.shippingCarrier}</dd></div>}
-          {order.trackingNumber && <div><dt>Mã vận đơn</dt><dd>{order.trackingNumber}</dd></div>}
-        </dl>
-      </Card>
-      <Card title="Sản phẩm">
-        <div className="v2-table-wrap"><table className="v2-table">
-          <thead><tr><th>Sản phẩm</th><th>Số lượng</th><th>Đơn giá</th><th>Thành tiền</th></tr></thead>
-          <tbody>{detail.items.map((item, index) => <tr key={`${item.productName}-${index}`}>
-            <td>{item.productName}<small className="v2-table-subtext">{item.condition}</small></td>
-            <td>{item.quantity}</td>
-            <td>{formatOrderMoney(item.unitPrice, item.currencyCode, order.showFinancials)}</td>
-            <td>{formatOrderMoney(item.lineTotal, item.currencyCode, order.showFinancials)}</td>
-          </tr>)}</tbody>
-        </table></div>
-        {order.showFinancials
-          ? <><p>Tạm tính: {formatOrderMoney(detail.subtotal, order.currencyCode, true)} · Phí giao hàng: {formatOrderMoney(detail.shippingFee, order.currencyCode, true)} · Giảm giá: {formatOrderMoney(detail.discountAmount, order.currencyCode, true)}</p>
-            <strong>Tổng đơn: {formatOrderMoney(order.total, order.currencyCode, true)}</strong></>
-          : <p className="v2-muted">Giá trị đơn hàng chưa được xác minh.</p>}
-      </Card>
-      <Card title="Lịch sử trạng thái">
-        {detail.statusHistory.length ? <ol className="v2-status-history">{detail.statusHistory.map((entry, index) => <li key={`${entry.createdAt}-${index}`}>
-          <strong>{entry.action}</strong> · {entry.previousStatus ?? "—"} → {entry.newStatus}
-          <small className="v2-table-subtext">{formatOrderDate(entry.createdAt)} · {entry.actorName} ({entry.actorRole})</small>
-          {entry.note && <p>{entry.note}</p>}
-        </li>)}</ol> : <p>Chưa có lịch sử trạng thái.</p>}
-      </Card>
+    {notice && <p role="status" className="v2-inline-success">{notice}</p>}
+    {order && detail && <OrderDetailView detail={detail}>
       {order.paymentMethod === "SIMULATED_ONLINE"
         && ["UNPAID", "FAILED", "CANCELLED"].includes(order.paymentStatus)
-        && <Card title="Thanh toán trực tuyến mô phỏng">
-          <p>Đây là giao dịch mô phỏng; không có khoản tiền thật nào được thu.</p>
+        && <Card title="Thanh toán trực tuyến (thử nghiệm)">
+          <p>Môi trường thử nghiệm: không có khoản tiền thật nào được thu.</p>
           {error && <p className="v2-inline-error" role="alert">{error}</p>}
           <PrimaryButton type="button" disabled={busy} onClick={retryPayment}>
-            {busy ? "Đang xử lý…" : "Thử thanh toán"}
+            {busy ? "Đang xử lý…" : "Thanh toán"}
           </PrimaryButton>
         </Card>}
-    </>}
+      {canRequestCancellation(order.status) && <p className="v2-muted">Muốn hủy hoặc thay đổi đơn hàng? Vui lòng liên hệ cửa hàng
+        qua trang <Link to="/contact">Liên hệ</Link> và cung cấp mã đơn {order.orderNumber}.</p>}
+    </OrderDetailView>}
   </div>;
 }
 
 export function AccountPage() {
   const { user, logout } = useAuth();
+  const [params] = useSearchParams();
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
-  return <RoleGate audience="customer"><div className="v2-page">
-    <div className="v2-page-title"><div><p className="v2-eyebrow">Hồ sơ khách hàng</p><h1>Tài khoản của tôi</h1></div><Badge tone="success">Phiên đã xác thực</Badge></div>
-    <Card title="Thông tin tài khoản" action={<PrimaryButton type="button" disabled={busy} onClick={() => {
-      setBusy(true); setError("");
-      void logout().then(() => window.location.assign("/login")).catch((reason: unknown) => setError(reason instanceof Error ? reason.message : "Không thể đăng xuất.")).finally(() => setBusy(false));
-    }}>{busy ? "Đang đăng xuất…" : "Đăng xuất"}</PrimaryButton>}>
-      <dl className="v2-profile-grid"><div><dt>Họ tên</dt><dd>{user?.fullName}</dd></div><div><dt>Email</dt><dd>{user?.email}</dd></div><div><dt>Vai trò</dt><dd>{user?.roleCode}</dd></div><div><dt>Nhóm khách hàng</dt><dd>{user?.customerSegment ?? "Chưa cung cấp"}</dd></div></dl>
-      {error && <p className="v2-inline-error" role="alert">{error}</p>}
-    </Card>
-    <Link to="/customer/orders">Lịch sử đơn hàng →</Link>
+  return <RoleGate audience="customer"><div className="v2-page v2-account-page">
+    <div className="v2-page-title"><div><p className="v2-eyebrow">Tài khoản</p><h1>Xin chào, {user?.fullName}</h1></div>
+      <SecondaryButton type="button" disabled={busy} onClick={() => {
+        setBusy(true); setError("");
+        void logout().then(() => window.location.assign("/login")).catch((reason: unknown) => setError(reason instanceof Error ? reason.message : "Không thể đăng xuất.")).finally(() => setBusy(false));
+      }}>{busy ? "Đang đăng xuất…" : "Đăng xuất"}</SecondaryButton>
+    </div>
+    {params.get("welcome") && <p className="v2-inline-success" role="status">Tạo tài khoản thành công. Giỏ hàng của bạn đã được giữ nguyên.</p>}
+    {error && <p className="v2-inline-error" role="alert">{error}</p>}
+    <div className="v2-account-shortcuts">
+      <Link to="/customer/orders"><span aria-hidden="true">📦</span><strong>Đơn hàng của tôi</strong><small>Theo dõi, thanh toán, yêu cầu hủy</small></Link>
+      <Link to="/customer/cart"><span aria-hidden="true">🛒</span><strong>Giỏ hàng</strong><small>Đồng bộ trên mọi thiết bị</small></Link>
+      <Link to="/build-pc/start"><span aria-hidden="true">🖥️</span><strong>Tự build PC</strong><small>Gợi ý cấu hình theo nhu cầu</small></Link>
+    </div>
+    <AccountSettings />
+    <MySavedBuilds />
   </div></RoleGate>;
+}
+
+/** Staff and admin: their own profile and password (temporary passwords are changed here). */
+export function AdminProfilePage() {
+  const { user } = useAuth();
+  return <RoleGate audience="staff"><div className="v2-page v2-account-page">
+    <div className="v2-page-title"><div><p className="v2-eyebrow">{user?.roleCode === "ADMIN" ? "Quản trị viên" : "Nhân viên bán hàng"}</p><h1>Tài khoản của tôi</h1></div></div>
+    <AccountSettings />
+  </div></RoleGate>;
+}
+
+/** Profile and password cards shared by customer and staff account pages. */
+function AccountSettings() {
+  const { user, refresh } = useAuth();
+  const [profile, setProfile] = useState<AccountProfile>();
+  const [profileForm, setProfileForm] = useState({ fullName: "", phone: "" });
+  const [profileBusy, setProfileBusy] = useState(false);
+  const [profileMessage, setProfileMessage] = useState<{ ok: boolean; text: string }>();
+  const [passwords, setPasswords] = useState({ current: "", next: "", confirm: "" });
+  const [passwordBusy, setPasswordBusy] = useState(false);
+  const [passwordMessage, setPasswordMessage] = useState<{ ok: boolean; text: string }>();
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void fetchProfile(controller.signal).then((loaded) => {
+      setProfile(loaded);
+      setProfileForm({ fullName: loaded.fullName, phone: loaded.phone ?? "" });
+    }, (reason: unknown) => {
+      if (!controller.signal.aborted) setError(reason instanceof Error ? reason.message : "Không thể tải hồ sơ.");
+    });
+    return () => controller.abort();
+  }, []);
+
+  const saveProfile = (event: FormEvent) => {
+    event.preventDefault();
+    setProfileBusy(true);
+    setProfileMessage(undefined);
+    void updateProfile({ ...profileForm, customerSegment: profile?.customerSegment ?? "UNSPECIFIED" })
+      .then((saved) => {
+        setProfile(saved);
+        setProfileMessage({ ok: true, text: "Đã lưu thông tin." });
+        return refresh();
+      })
+      .catch((reason: unknown) => setProfileMessage({ ok: false, text: reason instanceof Error ? reason.message : "Không thể lưu." }))
+      .finally(() => setProfileBusy(false));
+  };
+  const savePassword = (event: FormEvent) => {
+    event.preventDefault();
+    setPasswordMessage(undefined);
+    if (passwords.next !== passwords.confirm) {
+      setPasswordMessage({ ok: false, text: "Mật khẩu mới nhập lại chưa khớp." });
+      return;
+    }
+    setPasswordBusy(true);
+    void changePassword(passwords.current, passwords.next)
+      .then(() => {
+        setPasswords({ current: "", next: "", confirm: "" });
+        setPasswordMessage({ ok: true, text: "Đã đổi mật khẩu. Lần đăng nhập sau hãy dùng mật khẩu mới." });
+        return refresh();
+      })
+      .catch((reason: unknown) => setPasswordMessage({ ok: false, text: reason instanceof Error ? reason.message : "Không thể đổi mật khẩu." }))
+      .finally(() => setPasswordBusy(false));
+  };
+
+  return <>
+    {error && <p className="v2-inline-error" role="alert">{error}</p>}
+    {user?.mustChangePassword && <p className="v2-inline-error" role="alert">Bạn đang dùng mật khẩu tạm do cửa hàng cấp. Hãy đặt mật khẩu của riêng bạn ở ô "Đổi mật khẩu".</p>}
+    <div className="v2-account-grid">
+      <Card title="Thông tin cá nhân" description={profile ? `Tài khoản tạo ngày ${new Date(profile.createdAt).toLocaleDateString("vi-VN")}` : undefined}>
+        <form className="v2-form-stack" onSubmit={saveProfile}>
+          <FormField label="Họ và tên" htmlFor="account-name">
+            <input className="v2-form-input" id="account-name" required minLength={2} maxLength={160} autoComplete="name"
+              value={profileForm.fullName} onChange={(event) => setProfileForm((current) => ({ ...current, fullName: event.target.value }))} />
+          </FormField>
+          <FormField label="Email đăng nhập" htmlFor="account-email" hint="Email dùng để đăng nhập, không thay đổi được.">
+            <input className="v2-form-input" id="account-email" value={profile?.email ?? user?.email ?? ""} readOnly />
+          </FormField>
+          <FormField label="Số điện thoại" htmlFor="account-phone">
+            <input className="v2-form-input" id="account-phone" type="tel" maxLength={20} autoComplete="tel"
+              value={profileForm.phone} onChange={(event) => setProfileForm((current) => ({ ...current, phone: event.target.value }))} />
+          </FormField>
+          {profileMessage && <p className={profileMessage.ok ? "v2-inline-success" : "v2-inline-error"} role="status">{profileMessage.text}</p>}
+          <PrimaryButton type="submit" disabled={profileBusy || !profile}>{profileBusy ? "Đang lưu…" : "Lưu thông tin"}</PrimaryButton>
+        </form>
+      </Card>
+      <Card title="Đổi mật khẩu" description="Mật khẩu mới cần ít nhất 8 ký tự, gồm cả chữ và số.">
+        <form className="v2-form-stack" id="change-password" onSubmit={savePassword}>
+          <FormField label="Mật khẩu hiện tại" htmlFor="account-current-password">
+            <PasswordInput id="account-current-password" autoComplete="current-password" value={passwords.current}
+              onChange={(value) => setPasswords((current) => ({ ...current, current: value }))} />
+          </FormField>
+          <FormField label="Mật khẩu mới" htmlFor="account-new-password">
+            <PasswordInput id="account-new-password" autoComplete="new-password" minLength={8} value={passwords.next}
+              onChange={(value) => setPasswords((current) => ({ ...current, next: value }))} />
+          </FormField>
+          <FormField label="Nhập lại mật khẩu mới" htmlFor="account-confirm-password">
+            <PasswordInput id="account-confirm-password" autoComplete="new-password" value={passwords.confirm}
+              onChange={(value) => setPasswords((current) => ({ ...current, confirm: value }))} />
+          </FormField>
+          {passwordMessage && <p className={passwordMessage.ok ? "v2-inline-success" : "v2-inline-error"} role="status">{passwordMessage.text}</p>}
+          <PrimaryButton type="submit" disabled={passwordBusy}>{passwordBusy ? "Đang đổi…" : "Đổi mật khẩu"}</PrimaryButton>
+        </form>
+      </Card>
+    </div>
+  </>;
+}
+
+export function MySavedBuilds() {
+  const [builds, setBuilds] = useState<SavedBuildSummary[]>();
+  useEffect(() => {
+    const controller = new AbortController();
+    void fetchMyBuilds(controller.signal).then(setBuilds, () => setBuilds([]));
+    return () => controller.abort();
+  }, []);
+  if (!builds) return null;
+  return <Card title="Cấu hình PC đã lưu" description="Mở lại để xem báo giá mới nhất, in hoặc chia sẻ."
+    action={<Link to="/build-pc/start">+ Build cấu hình mới</Link>}>
+    {builds.length ? <ul className="v2-saved-builds">{builds.map((build) => <li key={build.shareCode}>
+      <Link to={`/build-pc/saved?code=${encodeURIComponent(build.shareCode)}`}>
+        <strong>{build.name}</strong>
+        <span>{build.itemCount} linh kiện · lưu ngày {new Date(build.createdAt.replace(" ", "T")).toLocaleDateString("vi-VN")}</span>
+      </Link>
+      <b>{money(build.savedTotal, "VND")}</b>
+    </li>)}</ul> : <p className="v2-muted">Chưa có cấu hình nào. Trong trang Build PC, bấm "Lưu, chia sẻ hoặc in báo giá" để lưu lại.</p>}
+  </Card>;
 }
 
 export function OrderHistoryPage() {
@@ -629,26 +1017,35 @@ export function OrderHistoryPage() {
     return () => { active = false; };
   }, []);
   return <RoleGate audience="customer"><div className="v2-page">
-    <div className="v2-page-title"><div><p className="v2-eyebrow">Tài khoản</p><h1>Lịch sử đơn hàng</h1></div></div>
+    <div className="v2-page-title"><div><p className="v2-eyebrow">Tài khoản</p><h1>Đơn hàng của tôi</h1></div></div>
     {loading && <LoadingState message="Đang tải đơn hàng…" />}
     {error && <ErrorState title="Không thể tải lịch sử đơn hàng" message={error} />}
     {!loading && !error && !orders.length && <EmptyState
-      title="Chưa có đơn hàng"
-      message="Các đơn hàng đã đặt sẽ hiển thị tại đây."
-      action={<Link to="/customer/parts">Tiếp tục mua sắm</Link>}
+      title="Bạn chưa có đơn hàng nào"
+      message="Các đơn hàng bạn đặt sẽ hiển thị tại đây để theo dõi."
+      action={<Link className="v2-button v2-button-primary" to="/customer/parts">Mua sắm ngay</Link>}
     />}
-    {!loading && !error && orders.map((order) => <Card
-      key={order.orderNumber}
-      title={order.orderNumber}
-      action={<Link to={`/customer/order-detail?orderNumber=${encodeURIComponent(order.orderNumber)}`}>Chi tiết →</Link>}
-    >
-      <dl className="v2-profile-grid">
-        <div><dt>Trạng thái đơn hàng</dt><dd>{orderStatusLabel[order.status]}</dd></div>
-        <div><dt>Thanh toán</dt><dd>{order.paymentStatus || "Chưa ghi nhận"}</dd></div>
-        <div><dt>Ngày đặt</dt><dd>{formatOrderDate(order.placedAt)}</dd></div>
-        <div><dt>Tổng đơn</dt><dd>{formatOrderMoney(order.total, order.currencyCode, order.showFinancials)}</dd></div>
-      </dl>
-    </Card>)}
+    {!loading && !error && orders.length > 0 && <ul className="v2-order-list">{orders.map((order) => {
+      const href = `/customer/order-detail?orderNumber=${encodeURIComponent(order.orderNumber)}`;
+      const awaitingTransfer = order.paymentMethod === "BANK_TRANSFER" && order.paymentStatus === "UNPAID"
+        && order.status !== "CANCELLED" && order.status !== "CANCELLATION_REQUESTED";
+      return <li key={order.orderNumber}>
+        <div className="v2-order-list-main">
+          <Link to={href} className="v2-order-code">{order.orderNumber}</Link>
+          <span className="v2-muted">Đặt lúc {formatOrderDate(order.placedAt)} · {label(paymentMethodText, order.paymentMethod)}</span>
+          <span className="v2-admin-badges">
+            <Badge tone={orderTone(order.status)}>{label(orderStatusText, order.status)}</Badge>
+            <Badge tone={paymentTone(order.paymentStatus)}>{label(paymentStatusText, order.paymentStatus)}</Badge>
+          </span>
+        </div>
+        <div className="v2-order-list-side">
+          <strong>{formatOrderMoney(order.total, order.currencyCode, order.showFinancials)}</strong>
+          <Link className={`v2-button ${awaitingTransfer ? "v2-button-primary" : "v2-button-secondary"}`} to={href}>
+            {awaitingTransfer ? "Thanh toán ngay" : "Xem chi tiết"}
+          </Link>
+        </div>
+      </li>;
+    })}</ul>}
   </div></RoleGate>;
 }
 
@@ -693,90 +1090,126 @@ export function OrderDetailPage() {
     setPaymentMessage("");
     void processOrderPayment(orderNumber).then((result) => {
       setDetail(result);
-      setPaymentMessage(`Kết quả mô phỏng thanh toán: ${result.order.paymentStatus}.`);
+      setPaymentMessage(`Kết quả thanh toán: ${label(paymentStatusText, result.order.paymentStatus)}.`);
     }).catch((problem: unknown) => {
       setError(problem instanceof Error ? problem.message : "Không thể xử lý thanh toán.");
     }).finally(() => setBusy(false));
   };
   const order = detail?.order;
+  if (!orderNumber) return <Navigate to="/customer/orders" replace />;
   return <RoleGate audience="customer"><div className="v2-page">
-    <div className="v2-page-title"><div><p className="v2-eyebrow">Tài khoản</p><h1>Chi tiết đơn hàng</h1></div><Link to="/customer/orders">← Lịch sử đơn hàng</Link></div>
+    <div className="v2-page-title"><div><p className="v2-eyebrow">Tài khoản</p><h1>Chi tiết đơn hàng</h1></div><Link to="/customer/orders">← Đơn hàng của tôi</Link></div>
     {loading && <LoadingState message="Đang tải chi tiết đơn hàng…" />}
-    {error && <ErrorState title="Không thể tải đơn hàng" message={error} />}
-    {detail && order && <>
-      {paymentMessage && <p className="v2-muted" role="status">{paymentMessage}</p>}
-      <Card title={`Đơn ${order.orderNumber}`}>
-        <dl className="v2-profile-grid">
-          <div><dt>Trạng thái đơn hàng</dt><dd>{orderStatusLabel[order.status]}</dd></div>
-          <div><dt>Trạng thái thanh toán</dt><dd>{order.paymentStatus || "Chưa ghi nhận"}</dd></div>
-          <div><dt>Phương thức thanh toán</dt><dd>{order.paymentMethod || "Chưa ghi nhận"}</dd></div>
-          <div><dt>Ngày đặt</dt><dd>{formatOrderDate(order.placedAt)}</dd></div>
+    {error && <p className="v2-inline-error" role="alert">{error}</p>}
+    {paymentMessage && <p className="v2-inline-success" role="status">{paymentMessage}</p>}
+    {detail && order && <OrderDetailView detail={detail}>
+      {canRequestCancellation(order.status) && <Card title="Hủy đơn hàng"
+        description="Đơn chưa giao có thể yêu cầu hủy. Cửa hàng sẽ xác nhận và hoàn tiền nếu bạn đã thanh toán.">
+        <FormField label="Lý do hủy" htmlFor="cancellation-reason">
+          <textarea id="cancellation-reason" className="v2-form-input" rows={3} maxLength={2000}
+            placeholder="Ví dụ: đặt nhầm sản phẩm, muốn đổi cấu hình…"
+            value={reason} onChange={(event) => setReason(event.target.value)} />
+        </FormField>
+        <SecondaryButton type="button" disabled={busy || !reason.trim()} onClick={submitCancellation}>
+          {busy ? "Đang gửi…" : "Gửi yêu cầu hủy"}
+        </SecondaryButton>
+      </Card>}
+      {order.paymentMethod === "SIMULATED_ONLINE"
+        && ["UNPAID", "FAILED", "CANCELLED"].includes(order.paymentStatus)
+        && <Card title="Thanh toán trực tuyến (thử nghiệm)">
+        <p>Môi trường thử nghiệm: không có khoản tiền thật nào được thu.</p>
+        <PrimaryButton type="button" disabled={busy} onClick={submitPayment}>
+          {busy ? "Đang xử lý…" : "Thanh toán"}
+        </PrimaryButton>
+      </Card>}
+    </OrderDetailView>}
+  </div></RoleGate>;
+}
+
+const ORDER_STEPS = ["Đặt hàng", "Đã xác nhận", "Chuẩn bị hàng", "Đang giao", "Đã giao"];
+const ORDER_STEP_INDEX: Partial<Record<OrderStatus, number>> = {
+  PENDING_CONFIRMATION: 0, CONFIRMED: 1, PROCESSING: 2, READY_TO_SHIP: 2, SHIPPING: 3, DELIVERED: 4,
+};
+
+/** Progress bar for an order; cancelled orders show a notice instead. */
+function OrderTracker({ status }: { status: OrderStatus }) {
+  if (status === "CANCELLED" || status === "CANCELLATION_REQUESTED") {
+    return <p className={status === "CANCELLED" ? "v2-order-cancelled" : "v2-cart-notice"}>
+      {status === "CANCELLED" ? "Đơn hàng đã được hủy." : "Yêu cầu hủy đơn đang chờ cửa hàng xử lý."}
+    </p>;
+  }
+  const current = ORDER_STEP_INDEX[status] ?? 0;
+  return <ol className="v2-order-tracker" aria-label="Tiến trình đơn hàng">
+    {ORDER_STEPS.map((step, index) => <li key={step}
+      className={index < current ? "is-done" : index === current ? "is-current" : undefined}
+      aria-current={index === current ? "step" : undefined}>
+      <span aria-hidden="true">{index < current ? "✓" : index + 1}</span>{step}
+    </li>)}
+  </ol>;
+}
+
+/** Shared by the customer's order page and the guest lookup. */
+function OrderDetailView({ detail, children }: { detail: OrderDetail; children?: ReactNode }) {
+  const order = detail.order;
+  const showMoney = (value: number, currency: string | null = order.currencyCode) =>
+    formatOrderMoney(value, currency, order.showFinancials);
+  return <div className="v2-order-view">
+    <Card title={`Đơn hàng ${order.orderNumber}`}
+      description={`Đặt lúc ${formatOrderDate(order.placedAt)}`}
+      action={<span className="v2-admin-badges">
+        <Badge tone={orderTone(order.status)}>{label(orderStatusText, order.status)}</Badge>
+        <Badge tone={paymentTone(order.paymentStatus)}>{label(paymentStatusText, order.paymentStatus)}</Badge>
+      </span>}>
+      <OrderTracker status={order.status} />
+    </Card>
+    <OrderPaymentInstructions detail={detail} />
+    <div className="v2-account-grid">
+      <Card title="Thông tin nhận hàng">
+        <dl className="v2-cart-summary">
           <div><dt>Người nhận</dt><dd>{order.customerName}</dd></div>
-          <div><dt>Địa chỉ</dt><dd>{detail.shippingAddress}{detail.shippingRegion ? `, ${detail.shippingRegion}` : ""}{detail.shippingPostalCode ? ` ${detail.shippingPostalCode}` : ""}</dd></div>
+          <div><dt>Điện thoại</dt><dd>{order.customerPhone}</dd></div>
+          {order.customerEmail && <div><dt>Email</dt><dd>{order.customerEmail}</dd></div>}
+          <div><dt>Địa chỉ</dt><dd>{[detail.shippingAddress, detail.shippingRegion, detail.shippingPostalCode].filter(Boolean).join(", ")}</dd></div>
           {order.shippingCarrier && <div><dt>Đơn vị vận chuyển</dt><dd>{order.shippingCarrier}</dd></div>}
           {order.trackingNumber && <div><dt>Mã vận đơn</dt><dd>{order.trackingNumber}</dd></div>}
         </dl>
       </Card>
-      <Card title="Sản phẩm">
-        {detail.items.length ? <div className="v2-table-wrap"><table className="v2-table">
-          <thead><tr><th>Sản phẩm</th><th>Số lượng</th><th>Đơn giá</th><th>Thành tiền</th></tr></thead>
-          <tbody>{detail.items.map((item, index) => <tr key={`${item.productName}-${index}`}>
-            <td>{item.productName}<small className="v2-table-subtext">{item.condition}</small></td>
-            <td>{item.quantity}</td>
-            <td>{formatOrderMoney(item.unitPrice, item.currencyCode, order.showFinancials)}</td>
-            <td>{formatOrderMoney(item.lineTotal, item.currencyCode, order.showFinancials)}</td>
-          </tr>)}</tbody>
-        </table></div> : <p>Đơn hàng không có dòng sản phẩm.</p>}
-        {order.showFinancials && <><p>Tạm tính: {formatOrderMoney(detail.subtotal, order.currencyCode, true)} · Phí giao hàng: {formatOrderMoney(detail.shippingFee, order.currencyCode, true)} · Giảm giá: {formatOrderMoney(detail.discountAmount, order.currencyCode, true)}</p>
-        <strong>Tổng đơn: {formatOrderMoney(order.total, order.currencyCode, true)}</strong></>}
-        {!order.showFinancials && <p className="v2-muted">Giá trị đơn hàng chưa được xác minh.</p>}
+      <Card title="Thanh toán">
+        <dl className="v2-cart-summary">
+          <div><dt>Phương thức</dt><dd>{label(paymentMethodText, order.paymentMethod)}</dd></div>
+          <div><dt>Tạm tính</dt><dd>{showMoney(detail.subtotal + detail.discountAmount)}</dd></div>
+          {detail.discountAmount > 0 && <div className="is-saving"><dt>Giảm giá</dt><dd>−{showMoney(detail.discountAmount)}</dd></div>}
+          <div><dt>Phí vận chuyển</dt><dd>{detail.shippingFee > 0 ? showMoney(detail.shippingFee) : "Miễn phí"}</dd></div>
+          <div className="is-total"><dt>Tổng cộng</dt><dd>{showMoney(order.total)}</dd></div>
+        </dl>
       </Card>
-      <Card title="Lịch sử trạng thái">
-        {detail.statusHistory.length ? <ol className="v2-status-history">{detail.statusHistory.map((entry, index) => <li key={`${entry.createdAt}-${index}`}>
-          <strong>{entry.action}</strong> · {entry.previousStatus ?? "—"} → {entry.newStatus}
-          <small className="v2-table-subtext">{formatOrderDate(entry.createdAt)} · {entry.actorName} ({entry.actorRole})</small>
-          {entry.note && <p>{entry.note}</p>}
-        </li>)}</ol> : <p>Chưa có lịch sử trạng thái.</p>}
-      </Card>
-      {canRequestCancellation(order.status) && <Card title="Yêu cầu hủy đơn hàng">
-        <FormField label="Lý do" htmlFor="cancellation-reason">
-          <textarea id="cancellation-reason" className="v2-form-input" rows={3} maxLength={2000}
-            value={reason} onChange={(event) => setReason(event.target.value)} />
-        </FormField>
-        <PrimaryButton type="button" disabled={busy || !reason.trim()} onClick={submitCancellation}>
-          {busy ? "Đang gửi…" : "Gửi yêu cầu hủy"}
-        </PrimaryButton>
-      </Card>}
-      {order.paymentMethod === "SIMULATED_ONLINE"
-        && ["UNPAID", "FAILED", "CANCELLED"].includes(order.paymentStatus)
-        && <Card title="Thanh toán mô phỏng">
-        <p>Trạng thái fulfillment không thay đổi khi thanh toán được xử lý.</p>
-        <PrimaryButton type="button" disabled={busy} onClick={submitPayment}>
-          {busy ? "Đang xử lý…" : "Thử thanh toán"}
-        </PrimaryButton>
-      </Card>}
-    </>}
-  </div></RoleGate>;
+    </div>
+    <Card title={`Sản phẩm (${detail.items.reduce((sum, item) => sum + item.quantity, 0)})`}>
+      {detail.items.length ? <ul className="v2-order-result-items">{detail.items.map((item, index) => <li key={`${item.productName}-${index}`}>
+        <span>{item.productName} <small>× {item.quantity} · {showMoney(item.unitPrice, item.currencyCode)}</small></span>
+        <strong>{showMoney(item.lineTotal, item.currencyCode)}</strong>
+      </li>)}</ul> : <p className="v2-muted">Đơn hàng không có sản phẩm.</p>}
+    </Card>
+    <Card title="Lịch sử đơn hàng">
+      {detail.statusHistory.length ? <ol className="v2-account-history">{[...detail.statusHistory].reverse().map((entry, index) => <li key={`${entry.createdAt}-${index}`}>
+        <strong>{label(historyActionText, entry.action)}{entry.newStatus && entry.newStatus !== entry.previousStatus
+          ? ` · ${label(orderStatusText, entry.newStatus)}` : ""}</strong>
+        <small>{formatOrderDate(entry.createdAt)} · {entry.actorRole === "CUSTOMER" || entry.actorRole === "GUEST" ? "Khách hàng" : "Cửa hàng"}</small>
+        {entry.note && <span>{entry.note}</span>}
+      </li>)}</ol> : <p className="v2-muted">Chưa có cập nhật.</p>}
+    </Card>
+    {children}
+  </div>;
 }
-
-const orderStatusLabel: Record<OrderStatus, string> = {
-  PENDING_CONFIRMATION: "Chờ xác nhận",
-  CONFIRMED: "Đã xác nhận",
-  PROCESSING: "Đang xử lý",
-  READY_TO_SHIP: "Sẵn sàng giao",
-  SHIPPING: "Đang giao",
-  DELIVERED: "Đã giao",
-  CANCELLATION_REQUESTED: "Đang yêu cầu hủy",
-  CANCELLED: "Đã hủy",
-};
 
 function canRequestCancellation(status: OrderStatus): boolean {
   return ["PENDING_CONFIRMATION", "CONFIRMED", "PROCESSING", "READY_TO_SHIP"].includes(status);
 }
 
 function formatOrderDate(value: string): string {
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? value : date.toLocaleString("vi-VN");
+  const date = new Date(value.replace(" ", "T"));
+  return Number.isNaN(date.getTime()) ? value
+    : date.toLocaleString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
 }
 
 function formatOrderMoney(value: number, currencyCode: string | null, verified: boolean): string {

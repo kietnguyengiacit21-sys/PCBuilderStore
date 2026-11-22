@@ -1,5 +1,7 @@
 package com.pc_builder_store.config;
 
+import com.pc_builder_store.auth.AccountSessionRefreshFilter;
+import com.pc_builder_store.auth.AccountStateCache;
 import com.pc_builder_store.auth.AuthUserRepository;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -22,6 +24,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.session.ChangeSessionIdAuthenticationStrategy;
 import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
+import org.springframework.security.web.context.SecurityContextHolderFilter;
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
@@ -54,6 +57,14 @@ public class SecurityConfiguration {
             PasswordEncoder passwordEncoder) {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider(userDetailsService);
         provider.setPasswordEncoder(passwordEncoder);
+        // Check the password before the account status, so "account locked" is only revealed to
+        // someone who already knows the password; wrong passwords look the same for every account.
+        provider.setPreAuthenticationChecks(user -> { });
+        provider.setPostAuthenticationChecks(user -> {
+            if (!user.isEnabled()) {
+                throw new org.springframework.security.authentication.DisabledException("Account is locked.");
+            }
+        });
         return provider;
     }
 
@@ -102,8 +113,12 @@ public class SecurityConfiguration {
             HttpSecurity http,
             CsrfTokenRepository csrfTokenRepository,
             SecurityContextRepository securityContextRepository,
-            SessionAuthenticationStrategy sessionAuthenticationStrategy) throws Exception {
+            SessionAuthenticationStrategy sessionAuthenticationStrategy,
+            AccountStateCache accountStates) throws Exception {
         http
+                // Locked accounts lose their session and role changes apply on the next request.
+                .addFilterAfter(new AccountSessionRefreshFilter(accountStates, securityContextRepository),
+                        SecurityContextHolderFilter.class)
                 .cors(Customizer.withDefaults())
                 .csrf(csrf -> csrf
                         .csrfTokenRepository(csrfTokenRepository)
@@ -122,6 +137,8 @@ public class SecurityConfiguration {
                                 "/api/auth/login",
                                 "/api/auth/register",
                                 "/api/auth/me",
+                                "/api/auth/password-reset/request",
+                                "/api/auth/password-reset/confirm",
                                 "/api/cart",
                                 "/api/cart/**")
                         .permitAll()
@@ -129,10 +146,28 @@ public class SecurityConfiguration {
                         .hasRole("ADMIN")
                         .requestMatchers("/api/storefront/**")
                         .permitAll()
+                        // Sales staff run the order desk; retrying a failed refund stays with the admin.
+                        .requestMatchers("/api/orders/admin/*/refund-retries", "/api/orders/admin/*/refund-confirmation")
+                        .hasRole("ADMIN")
                         .requestMatchers("/api/orders/admin", "/api/orders/admin/**")
+                        .hasAnyRole("ADMIN", "SALES")
+                        .requestMatchers(
+                                "/api/admin/accounts", "/api/admin/accounts/**",
+                                "/api/admin/imports", "/api/admin/imports/**")
                         .hasRole("ADMIN")
-                        .requestMatchers("/api/admin/accounts", "/api/admin/accounts/**")
-                        .hasRole("ADMIN")
+                        .requestMatchers(
+                                "/api/admin/dashboard",
+                                "/api/admin/customers", "/api/admin/customers/**",
+                                "/api/admin/reviews", "/api/admin/reviews/**")
+                        .hasAnyRole("ADMIN", "SALES")
+                        .requestMatchers("/api/reviews", "/api/reviews/**")
+                        .hasRole("CUSTOMER")
+                        .requestMatchers(HttpMethod.GET, "/api/builds/mine")
+                        .authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/builds/**")
+                        .authenticated()
+                        .requestMatchers("/api/builds", "/api/builds/**")
+                        .permitAll()
                         .requestMatchers(
                                 HttpMethod.POST,
                                 "/api/orders/guest",
@@ -170,19 +205,28 @@ public class SecurityConfiguration {
                 .exceptionHandling(errors -> errors
                         .authenticationEntryPoint((request, response, exception) ->
                                 writeError(response, HttpServletResponse.SC_UNAUTHORIZED,
-                                        "UNAUTHENTICATED", "Authentication is required."))
+                                        "UNAUTHENTICATED", "Vui lòng đăng nhập để tiếp tục."))
                         .accessDeniedHandler(accessDeniedHandler()));
         return http.build();
     }
 
     private AccessDeniedHandler accessDeniedHandler() {
-        return (request, response, exception) ->
-                writeError(response, HttpStatus.FORBIDDEN.value(), "ACCESS_DENIED", "Access denied.");
+        return (request, response, exception) -> {
+            if (exception instanceof org.springframework.security.web.csrf.CsrfException) {
+                // Usually an expired session or a tab left open for a long time.
+                writeError(response, HttpStatus.FORBIDDEN.value(), "CSRF_INVALID",
+                        "Phiên làm việc đã hết hạn. Vui lòng tải lại trang rồi thử lại.");
+                return;
+            }
+            writeError(response, HttpStatus.FORBIDDEN.value(), "ACCESS_DENIED",
+                    "Bạn không có quyền thực hiện thao tác này.");
+        };
     }
 
     private void writeError(
             HttpServletResponse response, int status, String code, String message) throws IOException {
         response.setStatus(status);
+        response.setCharacterEncoding(java.nio.charset.StandardCharsets.UTF_8.name());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.getWriter().write(
                 "{\"error\":{\"code\":\"" + code + "\",\"message\":\"" + message + "\"}}");

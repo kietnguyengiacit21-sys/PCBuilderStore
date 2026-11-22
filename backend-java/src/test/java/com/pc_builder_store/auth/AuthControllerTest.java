@@ -127,7 +127,35 @@ class AuthControllerTest {
     void rejectsWrongPasswordUnknownEmailAndInactiveAccounts() throws Exception {
         assertLoginRejected("customer@example.test", "wrong-password");
         assertLoginRejected("unknown@example.test", PASSWORD);
-        assertLoginRejected("inactive@example.test", PASSWORD);
+        // A wrong password never reveals that an account is locked...
+        assertLoginRejected("inactive@example.test", "wrong-password");
+        // ...only the right password does, so the owner knows to contact the store.
+        CsrfFixture csrf = csrfFixture();
+        mockMvc.perform(post("/api/auth/login")
+                        .cookie(csrf.cookie())
+                        .header("X-XSRF-TOKEN", csrf.token())
+                        .contentType("application/json")
+                        .content("""
+                                {"email":"inactive@example.test","password":"%s"}
+                                """.formatted(PASSWORD)))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error.code").value("ACCOUNT_LOCKED"));
+    }
+
+    @Test
+    void locksOutAnEmailAfterRepeatedWrongPasswords() throws Exception {
+        for (int attempt = 0; attempt < LoginAttemptLimiter.MAX_FAILURES_PER_EMAIL; attempt++) {
+            assertLoginRejected("sales@example.test", "wrong-password-" + attempt);
+        }
+        CsrfFixture csrf = csrfFixture();
+        mockMvc.perform(post("/api/auth/login")
+                        .cookie(csrf.cookie())
+                        .header("X-XSRF-TOKEN", csrf.token())
+                        .contentType("application/json")
+                        .content("""
+                                {"email":"sales@example.test","password":"%s"}
+                                """.formatted(PASSWORD)))
+                .andExpect(status().isTooManyRequests());
     }
 
     @Test

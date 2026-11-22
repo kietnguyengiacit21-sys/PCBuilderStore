@@ -51,7 +51,7 @@ public class GuestCartTokenService {
 
     public String hash(String token) {
         if (!isValid(token)) {
-            throw new IllegalArgumentException("Invalid guest cart token.");
+            throw new IllegalArgumentException("Phiên giỏ hàng không hợp lệ. Vui lòng tải lại trang.");
         }
         try {
             byte[] digest = MessageDigest.getInstance("SHA-256")

@@ -61,7 +61,7 @@ public class AdminCatalogService {
         String statusFilter = status == null ? "" : " AND p.\"product_status\" = ?";
         String typeFilter = productType == null ? "" : " AND pt.\"type_code\" = ?";
         String searchFilter = normalizedQuery.isEmpty() ? "" : """
-                 AND (p."product_name" ILIKE ? OR p."model_code" ILIKE ? OR p."sku" ILIKE ?)
+                 AND (LOWER(p."product_name") LIKE LOWER(?) OR LOWER(p."model_code") LIKE LOWER(?) OR LOWER(p."sku") LIKE LOWER(?))
                 """;
         String base = """
                 FROM "products" p

@@ -450,6 +450,49 @@ function UserIcon() {
   </svg>;
 }
 
+/** Signed-in header entry: given name plus a small menu, so the header never overflows. */
+function AccountMenu({ fullName, staff, onLogout }: { fullName: string; staff: boolean; onLogout: () => void }) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  // Vietnamese names end with the given name ("Nguyễn Văn An" → "An").
+  const shortName = fullName.trim().split(/\s+/).pop() || fullName;
+
+  useEffect(() => {
+    if (!open) return;
+    const close = (event: MouseEvent | KeyboardEvent) => {
+      if (event instanceof KeyboardEvent ? event.key === "Escape" : !rootRef.current?.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", close);
+    document.addEventListener("keydown", close);
+    return () => {
+      document.removeEventListener("mousedown", close);
+      document.removeEventListener("keydown", close);
+    };
+  }, [open]);
+
+  const links = staff
+    ? [{ to: "/admin/dashboard", label: "Trang quản trị" }, { to: "/admin/profile", label: "Tài khoản của tôi" }]
+    : [
+      { to: "/customer/account", label: "Tài khoản của tôi" },
+      { to: "/customer/orders", label: "Đơn hàng của tôi" },
+      { to: "/build-pc/saved", label: "Cấu hình đã lưu" },
+    ];
+  return <div className="v2-account-menu" ref={rootRef}>
+    <button className="v2-header-link" type="button" aria-haspopup="menu" aria-expanded={open}
+      title={fullName} onClick={() => setOpen((value) => !value)}>
+      <UserIcon /><span className="v2-header-link-text">{shortName}</span>
+      <span className="v2-account-menu-caret" aria-hidden="true">▾</span>
+    </button>
+    {open && <div className="v2-account-menu-panel" role="menu">
+      <p className="v2-account-menu-name">{fullName}<small>{staff ? "Nhân viên cửa hàng" : "Khách hàng"}</small></p>
+      {links.map((link) => <Link key={link.to} role="menuitem" to={link.to} onClick={() => setOpen(false)}>{link.label}</Link>)}
+      <button type="button" role="menuitem" onClick={() => { setOpen(false); onLogout(); }}>Đăng xuất</button>
+    </div>}
+  </div>;
+}
+
 export function CustomerHeader() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
@@ -508,15 +551,16 @@ export function CustomerHeader() {
         <div className="v2-header-actions">
           <Link className="v2-header-link" to="/customer/cart"><CartIcon /><span className="v2-header-link-text">Giỏ hàng</span></Link>
           {user ? (
-            <>
-              <Link className="v2-header-link" to={user.roleCode === "CUSTOMER" ? "/customer/account" : "/admin/dashboard"}><UserIcon /><span className="v2-header-link-text">{user.fullName} · {user.roleCode}</span></Link>
-              <button className="v2-header-link" type="button" onClick={() => {
+            <AccountMenu
+              fullName={user.fullName}
+              staff={user.roleCode !== "CUSTOMER"}
+              onLogout={() => {
                 setLogoutError("");
                 void logout().then(() => navigate("/login")).catch((reason: unknown) =>
                   setLogoutError(reason instanceof Error ? reason.message : "Không thể đăng xuất."),
                 );
-              }}>Đăng xuất</button>
-            </>
+              }}
+            />
           ) : <Link className="v2-header-link" to="/login"><UserIcon /><span className="v2-header-link-text">Đăng nhập</span></Link>}
         </div>
       </div>
@@ -567,18 +611,20 @@ export function CustomerFooter() {
           <h2>Hỗ trợ khách hàng</h2>
           <nav className="v2-footer-links" aria-label="Hỗ trợ khách hàng">
             <Link to="/customer/guest-order-lookup">Tra cứu đơn hàng</Link>
-            <Link to="/customer/cart">Giỏ hàng</Link>
-            <Link to="/customer/orders">Lịch sử đơn hàng</Link>
-            <Link to="/customer/account">Tài khoản của tôi</Link>
+            <Link to="/customer/orders">Đơn hàng của tôi</Link>
+            <Link to="/contact">Liên hệ</Link>
+            <Link to="/about">Giới thiệu</Link>
           </nav>
         </div>
         <div>
-          <h2>Mua hàng</h2>
-          <ul className="v2-footer-list">
-            <li>Thanh toán khi nhận hàng (COD)</li>
-            <li>Giao hàng tận nơi</li>
-            <li>Bảo hành theo từng sản phẩm</li>
-          </ul>
+          <h2>Chính sách</h2>
+          <nav className="v2-footer-links" aria-label="Chính sách">
+            <Link to="/policies/warranty">Bảo hành</Link>
+            <Link to="/policies/returns">Đổi trả và hoàn tiền</Link>
+            <Link to="/policies/shipping">Giao hàng</Link>
+            <Link to="/policies/payment">Thanh toán</Link>
+            <Link to="/policies/privacy">Bảo mật thông tin</Link>
+          </nav>
         </div>
       </div>
       <div className="v2-footer-bottom">© {new Date().getFullYear()} PC Builder Store. Giá và tình trạng hàng được cập nhật từ hệ thống.</div>
@@ -597,7 +643,7 @@ export function CustomerLayout({
   return (
     <div className={`v2-theme v2-shell ${className}`}>
       <CustomerHeader />
-      <main className={`v2-customer-main${items.length ? ` has-comparison-selection${collapsed ? " is-comparison-collapsed" : ""}` : ""}`}>{children}</main>
+      <main className={`v2-customer-main${items.length ? ` has-comparison-selection${collapsed ? " is-comparison-collapsed" : ""}` : ""}`}><TemporaryPasswordBanner />{children}</main>
       <CustomerFooter />
       <ComparisonTray />
       <FloatingContact />
@@ -605,40 +651,50 @@ export function CustomerLayout({
   );
 }
 
-const adminNavGroups = [
+type StaffRole = "ADMIN" | "SALES";
+const BOTH: StaffRole[] = ["ADMIN", "SALES"];
+const ADMIN_ONLY: StaffRole[] = ["ADMIN"];
+
+/** Sales staff run orders, customers and reviews; catalog, promotions and accounts are admin-only. */
+const adminNavGroups: { label: string; items: { label: string; path: string; roles: StaffRole[] }[] }[] = [
   {
     label: "Tổng quan",
-    items: [{ label: "Bảng điều khiển", path: "/admin/dashboard" }],
-  },
-  {
-    label: "Sản phẩm",
-    items: [
-      { label: "Quản lý sản phẩm", path: "/admin/products" },
-      { label: "Tạo / sửa sản phẩm", path: "/admin/product-edit" },
-      { label: "Nhập CSV", path: "/admin/csv-import" },
-      { label: "Danh mục", path: "/admin/categories" },
-      { label: "Thương hiệu", path: "/admin/brands" },
-    ],
+    items: [{ label: "Bảng điều khiển", path: "/admin/dashboard", roles: BOTH }],
   },
   {
     label: "Bán hàng",
     items: [
-      { label: "Đơn hàng", path: "/admin/orders" },
-      { label: "Khuyến mãi", path: "/admin/promotions" },
-      { label: "Tra cứu khách hàng", path: "/admin/customers" },
+      { label: "Đơn hàng", path: "/admin/orders", roles: BOTH },
+      { label: "Tra cứu khách hàng", path: "/admin/customers", roles: BOTH },
+      { label: "Đánh giá sản phẩm", path: "/admin/reviews", roles: BOTH },
+      { label: "Khuyến mãi", path: "/admin/promotions", roles: ADMIN_ONLY },
+    ],
+  },
+  {
+    label: "Sản phẩm",
+    items: [
+      { label: "Quản lý sản phẩm", path: "/admin/products", roles: ADMIN_ONLY },
+      { label: "Tạo / sửa sản phẩm", path: "/admin/product-edit", roles: ADMIN_ONLY },
+      { label: "Nhập CSV", path: "/admin/csv-import", roles: ADMIN_ONLY },
+      { label: "Danh mục", path: "/admin/categories", roles: ADMIN_ONLY },
+      { label: "Thương hiệu", path: "/admin/brands", roles: ADMIN_ONLY },
     ],
   },
   {
     label: "Hệ thống",
-    items: [{ label: "Nhân viên và vai trò", path: "/admin/staff" }],
+    items: [
+      { label: "Nhân viên và tài khoản", path: "/admin/staff", roles: ADMIN_ONLY },
+      { label: "Tài khoản của tôi", path: "/admin/profile", roles: BOTH },
+    ],
   },
 ];
 
 export function AdminSidebar({ open = false, onNavigate }: { open?: boolean; onNavigate?: () => void }) {
   const { user } = useAuth();
-  const visibleGroups = user?.roleCode === "ADMIN"
-    ? adminNavGroups
-    : adminNavGroups.filter((group) => group.items.some((item) => item.path === "/admin/dashboard"));
+  const role = user?.roleCode === "ADMIN" || user?.roleCode === "SALES" ? user.roleCode : undefined;
+  const visibleGroups = adminNavGroups
+    .map((group) => ({ ...group, items: group.items.filter((item) => role && item.roles.includes(role)) }))
+    .filter((group) => group.items.length > 0);
   return (
     <aside
       className={`v2-admin-sidebar${open ? " is-open" : ""}`}
@@ -665,8 +721,7 @@ export function AdminSidebar({ open = false, onNavigate }: { open?: boolean; onN
         </nav>
       ))}
       <div className="v2-admin-sidebar-footer">
-        <strong>Build-PC</strong><br />
-        Sắp ra mắt · B01–B08
+        <Link to="/customer/home">← Xem cửa hàng</Link>
       </div>
     </aside>
   );
@@ -701,7 +756,7 @@ export function AdminTopbar({
           <span className="v2-admin-topbar-title">{title}</span>
         </div>
         <div className="v2-preview-row">
-          {user && <span className="v2-admin-user">{user.fullName} · {user.roleCode}</span>}
+          {user && <Link className="v2-admin-user" to="/admin/profile">{user.fullName} · {user.roleCode === "ADMIN" ? "Quản trị viên" : "Nhân viên"}</Link>}
           {user && <SecondaryButton type="button" onClick={() => {
             setLogoutError("");
             void logout().then(() => navigate("/login")).catch((reason: unknown) =>
@@ -735,6 +790,16 @@ export function Breadcrumb({ items }: { items: BreadcrumbItem[] }) {
   );
 }
 
+/** Shown until a user with an admin-issued temporary password picks their own. */
+function TemporaryPasswordBanner() {
+  const { user } = useAuth();
+  if (!user?.mustChangePassword) return null;
+  const path = user.roleCode === "CUSTOMER" ? "/customer/account?changePassword=1" : "/admin/profile?changePassword=1";
+  return <div className="v2-temp-password-banner" role="alert">
+    Bạn đang đăng nhập bằng mật khẩu tạm. <Link to={path}>Đặt mật khẩu của riêng bạn →</Link>
+  </div>;
+}
+
 export function AdminLayout({
   children,
   title,
@@ -756,6 +821,7 @@ export function AdminLayout({
           onMenuClick={() => setSidebarOpen((open) => !open)}
         />
         <main className="v2-admin-main">
+          <TemporaryPasswordBanner />
           {breadcrumb && <Breadcrumb items={breadcrumb} />}
           {children}
         </main>

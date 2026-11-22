@@ -5,13 +5,21 @@ import { validatePcBuilderCompatibility } from "../catalog-api";
 import type { CatalogOffer, CatalogProduct, PcBuilderCompatibilityResult } from "../catalog-api";
 import { BUILD_SLOTS } from "./build-planner";
 import type { BuildParts } from "./build-planner";
-import { PrimaryButton } from "./components";
+import { Modal, PrimaryButton, SecondaryButton } from "./components";
+import { buildShareUrl, saveBuild } from "../builds-api";
+import type { SavedBuild } from "../builds-api";
 
 /** A catalog product together with the purchasable offer the builder prices it at. */
 export interface Listing { product: CatalogProduct; offer: CatalogOffer }
 
 /** Server-side compatibility check of the whole build plus "add everything to cart". */
-export function CompatibilityAndCart({ parts, byCode, issues }: { parts: BuildParts; byCode: Map<string, Listing>; issues: string[] }) {
+export function CompatibilityAndCart({ parts, byCode, issues, resolution, suggestedName }: {
+  parts: BuildParts;
+  byCode: Map<string, Listing>;
+  issues: string[];
+  resolution?: string;
+  suggestedName?: string;
+}) {
   const [result, setResult] = useState<PcBuilderCompatibilityResult>();
   const [checking, setChecking] = useState(false);
   const [checkError, setCheckError] = useState("");
@@ -87,8 +95,65 @@ export function CompatibilityAndCart({ parts, byCode, issues }: { parts: BuildPa
       <PrimaryButton type="button" disabled={!listings.length || cartBusy || blocking} onClick={() => void addAll()}>
         {cartBusy ? "Đang thêm vào giỏ…" : `🛒 Thêm cả cấu hình vào giỏ (${listings.length} linh kiện)`}
       </PrimaryButton>
+      <SaveBuildButton parts={parts} resolution={resolution} suggestedName={suggestedName} disabled={!listings.length} />
       {cartNotice && <p className="v2-inline-success" role="status">{cartNotice} <Link to="/customer/cart">Xem giỏ hàng →</Link></p>}
       {cartError && <p className="v2-inline-error" role="alert">{cartError}</p>}
     </div>
   </section>;
+}
+
+/** Saves the build server-side and shows a share link to the printable quotation page. */
+function SaveBuildButton({ parts, resolution, suggestedName, disabled }: {
+  parts: BuildParts;
+  resolution?: string;
+  suggestedName?: string;
+  disabled: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [saved, setSaved] = useState<SavedBuild>();
+  const [copied, setCopied] = useState(false);
+
+  const save = () => {
+    setBusy(true);
+    setError("");
+    const items = BUILD_SLOTS.flatMap((slot) => parts[slot] ? [{ slot, modelCode: parts[slot]!.modelCode }] : []);
+    void saveBuild({ name: name.trim() || suggestedName || "Cấu hình PC", resolution, items })
+      .then(setSaved, (reason: unknown) => setError(reason instanceof Error ? reason.message : "Không thể lưu cấu hình."))
+      .finally(() => setBusy(false));
+  };
+  const link = saved ? buildShareUrl(saved.shareCode) : "";
+  return <>
+    <SecondaryButton type="button" disabled={disabled} onClick={() => {
+      setOpen(true); setSaved(undefined); setError(""); setCopied(false); setName(suggestedName ?? "");
+    }}>💾 Lưu, chia sẻ hoặc in báo giá</SecondaryButton>
+    <Modal open={open} onClose={() => setOpen(false)} title={saved ? "Đã lưu cấu hình" : "Lưu cấu hình"}
+      footer={saved ? <>
+        <SecondaryButton type="button" onClick={() => setOpen(false)}>Đóng</SecondaryButton>
+        <Link className="v2-button v2-button-primary" to={`/build-pc/saved?code=${encodeURIComponent(saved.shareCode)}`}>Mở trang báo giá →</Link>
+      </> : <>
+        <SecondaryButton type="button" disabled={busy} onClick={() => setOpen(false)}>Hủy</SecondaryButton>
+        <PrimaryButton type="button" disabled={busy} onClick={save}>{busy ? "Đang lưu…" : "Lưu cấu hình"}</PrimaryButton>
+      </>}>
+      {saved ? <div className="v2-form-stack">
+        <p>Ai có đường link dưới đây đều xem được cấu hình và báo giá. Giá được chụp lại tại thời điểm lưu để so sánh khi giá thay đổi.</p>
+        <div className="v2-share-link">
+          <input className="v2-form-input" readOnly value={link} aria-label="Đường link chia sẻ" onFocus={(event) => event.target.select()} />
+          <SecondaryButton type="button" onClick={() => {
+            void navigator.clipboard?.writeText(link).then(() => setCopied(true), () => setCopied(false));
+          }}>{copied ? "✓ Đã chép" : "Chép link"}</SecondaryButton>
+        </div>
+      </div> : <div className="v2-form-stack">
+        <label className="v2-form-field" htmlFor="save-build-name">
+          <span>Tên cấu hình</span>
+          <input id="save-build-name" className="v2-form-input" maxLength={120} value={name} placeholder="Ví dụ: PC chơi game 25 triệu"
+            onChange={(event) => setName(event.target.value)} />
+        </label>
+        <p className="v2-muted">Đăng nhập trước khi lưu để cấu hình xuất hiện trong trang Tài khoản của bạn.</p>
+        {error && <p className="v2-inline-error" role="alert">{error}</p>}
+      </div>}
+    </Modal>
+  </>;
 }

@@ -1,4 +1,5 @@
 import { createPortal } from "react-dom";
+import { ProductReviews, ReviewBadge } from "./ProductReviews";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
@@ -24,7 +25,7 @@ import type {
   PublicUpgradeConfiguration,
 } from "../catalog-api";
 import { addCartItem, fetchCart, updateCartItemConfiguration } from "../cart-api";
-import { money } from "../demo/demo-store";
+import { money } from "../money";
 import { useCatalogAttributeDefinitions } from "./catalog-metadata";
 import { pcReferenceDescription } from "./pc-configuration";
 import {
@@ -1329,9 +1330,10 @@ function bomWithSelectedUpgrades(
       productName: option.productName,
       productType: option.productType,
       quantity: choice.quantity,
-      imageUrl: null,
-      imageAltText: null,
-      keySpecifications: null,
+      // The default option is usually the same part as the stored component: keep its photo.
+      imageUrl: option.modelCode === current.modelCode ? current.imageUrl : option.imageUrl ?? null,
+      imageAltText: option.modelCode === current.modelCode ? current.imageAltText : option.productName,
+      keySpecifications: option.modelCode === current.modelCode ? current.keySpecifications : null,
     };
   }
   return result.sort((a, b) => a.displayOrder - b.displayOrder);
@@ -1523,6 +1525,9 @@ export function ProductPage() {
   const modelCode = params.get("modelCode")?.trim() ?? "";
   const { codes, toggle } = useComparison();
   const [product, setProduct] = useState<CatalogProduct>();
+  useEffect(() => {
+    if (product) document.title = `${product.productName} | PC Builder Store`;
+  }, [product]);
   const [loading, setLoading] = useState(Boolean(modelCode));
   const [error, setError] = useState<string>();
   const [actionMessage, setActionMessage] = useState("");
@@ -1901,6 +1906,7 @@ export function ProductPage() {
         <section className="v2-detail-info">
           <p className="v2-eyebrow">{product.brandName ?? "Chưa có thương hiệu"} · {productTypeLabel(product.productType)}</p>
           <h1>{product.productName}</h1>
+          <ReviewBadge modelCode={product.modelCode} />
           {displayedShortDescription && product.modelCode !== "PBC-PC-GAME-002" && <p>{displayedShortDescription}</p>}
           {displayedDescription && <ExpandableText text={displayedDescription} />}
           {product.productType === "PC" && <PCComponentChecklist components={configuredBom} />}
@@ -2182,6 +2188,7 @@ export function ProductPage() {
           />
         </Card>
       )}
+      <ProductReviews key={`reviews:${product.modelCode}`} modelCode={product.modelCode} productName={product.productName} />
       <RelatedProductsSection product={product} definitions={definitions} />
       <RecentlyViewedSection key={product.modelCode} excludeModelCode={product.modelCode} />
     </div>
@@ -2310,77 +2317,4 @@ export function ComparePage() {
       </>}
     </div>
   );
-}
-
-export function ProductManagementPage() {
-  const [query, setQuery] = useState("");
-  const { facets, error: facetError } = useFacets();
-  const { definitions, error: definitionsError } = useCatalogAttributeDefinitions();
-  const [type, setType] = useState("");
-  const [category, setCategory] = useState("");
-  const [brand, setBrand] = useState("");
-  const [page, setPage] = useState(1);
-  const { result, loading, error } = useProducts({
-    page,
-    limit: 12,
-    q: query || undefined,
-    type: type || undefined,
-    category: category || undefined,
-    brand: brand || undefined,
-  });
-  const updateQuery = (value: string) => {
-    setQuery(value);
-    setPage(1);
-  };
-  const filterSelect = (label: string, value: string, options: CatalogFacets["categories"], setValue: (next: string) => void) => (
-    <label className="v2-field">{label}<select className="v2-form-input" value={value} onChange={(event) => {
-      setValue(event.target.value);
-      setPage(1);
-    }}><option value="">Tất cả</option>{options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
-  );
-  return <div className="v2-page">
-    <div className="v2-page-title"><div><p className="v2-eyebrow">Catalog API · chỉ đọc</p><h1>Quản lý sản phẩm</h1></div><Badge tone="gold">Không có API ghi</Badge></div>
-    <Card title="Danh mục sản phẩm" description="Thông tin lấy từ catalog API. Tạo/sửa sản phẩm chưa được hỗ trợ bởi backend.">
-      <div className="v2-management-filters">
-        <input className="v2-form-input v2-management-search" placeholder="Tìm tên hoặc mã model" value={query} onChange={(event) => updateQuery(event.target.value)} />
-        {filterSelect("Loại sản phẩm", type, facets?.productTypes ?? [], setType)}
-        {filterSelect("Danh mục", category, facets?.categories ?? [], setCategory)}
-        {filterSelect("Thương hiệu", brand, facets?.brands ?? [], setBrand)}
-      </div>
-      {loading && <LoadingState message="Đang tải danh mục…" />}{error && <ErrorState title="Không thể tải sản phẩm" message={error} />}{facetError && <ErrorState title="Không thể tải facets" message={facetError} />}
-      {definitionsError && <p className="v2-inline-error" role="alert">Không tải được định nghĩa thông số: {definitionsError}</p>}
-      {result && <div className="v2-table-wrap"><table className="v2-table"><thead><tr><th>Model / mã</th><th>Loại / danh mục / thương hiệu</th><th>Thông số chính</th><th>Ưu đãi · điều kiện · tồn · bảo hành</th><th>Trạng thái / chi tiết</th></tr></thead><tbody>{result.data.map((product) => <tr key={product.productId}>
-        <td>{product.productName}<small className="v2-table-subtext v2-mono">{product.modelCode}</small></td>
-        <td>{product.productTypeName}<small className="v2-table-subtext">{product.categoryName} · {product.brandName ?? "Chưa có thương hiệu"}</small></td>
-        <td><SpecificationHighlights productType={product.productType} specifications={product.specifications} definitions={definitions} limit={4} /></td>
-        <td>{product.offers.length
-          ? <div className="v2-admin-offer-summaries">{product.offers.map((offer) => <div key={offer.offerId}>
-            <Badge>{offer.condition}</Badge><strong>{money(offer.price, offer.currency)}</strong>
-            <span>Tồn khả dụng: {offer.availableQuantity}</span>
-            <WarrantyDisplay months={offer.warrantyMonths} showMissing />
-          </div>)}</div>
-          : "Chưa có offer hoạt động."}</td>
-        <td><Badge>{product.status}</Badge><details className="v2-product-inventory-details"><summary>Toàn bộ thông số ({Object.keys(product.specifications).length})</summary><TechnicalSpecifications productType={product.productType} productTypeName={product.productTypeName} specifications={product.specifications} definitions={definitions} verificationMetadata={product.verificationMetadata} /></details></td>
-      </tr>)}</tbody></table></div>}
-      {result && result.pagination.totalPages > 1 && <div className="v2-pager">
-        <SecondaryButton type="button" disabled={page <= 1 || loading} onClick={() => setPage((value) => value - 1)}>Trước</SecondaryButton>
-        <span>Trang {result.pagination.page} / {result.pagination.totalPages} · {result.pagination.total} sản phẩm</span>
-        <SecondaryButton type="button" disabled={page >= result.pagination.totalPages || loading} onClick={() => setPage((value) => value + 1)}>Tiếp</SecondaryButton>
-      </div>}
-      {facets && <p className="v2-muted">Danh mục facets: {facets.productTypes.length} loại sản phẩm · {facets.categories.length} danh mục · {facets.brands.length} thương hiệu</p>}
-    </Card>
-  </div>;
-}
-
-export function FacetManagementPage({ kind }: { kind: "categories" | "brands" }) {
-  const { facets, loading, error } = useFacets();
-  const items = kind === "categories" ? facets?.categories : facets?.brands;
-  const title = kind === "categories" ? "Quản lý danh mục" : "Quản lý thương hiệu";
-  return <div className="v2-page"><div className="v2-page-title"><div><p className="v2-eyebrow">Catalog facets · chỉ đọc</p><h1>{title}</h1></div><Badge tone="gold">Không có API ghi</Badge></div>
-    <Card title={title} description="Danh sách được cung cấp bởi API facets hiện có.">
-      {loading && <LoadingState message="Đang tải dữ liệu…" />}{error && <ErrorState title="Không thể tải facets" message={error} />}
-      {items && <div className="v2-facet-grid">{items.map((item) => <div className="v2-facet-item" key={item.value}><strong>{item.label}</strong><span className="v2-mono">{item.value}</span></div>)}</div>}
-      {!loading && items?.length === 0 && <EmptyState title="Chưa có dữ liệu" message="API không trả về mục nào." />}
-    </Card>
-  </div>;
 }

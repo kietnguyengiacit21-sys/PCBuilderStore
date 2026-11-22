@@ -81,6 +81,9 @@ public final class OrderDtos {
 
     public record RefundRetryRequest(@Size(max = 2000) String note) {}
 
+    /** Staff confirmation that money was received or sent back by hand. */
+    public record ManualPaymentRequest(@Size(max = 2000) String note) {}
+
     public record CancellationRequest(
             @NotBlank @Size(max = 2000) String reason) {}
 

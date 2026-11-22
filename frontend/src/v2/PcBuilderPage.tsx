@@ -1,5 +1,5 @@
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import {
   canPurchaseOffer,
   customerVisibleOffers,
@@ -7,7 +7,7 @@ import {
   fetchCatalogProducts,
 } from "../catalog-api";
 import type { CatalogProduct } from "../catalog-api";
-import { money } from "../demo/demo-store";
+import { money } from "../money";
 import {
   BUILD_SLOTS,
   RESOLUTION_LABEL,
@@ -30,6 +30,7 @@ import type {
   UseCase,
 } from "./build-planner";
 import { CompatibilityAndCart } from "./BuilderCheckout";
+import { fetchSavedBuild } from "../builds-api";
 import type { Listing } from "./BuilderCheckout";
 import { ErrorState, LoadingState, PrimaryButton, SecondaryButton } from "./components";
 import { ExpertBuilder } from "./PcBuilderExpert";
@@ -132,16 +133,38 @@ export function PcBuilderPage() {
   }, []);
 
   const byCode = useMemo(() => new Map(listings.map((listing) => [listing.product.modelCode, listing])), [listings]);
-  const catalog = useMemo(() => createCatalog(listings.map((listing): PlannerProduct => ({
+  const plannerProducts = useMemo(() => listings.map((listing): PlannerProduct => ({
     modelCode: listing.product.modelCode,
     productName: listing.product.productName,
     productType: listing.product.productType,
     brandName: listing.product.brandName,
     price: Number(listing.offer.price),
     specifications: listing.product.specifications,
-  }))), [listings]);
+  })), [listings]);
+  const catalog = useMemo(() => createCatalog(plannerProducts), [plannerProducts]);
   const plan = useMemo(() => listings.length ? planBuild(catalog, deferredRequest) : undefined, [catalog, deferredRequest, listings.length]);
   useEffect(() => setCustomParts(undefined), [deferredRequest]);
+  const [params] = useSearchParams();
+  const loadCode = params.get("load");
+  const [loadNotice, setLoadNotice] = useState("");
+  useEffect(() => {
+    if (!loadCode || !listings.length) return;
+    const controller = new AbortController();
+    void fetchSavedBuild(loadCode, controller.signal).then((saved) => {
+      const parts: BuildParts = {};
+      const missing: string[] = [];
+      for (const item of saved.items) {
+        const product = plannerProducts.find((candidate) => candidate.modelCode === item.modelCode);
+        if (product) parts[item.slot as BuildSlot] = product; else missing.push(item.productName);
+      }
+      setCustomParts(parts);
+      setLoadNotice(`Đã mở cấu hình "${saved.name}".${missing.length ? ` Không còn bán: ${missing.join(", ")}.` : ""}`);
+    }, (reason: unknown) => {
+      if (!controller.signal.aborted) setLoadNotice(reason instanceof Error ? reason.message : "Không mở được cấu hình đã lưu.");
+    });
+    return () => controller.abort();
+    // Runs once the catalog is loaded; later request changes reset to the suggestion as usual.
+  }, [loadCode, listings.length]);
 
   const advisorParts = useMemo(() => customParts ?? plan?.build?.parts ?? {}, [customParts, plan]);
   const analysis = useMemo(() => analyzeBuild(advisorParts, catalog, deferredRequest), [advisorParts, catalog, deferredRequest]);
@@ -183,6 +206,7 @@ export function PcBuilderPage() {
           profile={{ useCase: request.useCase, resolution: request.resolution, priority: request.priority }} />
       </div>}
 
+      {loadNotice && <p className="v2-inline-success v2-builder-load-notice" role="status">{loadNotice}</p>}
       {error && <ErrorState title="Không tải được linh kiện" message={error} />}
       {loading && <LoadingState message="Đang tải linh kiện đang bán…" />}
 
@@ -313,7 +337,9 @@ export function PcBuilderPage() {
             </div>
           </section>}
 
-          {analysis.parts.CPU && <CompatibilityAndCart parts={analysis.parts} byCode={byCode} issues={analysis.issues} />}
+          {analysis.parts.CPU && <CompatibilityAndCart parts={analysis.parts} byCode={byCode} issues={analysis.issues}
+            resolution={deferredRequest.resolution}
+            suggestedName={`PC ${USE_CASES.find((item) => item.value === deferredRequest.useCase)?.title.toLowerCase() ?? ""} ${millions(deferredRequest.budget)}`} />}
         </section>
       </div>}
     </div>

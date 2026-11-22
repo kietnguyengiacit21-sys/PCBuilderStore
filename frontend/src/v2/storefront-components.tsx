@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import type { CatalogImage, CatalogProduct } from "../catalog-api";
 import { customerVisibleOffers } from "../catalog-offers";
-import { money } from "../demo/demo-store";
+import { money } from "../money";
 import { ChevronIcon, CloseIcon, IconButton } from "./components";
 import { availableProductImages, displayProductImages, preferredProductImage } from "./product-images";
 

@@ -43,6 +43,8 @@ import tools.jackson.databind.json.JsonMapper;
 @Service
 public class OrderManagementService {
 
+    private static final String SIMULATED_PAYMENT_METHOD = PaymentSettings.SIMULATED_ONLINE;
+
     private static final List<FulfillmentStatus> PRE_SHIPPING_STATUSES = List.of(
             FulfillmentStatus.PENDING_CONFIRMATION,
             FulfillmentStatus.CONFIRMED,
@@ -54,6 +56,13 @@ public class OrderManagementService {
     private final ComponentInventoryService componentInventory;
     private final PromotionPricingService promotionPricing;
     private final ProductUpgradeService upgrades;
+    private final PaymentSettings paymentSettings;
+
+    /** Order codes customers can read out on the phone: no 0/O or 1/I/L look-alikes. */
+    private static final String ORDER_CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+    private static final java.security.SecureRandom ORDER_CODE_RANDOM = new java.security.SecureRandom();
+    private static final java.time.format.DateTimeFormatter ORDER_CODE_DATE =
+            java.time.format.DateTimeFormatter.ofPattern("yyMMdd");
 
     @Autowired
     public OrderManagementService(
@@ -61,19 +70,41 @@ public class OrderManagementService {
             PaymentGateway paymentGateway,
             ComponentInventoryService componentInventory,
             PromotionPricingService promotionPricing,
-            ProductUpgradeService upgrades) {
+            ProductUpgradeService upgrades,
+            PaymentSettings paymentSettings) {
         this.jdbc = jdbc;
         this.paymentGateway = paymentGateway;
         this.componentInventory = componentInventory;
         this.promotionPricing = promotionPricing;
         this.upgrades = upgrades;
+        this.paymentSettings = paymentSettings;
     }
 
     public OrderManagementService(JdbcTemplate jdbc, PaymentGateway paymentGateway) {
+        this(jdbc, paymentGateway, PaymentSettings.forTests());
+    }
+
+    public OrderManagementService(JdbcTemplate jdbc, PaymentGateway paymentGateway, PaymentSettings settings) {
         this(jdbc, paymentGateway,
                 new ComponentInventoryService(jdbc, JsonMapper.builder().build()),
                 new PromotionPricingService(jdbc, JsonMapper.builder().build()),
-                new ProductUpgradeService(jdbc, JsonMapper.builder().build()));
+                new ProductUpgradeService(jdbc, JsonMapper.builder().build()),
+                settings);
+    }
+
+    /** e.g. PC261122-7KQ4M: date of order + 5 random characters, checked for uniqueness. */
+    private String newOrderNumber() {
+        String date = java.time.LocalDate.now(java.time.ZoneId.of("Asia/Ho_Chi_Minh")).format(ORDER_CODE_DATE);
+        for (int attempt = 0; attempt < 8; attempt++) {
+            StringBuilder code = new StringBuilder("PC").append(date).append('-');
+            for (int index = 0; index < 5; index++) {
+                code.append(ORDER_CODE_ALPHABET.charAt(ORDER_CODE_RANDOM.nextInt(ORDER_CODE_ALPHABET.length())));
+            }
+            Integer taken = jdbc.queryForObject(
+                    "SELECT COUNT(*) FROM \"orders\" WHERE \"order_number\" = ?", Integer.class, code.toString());
+            if (taken == null || taken == 0) return code.toString();
+        }
+        return "PC" + date + "-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
     }
 
     @Transactional(readOnly = true)
@@ -107,8 +138,8 @@ public class OrderManagementService {
         }
         if (StringUtils.hasText(search)) {
             sql.append("""
-                     AND ("order_number" ILIKE ? OR "customer_name" ILIKE ?
-                          OR "customer_email" ILIKE ? OR COALESCE("customer_phone", '') ILIKE ?)
+                     AND (LOWER("order_number") LIKE LOWER(?) OR LOWER("customer_name") LIKE LOWER(?)
+                          OR LOWER("customer_email") LIKE LOWER(?) OR COALESCE("customer_phone", '') LIKE ?)
                     """);
             String like = "%" + search.trim() + "%";
             parameters.add(like);
@@ -200,7 +231,7 @@ public class OrderManagementService {
     public OrderDetail updateStatus(
             String orderNumber, StatusUpdateRequest request, AuthUserPrincipal actor) {
         if (request == null || request.status() == null) {
-            throw new OrderManagementException(HttpStatus.BAD_REQUEST, "A valid status is required.");
+            throw new OrderManagementException(HttpStatus.BAD_REQUEST, "Vui lòng chọn trạng thái hợp lệ.");
         }
         Map<String, Object> row = lockOrder(orderNumber);
         if (request.status() == OrderDtos.FulfillmentStatus.SHIPPING
@@ -209,6 +240,13 @@ public class OrderManagementService {
             throw new OrderManagementException(
                     HttpStatus.CONFLICT,
                     "Không thể chuyển đơn hàng sang giao hàng khi thanh toán trực tuyến chưa thành công.");
+        }
+        if (request.status() == OrderDtos.FulfillmentStatus.SHIPPING
+                && PaymentSettings.BANK_TRANSFER.equals(row.get("payment_method"))
+                && !"PAID".equals(row.get("payment_status"))) {
+            throw new OrderManagementException(
+                    HttpStatus.CONFLICT,
+                    "Đơn chuyển khoản chưa được xác nhận đã nhận tiền nên chưa thể giao hàng.");
         }
         FulfillmentStatus previous = statusFrom(row);
         FulfillmentStatus next = request.status();
@@ -219,7 +257,7 @@ public class OrderManagementService {
         if (next == FulfillmentStatus.CANCELLATION_REQUESTED) {
             if (!PRE_SHIPPING_STATUSES.contains(previous)) {
                 throw new OrderManagementException(HttpStatus.CONFLICT,
-                        "Cancellation is not available for this order status.");
+                        "Không thể hủy đơn hàng ở trạng thái hiện tại.");
             }
             updateStatusRow(orderId, next);
             insertHistory(row, previous, next, "ADMIN_CANCELLATION_REQUESTED", actor, request.note());
@@ -229,7 +267,7 @@ public class OrderManagementService {
             if (!PRE_SHIPPING_STATUSES.contains(previous)
                     && previous != FulfillmentStatus.CANCELLATION_REQUESTED) {
                 throw new OrderManagementException(HttpStatus.CONFLICT,
-                        "Cancellation is not available for this order status.");
+                        "Không thể hủy đơn hàng ở trạng thái hiện tại.");
             }
             releaseInventoryReservations(orderId);
             issueSimulatedRefundIfPaid(row);
@@ -239,13 +277,70 @@ public class OrderManagementService {
         }
         if (!isAllowedTransition(previous, next)) {
             throw new OrderManagementException(HttpStatus.CONFLICT,
-                    "The requested status transition is not allowed.");
+                    "Không thể chuyển đơn hàng sang trạng thái này.");
         }
         if (next == FulfillmentStatus.SHIPPING) {
             consumeInventoryReservations(orderId);
         }
         updateStatusRow(orderId, next);
+        if (next == FulfillmentStatus.DELIVERED && PaymentSettings.COD.equals(row.get("payment_method"))
+                && "UNPAID".equals(row.get("payment_status"))) {
+            // Cash on delivery: the courier collected the money when handing over the parcel.
+            jdbc.update("""
+                    UPDATE "orders" SET "payment_status" = 'PAID', "updated_at" = CURRENT_TIMESTAMP
+                    WHERE "order_id" = ?
+                    """, orderId);
+        }
         insertHistory(row, previous, next, "ADMIN_STATUS_CHANGED", actor, request.note());
+        return findDetail(orderNumber, null);
+    }
+
+    /** Staff saw the bank transfer arrive (or collected the COD cash): mark the order paid. */
+    @Transactional
+    public OrderDetail confirmPayment(String orderNumber, String note, AuthUserPrincipal actor) {
+        Map<String, Object> row = lockOrder(orderNumber);
+        String method = String.valueOf(row.get("payment_method"));
+        if (!PaymentSettings.BANK_TRANSFER.equals(method) && !PaymentSettings.COD.equals(method)) {
+            throw new OrderManagementException(HttpStatus.CONFLICT,
+                    "Chỉ xác nhận thủ công cho đơn chuyển khoản hoặc thanh toán khi nhận hàng.");
+        }
+        FulfillmentStatus status = statusFrom(row);
+        if (status == FulfillmentStatus.CANCELLED || status == FulfillmentStatus.CANCELLATION_REQUESTED) {
+            throw new OrderManagementException(HttpStatus.CONFLICT,
+                    "Đơn hàng đã hủy hoặc đang chờ hủy, không thể xác nhận thanh toán.");
+        }
+        String paymentStatus = String.valueOf(row.get("payment_status"));
+        if ("PAID".equals(paymentStatus)) return findDetail(orderNumber, null);
+        if (!Set.of("UNPAID", "FAILED", "PENDING").contains(paymentStatus)) {
+            throw new OrderManagementException(HttpStatus.CONFLICT,
+                    "Trạng thái thanh toán hiện tại không cho phép xác nhận.");
+        }
+        jdbc.update("""
+                UPDATE "orders"
+                SET "payment_status" = 'PAID', "payment_reference" = ?, "updated_at" = CURRENT_TIMESTAMP
+                WHERE "order_id" = ?
+                """, "MANUAL-" + actor.userId(), number(row.get("order_id")));
+        insertHistory(row, status, status, "ADMIN_PAYMENT_CONFIRMED", actor,
+                StringUtils.hasText(note) ? note.trim() : "Đã xác nhận nhận tiền.");
+        return findDetail(orderNumber, null);
+    }
+
+    /** Staff sent the money back for a cancelled, already-paid order. */
+    @Transactional
+    public OrderDetail confirmManualRefund(String orderNumber, String note, AuthUserPrincipal actor) {
+        Map<String, Object> row = lockOrder(orderNumber);
+        if (!"REFUND_PENDING".equals(String.valueOf(row.get("payment_status")))
+                || SIMULATED_PAYMENT_METHOD.equals(String.valueOf(row.get("payment_method")))) {
+            throw new OrderManagementException(HttpStatus.CONFLICT,
+                    "Đơn hàng này không có khoản hoàn tiền đang chờ xác nhận.");
+        }
+        jdbc.update("""
+                UPDATE "orders" SET "payment_status" = 'REFUNDED', "updated_at" = CURRENT_TIMESTAMP
+                WHERE "order_id" = ?
+                """, number(row.get("order_id")));
+        FulfillmentStatus status = statusFrom(row);
+        insertHistory(row, status, status, "ADMIN_REFUND_CONFIRMED", actor,
+                StringUtils.hasText(note) ? note.trim() : "Đã hoàn tiền cho khách.");
         return findDetail(orderNumber, null);
     }
 
@@ -255,7 +350,7 @@ public class OrderManagementService {
         Map<String, Object> row = lockOrder(orderNumber);
         if (row.get("user_id") == null
                 || number(row.get("user_id")) != Long.parseLong(actor.userId())) {
-            throw new OrderManagementException(HttpStatus.NOT_FOUND, "Order not found.");
+            throw new OrderManagementException(HttpStatus.NOT_FOUND, "Không tìm thấy đơn hàng.");
         }
         FulfillmentStatus previous = statusFrom(row);
         if (!Set.of(
@@ -264,7 +359,7 @@ public class OrderManagementService {
                 FulfillmentStatus.PROCESSING,
                 FulfillmentStatus.READY_TO_SHIP).contains(previous)) {
             throw new OrderManagementException(
-                    HttpStatus.CONFLICT, "Cancellation is not available for this order status.");
+                    HttpStatus.CONFLICT, "Không thể hủy đơn hàng ở trạng thái hiện tại.");
         }
         FulfillmentStatus next = FulfillmentStatus.CANCELLATION_REQUESTED;
         updateStatusRow(number(row.get("order_id")), next);
@@ -276,7 +371,7 @@ public class OrderManagementService {
     public OrderDetail processSimulatedPayment(
             String orderNumber, String idempotencyKey, AuthUserPrincipal customer) {
         if (customer == null || customer.userId() == null) {
-            throw new OrderManagementException(HttpStatus.NOT_FOUND, "Order not found.");
+            throw new OrderManagementException(HttpStatus.NOT_FOUND, "Không tìm thấy đơn hàng.");
         }
         return processSimulatedPayment(
                 orderNumber, idempotencyKey, Long.parseLong(customer.userId()), null, false);
@@ -295,16 +390,20 @@ public class OrderManagementService {
             Long customerId,
             String normalizedPhone,
             boolean guestOnly) {
+        if (!paymentSettings.simulatedOnlineEnabled()) {
+            throw new OrderManagementException(HttpStatus.CONFLICT,
+                    "Thanh toán trực tuyến hiện không khả dụng. Vui lòng thanh toán khi nhận hàng hoặc chuyển khoản.");
+        }
         if (!StringUtils.hasText(idempotencyKey) || idempotencyKey.length() > 120) {
             throw new OrderManagementException(HttpStatus.BAD_REQUEST,
-                    "A valid payment idempotency key is required.");
+                    "Yêu cầu thanh toán không hợp lệ. Vui lòng tải lại trang.");
         }
         Map<String, Object> row = lockOrder(orderNumber);
         if (guestOnly
                 ? row.get("user_id") != null
                         || !phoneMatches(row.get("customer_phone"), normalizedPhone)
                 : row.get("user_id") == null || number(row.get("user_id")) != customerId) {
-            throw new OrderManagementException(HttpStatus.NOT_FOUND, "Order not found.");
+            throw new OrderManagementException(HttpStatus.NOT_FOUND, "Không tìm thấy đơn hàng.");
         }
         FulfillmentStatus fulfillmentStatus = statusFrom(row);
         if (fulfillmentStatus == FulfillmentStatus.CANCELLED
@@ -312,11 +411,11 @@ public class OrderManagementService {
                 || fulfillmentStatus == FulfillmentStatus.DELIVERED
                 || fulfillmentStatus == FulfillmentStatus.SHIPPING) {
             throw new OrderManagementException(HttpStatus.CONFLICT,
-                    "Payment is not available for this fulfillment status.");
+                    "Không thể thanh toán đơn hàng ở trạng thái hiện tại.");
         }
         if (!"SIMULATED_ONLINE".equalsIgnoreCase(String.valueOf(row.get("payment_method")))) {
             throw new OrderManagementException(HttpStatus.CONFLICT,
-                    "This order does not use simulated online payment.");
+                    "Đơn hàng này không dùng thanh toán trực tuyến.");
         }
         List<Map<String, Object>> existing = jdbc.queryForList("""
                 SELECT "order_payment_transaction_id"
@@ -367,7 +466,7 @@ public class OrderManagementService {
             CheckoutRequest request, String idempotencyKey, AuthUserPrincipal customer) {
         if (customer == null || customer.userId() == null) {
             throw new OrderManagementException(HttpStatus.UNAUTHORIZED,
-                    "Customer authentication is required.");
+                    "Vui lòng đăng nhập để tiếp tục.");
         }
         CheckoutOwner owner = new CheckoutOwner(
                 Long.parseLong(customer.userId()),
@@ -387,12 +486,12 @@ public class OrderManagementService {
                 || !request.customerEmail().trim().matches(
                         "(?i)^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")) {
             throw new OrderManagementException(HttpStatus.BAD_REQUEST,
-                    "A valid customer email is required for guest checkout.");
+                    "Vui lòng nhập email hợp lệ để nhận thông tin đơn hàng.");
         }
         if (!StringUtils.hasText(guestCartTokenHash)
                 || !guestCartTokenHash.matches("[0-9a-f]{64}")) {
             throw new OrderManagementException(HttpStatus.BAD_REQUEST,
-                    "A valid guest cart token is required.");
+                    "Phiên giỏ hàng không hợp lệ. Vui lòng tải lại trang.");
         }
         CheckoutOwner owner = new CheckoutOwner(
                 null,
@@ -411,12 +510,12 @@ public class OrderManagementService {
                 || !StringUtils.hasText(request.paymentMethod())
                 || !StringUtils.hasText(idempotencyKey) || idempotencyKey.length() > 120) {
             throw new OrderManagementException(HttpStatus.BAD_REQUEST,
-                    "Checkout details and a valid idempotency key are required.");
+                    "Thiếu thông tin đặt hàng. Vui lòng tải lại trang và thử lại.");
         }
         String paymentMethod = request.paymentMethod().trim().toUpperCase();
-        if (!Set.of("COD", "SIMULATED_ONLINE").contains(paymentMethod)) {
+        if (!paymentSettings.accepts(paymentMethod)) {
             throw new OrderManagementException(HttpStatus.BAD_REQUEST,
-                    "Choose COD or simulated online payment.");
+                    "Phương thức thanh toán này hiện không khả dụng. Vui lòng chọn phương thức khác.");
         }
         String storedIdempotencyKey = owner.guest()
                 ? guestIdempotencyKey(owner.guestCartTokenHash(), idempotencyKey)
@@ -441,7 +540,7 @@ public class OrderManagementService {
                     : prior.get("user_id") == null
                             || number(prior.get("user_id")) != owner.userId()) {
                 throw new OrderManagementException(HttpStatus.CONFLICT,
-                        "The checkout idempotency key is already associated with another order.");
+                        "Yêu cầu đặt hàng bị trùng. Vui lòng tải lại trang và thử lại.");
             }
             return findDetail(
                     String.valueOf(prior.get("order_number")), owner.userId(), owner.guest());
@@ -452,12 +551,12 @@ public class OrderManagementService {
             if (item == null || !StringUtils.hasText(item.offerId())
                     || item.quantity() < 1 || item.quantity() > 100) {
                 throw new OrderManagementException(HttpStatus.BAD_REQUEST,
-                        "Each checkout item needs a valid offer and quantity.");
+                        "Sản phẩm hoặc số lượng trong đơn hàng không hợp lệ.");
             }
             String offerId = item.offerId().trim();
             if (!offerId.matches("\\d{1,20}")) {
                 throw new OrderManagementException(HttpStatus.BAD_REQUEST,
-                        "Each checkout item needs a valid offer and quantity.");
+                        "Sản phẩm hoặc số lượng trong đơn hàng không hợp lệ.");
             }
             quantities.merge(offerId, item.quantity(), Integer::sum);
         }
@@ -488,7 +587,7 @@ public class OrderManagementService {
                     """, item.getKey());
             if (rows.isEmpty()) {
                 throw new OrderManagementException(HttpStatus.CONFLICT,
-                        "One or more selected offers are unavailable.");
+                        "Một số sản phẩm trong giỏ hiện không còn bán. Vui lòng kiểm tra lại giỏ hàng.");
             }
             Map<String, Object> offer = rows.getFirst();
             BigDecimal price = (BigDecimal) offer.get("price");
@@ -524,12 +623,12 @@ public class OrderManagementService {
             if (available < item.getValue()) {
                 throw new OrderManagementException(HttpStatus.CONFLICT,
                         componentInventoryProduct
-                                ? "There is not enough NEW component stock to assemble this PC."
-                                : "There is not enough available stock for a selected offer.");
+                                ? "Không đủ linh kiện mới trong kho để lắp bộ PC này."
+                                : "Một sản phẩm trong giỏ không còn đủ số lượng. Vui lòng giảm số lượng hoặc chọn sản phẩm khác.");
             }
             if (currencyCode != null && !currencyCode.equals(offerCurrency)) {
                 throw new OrderManagementException(HttpStatus.CONFLICT,
-                        "An order cannot contain offers in different currencies.");
+                        "Một đơn hàng không thể chứa sản phẩm tính bằng nhiều loại tiền tệ.");
             }
             currencyCode = offerCurrency;
             PromotionPricingService.Pricing pricing = promotionPricing.price(
@@ -559,7 +658,7 @@ public class OrderManagementService {
             offers.add(offer);
         }
 
-        String orderNumber = "ORD-" + UUID.randomUUID().toString().toUpperCase();
+        String orderNumber = newOrderNumber();
         long orderId = jdbc.queryForObject("""
                 INSERT INTO "orders" (
                     "order_number", "user_id", "customer_name", "customer_email", "customer_phone",
@@ -747,7 +846,7 @@ public class OrderManagementService {
         FulfillmentStatus current = statusFrom(row);
         if (current != FulfillmentStatus.CANCELLATION_REQUESTED) {
             throw new OrderManagementException(
-                    HttpStatus.CONFLICT, "This order has no pending cancellation request.");
+                    HttpStatus.CONFLICT, "Đơn hàng không có yêu cầu hủy nào đang chờ duyệt.");
         }
         long orderId = number(row.get("order_id"));
         if (request.approve()) {
@@ -766,7 +865,7 @@ public class OrderManagementService {
                     """, orderId);
             if (priorStatuses.isEmpty() || priorStatuses.getFirst().get("previous_status") == null) {
                 throw new OrderManagementException(HttpStatus.CONFLICT,
-                        "The prior status for this cancellation request is unavailable.");
+                        "Không xác định được trạng thái trước khi yêu cầu hủy.");
             }
             FulfillmentStatus restored = parseStatus(
                     String.valueOf(priorStatuses.getFirst().get("previous_status")));
@@ -812,7 +911,7 @@ public class OrderManagementService {
                 """, orderId, orderId, orderId);
         if (priorAttempts.isEmpty()) {
             throw new OrderManagementException(HttpStatus.CONFLICT,
-                    "There is no failed refund to retry.");
+                    "Không có khoản hoàn tiền lỗi nào để thử lại.");
         }
         Map<String, Object> prior = priorAttempts.getFirst();
         String priorStatus = String.valueOf(prior.get("refund_status"));
@@ -820,7 +919,7 @@ public class OrderManagementService {
                 || Boolean.TRUE.equals(prior.get("has_pending"))
                 || (!"FAILED".equals(priorStatus) && !"CANCELLED".equals(priorStatus))) {
             throw new OrderManagementException(HttpStatus.CONFLICT,
-                    "Only a failed refund can be retried; pending or successful refunds cannot be repeated.");
+                    "Chỉ có thể thử lại khoản hoàn tiền bị lỗi; khoản đang xử lý hoặc đã hoàn không thể lặp lại.");
         }
 
         String currencyCode = String.valueOf(prior.get("currency_code")).trim();
@@ -847,7 +946,7 @@ public class OrderManagementService {
     public OrderDetail updateShipping(
             String orderNumber, ShippingUpdateRequest request, AuthUserPrincipal actor) {
         if (request == null) {
-            throw new OrderManagementException(HttpStatus.BAD_REQUEST, "Shipping details are required.");
+            throw new OrderManagementException(HttpStatus.BAD_REQUEST, "Vui lòng nhập thông tin vận chuyển.");
         }
         Map<String, Object> row = lockOrder(orderNumber);
         FulfillmentStatus current = statusFrom(row);
@@ -855,7 +954,7 @@ public class OrderManagementService {
                 && current != FulfillmentStatus.SHIPPING
                 && current != FulfillmentStatus.DELIVERED) {
             throw new OrderManagementException(HttpStatus.CONFLICT,
-                    "Shipping details can only be edited when an order is ready to ship or later.");
+                    "Chỉ cập nhật thông tin vận chuyển khi đơn đã sẵn sàng giao hoặc đang giao.");
         }
         jdbc.update("""
                 UPDATE "orders"
@@ -909,7 +1008,7 @@ public class OrderManagementService {
                 ? jdbc.queryForList(sql, orderNumber, customerId)
                 : jdbc.queryForList(sql, orderNumber);
         if (rows.isEmpty()) {
-            throw new OrderManagementException(HttpStatus.NOT_FOUND, "Order not found.");
+            throw new OrderManagementException(HttpStatus.NOT_FOUND, "Không tìm thấy đơn hàng.");
         }
         Map<String, Object> row = rows.getFirst();
         long orderId = number(row.get("order_id"));
@@ -959,7 +1058,7 @@ public class OrderManagementService {
                 SELECT * FROM "orders" WHERE "order_number" = ? FOR UPDATE
                 """, orderNumber);
         if (rows.isEmpty()) {
-            throw new OrderManagementException(HttpStatus.NOT_FOUND, "Order not found.");
+            throw new OrderManagementException(HttpStatus.NOT_FOUND, "Không tìm thấy đơn hàng.");
         }
         return rows.getFirst();
     }
@@ -1024,7 +1123,7 @@ public class OrderManagementService {
                 """, (rs, row) -> rs.getBigDecimal(1), guestCartTokenHash);
         if (cartIds.isEmpty()) {
             throw new OrderManagementException(HttpStatus.CONFLICT,
-                    "The guest cart is empty or no longer available.");
+                    "Giỏ hàng đang trống hoặc đã hết hạn.");
         }
         BigDecimal cartId = cartIds.getFirst();
         Map<String, Integer> cartQuantities = new TreeMap<>();
@@ -1039,7 +1138,7 @@ public class OrderManagementService {
                 cartId);
         if (cartQuantities.isEmpty() || !cartQuantities.equals(requestedQuantities)) {
             throw new OrderManagementException(HttpStatus.CONFLICT,
-                    "Checkout items must exactly match the current guest cart.");
+                    "Giỏ hàng đã thay đổi trong lúc đặt hàng. Vui lòng kiểm tra lại giỏ hàng.");
         }
         return cartId;
     }
@@ -1065,7 +1164,7 @@ public class OrderManagementService {
     }
 
     private static OrderManagementException guestOrderNotFound() {
-        return new OrderManagementException(HttpStatus.NOT_FOUND, "Order not found.");
+        return new OrderManagementException(HttpStatus.NOT_FOUND, "Không tìm thấy đơn hàng.");
     }
 
     private void releaseInventoryReservations(long orderId) {
@@ -1087,7 +1186,7 @@ public class OrderManagementService {
                     number(reservation.get("quantity")));
             if (changed != 1) {
                 throw new OrderManagementException(HttpStatus.CONFLICT,
-                        "The inventory reservation is inconsistent; cancellation was not applied.");
+                        "Dữ liệu giữ hàng trong kho không khớp nên chưa thể hủy đơn. Vui lòng kiểm tra tồn kho.");
             }
             jdbc.update("""
                     UPDATE "order_inventory_reservations"
@@ -1120,7 +1219,7 @@ public class OrderManagementService {
                         """, orderId);
         if (items.isEmpty()) {
                     throw new OrderManagementException(
-                            HttpStatus.CONFLICT, "The order has no inventory lines to reserve.");
+                            HttpStatus.CONFLICT, "Đơn hàng không có sản phẩm nào để giữ hàng.");
         }
         for (Map<String, Object> item : items) {
                     BigDecimal orderItemId = (BigDecimal) item.get("order_item_id");
@@ -1184,7 +1283,7 @@ public class OrderManagementService {
                         if (gift.selectionRequired()
                                 && !selected.contains(gift.promotionId() + ":" + gift.offerId())) {
                             throw new OrderManagementException(HttpStatus.CONFLICT,
-                                    "Select every required gift before checkout.");
+                                    "Vui lòng chọn đầy đủ quà tặng bắt buộc trước khi đặt hàng.");
                         }
                     }
                     if (!selections.isEmpty() && selections.stream().anyMatch(selection ->
@@ -1286,7 +1385,7 @@ public class OrderManagementService {
                     quantity, quantity, number(reservation.get("offer_id")), quantity, quantity);
             if (changed != 1) {
                 throw new OrderManagementException(HttpStatus.CONFLICT,
-                        "The inventory reservation is inconsistent; shipping was not applied.");
+                        "Dữ liệu giữ hàng trong kho không khớp nên chưa thể giao đơn. Vui lòng kiểm tra tồn kho.");
             }
             jdbc.update("""
                     UPDATE "order_inventory_reservations"
@@ -1298,6 +1397,14 @@ public class OrderManagementService {
 
     private void issueSimulatedRefundIfPaid(Map<String, Object> order) {
         if (!"PAID".equalsIgnoreCase(String.valueOf(order.get("payment_status")))) {
+            return;
+        }
+        if (!SIMULATED_PAYMENT_METHOD.equalsIgnoreCase(String.valueOf(order.get("payment_method")))) {
+            // Real money (bank transfer, cash collected): staff send it back and confirm the refund.
+            jdbc.update("""
+                    UPDATE "orders" SET "payment_status" = 'REFUND_PENDING', "updated_at" = CURRENT_TIMESTAMP
+                    WHERE "order_id" = ?
+                    """, number(order.get("order_id")));
             return;
         }
         String currencyCode = verifiedOrderCurrency(number(order.get("order_id")));
@@ -1347,7 +1454,7 @@ public class OrderManagementService {
                 || currency.get("currency_code") == null
                 || !String.valueOf(currency.get("currency_code")).matches("[A-Z]{3}")) {
             throw new OrderManagementException(HttpStatus.CONFLICT,
-                    "Payment cannot be simulated because the order currency is invalid.");
+                    "Không thể thanh toán vì đơn vị tiền tệ của đơn hàng không hợp lệ.");
         }
         return String.valueOf(currency.get("currency_code"));
     }
@@ -1413,7 +1520,7 @@ public class OrderManagementService {
             return FulfillmentStatus.valueOf(value.trim().toUpperCase());
         } catch (IllegalArgumentException | NullPointerException exception) {
             throw new OrderManagementException(HttpStatus.CONFLICT,
-                    "The order has an unsupported fulfillment status.");
+                    "Trạng thái đơn hàng không hợp lệ.");
         }
     }
 

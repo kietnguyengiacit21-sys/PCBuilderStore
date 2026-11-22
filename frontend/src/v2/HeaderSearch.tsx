@@ -1,10 +1,10 @@
 import { useEffect, useId, useRef, useState } from "react";
 import type { KeyboardEvent, ReactNode } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { fetchCatalogProducts } from "../catalog-api";
 import type { CatalogFacets, CatalogProduct } from "../catalog-api";
 import { customerVisibleOffers } from "../catalog-offers";
-import { money } from "../demo/demo-store";
+import { money } from "../money";
 import { displayProductImages, preferredProductImage } from "./product-images";
 import { ProductArtwork, productTypeLabel } from "./storefront-components";
 
@@ -50,6 +50,7 @@ function SuggestionPrice({ product }: { product: CatalogProduct }) {
 
 export function HeaderSearch({ facets }: { facets?: CatalogFacets }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const listboxId = useId();
   const rootRef = useRef<HTMLFormElement>(null);
   const [query, setQuery] = useState("");
@@ -57,6 +58,15 @@ export function HeaderSearch({ facets }: { facets?: CatalogFacets }) {
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
   const [state, setState] = useState<SuggestionState>({ status: "idle" });
+
+  // On the product list the box mirrors the current filter, so it never shows a stale category.
+  useEffect(() => {
+    if (location.pathname !== "/customer/parts") return;
+    const params = new URLSearchParams(location.search);
+    setType(params.get("type") ?? "");
+    setQuery(params.get("q") ?? "");
+    setOpen(false);
+  }, [location.pathname, location.search]);
 
   const trimmed = query.trim();
   const canSuggest = trimmed.length >= MIN_QUERY_LENGTH;
@@ -145,7 +155,12 @@ export function HeaderSearch({ facets }: { facets?: CatalogFacets }) {
       <div className="v2-header-search-bar">
         <label className="v2-header-search-type">
           <span className="v2-visually-hidden">Danh mục tìm kiếm</span>
-          <select value={type} onChange={(event) => setType(event.target.value)}>
+          <select value={type} onChange={(event) => {
+            // Picking a category opens its product list right away (keeping any typed search).
+            const next = event.target.value;
+            setType(next);
+            goTo(resultsLink(trimmed, next));
+          }}>
             <option value="">Tất cả danh mục</option>
             {facets?.productTypes.map((option) => (
               <option key={option.value} value={option.value}>

@@ -12,7 +12,12 @@ import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.server.ResponseStatusException;
@@ -21,13 +26,15 @@ import org.springframework.web.server.ResponseStatusException;
 public class GlobalExceptionHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+    static final String DATABASE_UNAVAILABLE_MESSAGE =
+            "Hệ thống đang tạm gián đoạn kết nối dữ liệu, vui lòng thử lại sau ít phút.";
 
     @ExceptionHandler(DatabaseUnavailableException.class)
     public ResponseEntity<ApiErrorResponse> handleDatabaseUnavailable(
             DatabaseUnavailableException exception) {
         logger.warn("Database health check failed");
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                .body(ApiErrorResponse.of("DATABASE_UNAVAILABLE", "Database is unavailable."));
+                .body(ApiErrorResponse.of("DATABASE_UNAVAILABLE", DATABASE_UNAVAILABLE_MESSAGE));
     }
 
     @ExceptionHandler(InvalidCatalogQueryException.class)
@@ -84,18 +91,45 @@ public class GlobalExceptionHandler {
                 .body(ApiErrorResponse.of("INVALID_REQUEST", "Thông tin yêu cầu không hợp lệ."));
     }
 
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiErrorResponse> handleUnreadableBody(HttpMessageNotReadableException exception) {
+        return ResponseEntity.badRequest()
+                .body(ApiErrorResponse.of("INVALID_REQUEST_BODY", "Dữ liệu gửi lên không đúng định dạng JSON."));
+    }
+
     @ExceptionHandler(DataAccessResourceFailureException.class)
     public ResponseEntity<ApiErrorResponse> handleDatabaseError(
             DataAccessResourceFailureException exception) {
         logger.warn("Catalog database operation failed");
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                .body(ApiErrorResponse.of("DATABASE_UNAVAILABLE", "Database is unavailable."));
+                .body(ApiErrorResponse.of("DATABASE_UNAVAILABLE", DATABASE_UNAVAILABLE_MESSAGE));
+    }
+
+    /** Unknown API address (for example a missing path segment). */
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ApiErrorResponse> handleNoResource(NoResourceFoundException exception) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiErrorResponse.of("NOT_FOUND", "Không tìm thấy nội dung được yêu cầu."));
+    }
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ApiErrorResponse> handleMethodNotSupported(
+            HttpRequestMethodNotSupportedException exception) {
+        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED)
+                .body(ApiErrorResponse.of("METHOD_NOT_ALLOWED", "Thao tác này không được hỗ trợ."));
+    }
+
+    @ExceptionHandler({MissingServletRequestParameterException.class, MethodArgumentTypeMismatchException.class})
+    public ResponseEntity<ApiErrorResponse> handleBadParameter(Exception exception) {
+        return ResponseEntity.badRequest()
+                .body(ApiErrorResponse.of("INVALID_REQUEST", "Thiếu hoặc sai tham số trong yêu cầu."));
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiErrorResponse> handleUnexpectedException(Exception exception) {
         logger.error("Request failed", exception);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiErrorResponse.of("INTERNAL_SERVER_ERROR", "An unexpected error occurred."));
+                .body(ApiErrorResponse.of("INTERNAL_SERVER_ERROR",
+                        "Đã có lỗi xảy ra phía máy chủ. Vui lòng thử lại sau."));
     }
 }

@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { money } from "../demo/demo-store";
+import { money } from "../money";
 import {
   BUILD_SLOTS,
   KEY_SPECS,
@@ -378,7 +378,8 @@ export function ExpertBuilder({ catalog, byCode, suggestedParts, profile }: {
       </div>
     </section>
 
-    {parts.CPU && <CompatibilityAndCart parts={parts} byCode={byCode} issues={analysis.issues} />}
+    {parts.CPU && <CompatibilityAndCart parts={parts} byCode={byCode} issues={analysis.issues}
+      resolution={resolution} suggestedName={`PC ${PROFILE_LABEL[useCase].toLowerCase()} (tự cấu hình)`} />}
   </div>;
 }
 

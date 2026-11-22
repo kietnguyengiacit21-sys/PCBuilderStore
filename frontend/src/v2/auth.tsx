@@ -8,6 +8,8 @@ export interface AuthUser {
   roleCode: "ADMIN" | "SALES" | "CUSTOMER";
   customerSegment: string | null;
   accountStatus: string;
+  /** An admin issued a temporary password; the user should choose their own. */
+  mustChangePassword: boolean;
 }
 
 interface AuthContextValue {
@@ -45,6 +47,7 @@ function parseAuthUser(value: unknown): AuthUser {
     roleCode: fields.roleCode,
     customerSegment: fields.customerSegment,
     accountStatus: fields.accountStatus,
+    mustChangePassword: fields.mustChangePassword === true,
   };
 }
 

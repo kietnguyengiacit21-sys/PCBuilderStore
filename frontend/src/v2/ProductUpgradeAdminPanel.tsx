@@ -10,7 +10,7 @@ import type {
   AdminUpgradeConfiguration,
   AdminUpgradeGroup,
 } from "../catalog-api";
-import { money } from "../demo/demo-store";
+import { money } from "../money";
 import { Card, ErrorState, LoadingState, PrimaryButton, SecondaryButton } from "./components";
 
 function emptyGroup(index: number): AdminUpgradeGroup {
